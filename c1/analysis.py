@@ -11,7 +11,7 @@ processed = Path("processed")
 
 # Define FluidFlower with first 10 baseline images
 baseline_images = list(sorted((folder / baseline).glob("*.JPG")))[:10]
-ff = BenchmarkRig(baseline_images, config_source="./config.json")
+ff = BenchmarkRig(baseline_images, config_source="./config.json", update_setup=False)
 
 # Extract concentration.
 images = list(sorted(folder.glob("*.JPG")))[30:32]
