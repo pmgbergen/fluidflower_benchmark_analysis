@@ -2,13 +2,8 @@
     "description": "FluidFlower Benchmark setup for run C1",
 
     "physical_asset": {
-        "dimensions": {
-            "width": 2.745,
-            "height": 1.5
-        },
-        "parameters": {
-            "porosity": 0.44
-        }
+        "dimensions": {"width": 2.745, "height": 1.5},
+        "parameters": {"porosity": 0.44}
     },
 
     "geometry": {
@@ -24,5 +19,7 @@
             "horizontal_center_offset": -1,
             "vertical_center_offset": -66
         }
-    }
+    },
+
+    "calibration": {"scaling": 1.0}
 }
