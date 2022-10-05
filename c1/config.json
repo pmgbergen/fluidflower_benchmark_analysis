@@ -1,0 +1,16 @@
+{
+    "geometry": {
+        "init": {"horizontal_bulge": 0.0, "vertical_bulge": 0.0},
+        "crop": {
+            "pts_src": [[30, 34], [49, 4420], [7924, 4401], [7918, 19]],
+            "width": 2.745,
+            "height": 1.5
+        },
+        "bulge": {
+            "horizontal_bulge": -0.0,
+            "vertical_bulge": -4.059431363309113e-09,
+            "horizontal_center_offset": -1,
+            "vertical_center_offset": -66
+        }
+    }
+}
