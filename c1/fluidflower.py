@@ -2,7 +2,6 @@
 Module containing the setup for the fluidflower rig, used for the PoroTwin1 optimal control project.
 """
 import json
-import time
 from pathlib import Path
 from typing import Optional, Union
 
@@ -11,6 +10,7 @@ import daria
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
+from scipy import ndimage as ndi
 from scipy.interpolate import RBFInterpolator
 
 
@@ -37,7 +37,7 @@ class BenchmarkRig:
         self,
         baseline: Union[str, Path, list[str], list[Path]],
         config_source: Union[str, Path],
-        path_to_cleaning_filter: Optional[Union[str, Path]] = None,
+        update_setup: bool = False,
     ) -> None:
         """
         Constructor for Benchmark rig.
@@ -48,7 +48,8 @@ class BenchmarkRig:
             base (str, Path or list of such): baseline images, used to
                 set up analysis tools and cleaning tools
             config_source (str or Path): path to config dict
-            path_to_cleaning_filter (str or Path, optional):
+            update_setup (bool): flag controlling whether cache in setup
+                routines is emptied.
         """
         # Read general config file
         f = open(config_source, "r")
@@ -56,12 +57,12 @@ class BenchmarkRig:
         f.close()
 
         # Some hardcoded config data (incl. not JSON serializable data)
-        roi = {
+        self.roi = {
             "color": (slice(0, 600, None), slice(0, 600, None)),
         }
 
         # Define correction objects
-        self.color_correction = daria.ColorCorrection(roi=roi["color"])
+        self.color_correction = daria.ColorCorrection(roi=self.roi["color"])
         self.curvature_correction = daria.CurvatureCorrection(
             config=self.config["geometry"]
         )
@@ -72,33 +73,152 @@ class BenchmarkRig:
         reference_base = baseline[0]
         self.base = self._read(reference_base)
 
+        # Segment the baseline image; identidy water and esf layer.
+        self._segment_geometry()
+
+        # Neutralize the water zone in the baseline image
+        self.base_with_clean_water = self._neutralize_water_zone(self.base)
+
         # Determine effective volumes, required for calibration, determining total mass etc.
         self._determine_effective_volumes()
+
+        # Analysis tools
+        self.translation_estimator = daria.TranslationEstimator()
 
         # Define concentration analysis. To speed up significantly the process,
         # invoke resizing of signals within the concentration analysis.
         # Also use pre-calibrated information.
         self.concentration_analysis = TailoredConcentrationAnalysis(
-            self.base, color="gray", resize_factor=0.2
+            self.base_with_clean_water, color="gray", resize_factor=0.2
         )
-        if path_to_cleaning_filter is not None:
-            self.concentration_analysis.read_calibration_from_file(
-                self.config["calibration"],
-                path_to_cleaning_filter,
-            )
-        elif "calibration" in self.config:
-            self._setup_concentration_analysis(self.config["calibration"], baseline)
-        else:
-            print("Warning: Concentration analysis is not calibrated.")
-            self._setup_concentration_analysis({}, baseline)
+        print("Warning: Concentration analysis is not calibrated.")
+        self._setup_concentration_analysis(baseline, update_setup)
 
         # Forward volumes to the concentration analysis, required for calibration
         self.concentration_analysis.update_volumes(self.effective_volumes)
 
     # ! ---- Auxiliary setup routines
 
-    def _segment_geometry(self) -> None:
-        pass
+    def _segment_geometry(self, update: bool = False) -> None:
+        """
+        Use watershed segmentation and some cleaning to segment
+        the geometry. Note that not all sand layers are detected
+        by this approach.
+
+        Args:
+            update (bool): flag whether
+        """
+
+        # Fetch or generate labels
+        if Path("labels.npy").exists() and not update:
+            labels = np.load("labels.npy")
+        else:
+            # Require scalar representation - work with grayscale image. Alternatives exist, but with little difference.
+            basis = cv2.cvtColor(self.base.img, cv2.COLOR_RGB2GRAY)
+
+            # Smooth the image to get rid of sand grains
+            denoised = skimage.filters.rank.median(basis, skimage.morphology.disk(20))
+
+            # Resize image
+            denoised = skimage.util.img_as_ubyte(
+                skimage.transform.rescale(denoised, 0.1, anti_aliasing=False)
+            )
+
+            # Find continuous region, i.e., areas with low local gradient
+            markers_basis = skimage.filters.rank.gradient(
+                denoised, skimage.morphology.disk(10)
+            )
+            markers = markers_basis < 20  # hardcoded
+            markers = ndi.label(markers)[0]
+
+            # Find edges
+            gradient = skimage.filters.rank.gradient(
+                denoised, skimage.morphology.disk(2)
+            )
+
+            # Process the watershed and resize to the original size
+            labels_rescaled = skimage.util.img_as_ubyte(
+                skimage.segmentation.watershed(gradient, markers)
+            )
+            labels = skimage.util.img_as_ubyte(
+                skimage.transform.resize(labels_rescaled, self.base.img.shape[:2])
+            )
+
+            # NOTE: Segmentation needs some cleaning, as some areas are just small,
+            # tiny lines, etc. Define some auxiliary methods for this.
+
+            # Make labels increasing in steps of 1 starting from zero
+            def _reset(labels):
+                pre_labels = np.unique(labels)
+                for i, label in enumerate(pre_labels):
+                    mask = labels == label
+                    labels[mask] = i
+                return labels
+
+            # Fill holes
+            def _fill_holes(labels):
+                pre_labels = np.unique(labels)
+                for label in pre_labels:
+                    mask = labels == label
+                    mask = ndi.binary_fill_holes(mask).astype(bool)
+                    labels[mask] = label
+                return labels
+
+            # Dilate objects
+            def _dilate_by_size(labels, footprint, decreasing_order):
+                # Determine sizes of all marked areas
+                pre_labels = np.unique(labels)
+                sizes = [np.count_nonzero(labels == label) for label in pre_labels]
+                # Sort from small to large
+                labels_sorted_sizes = np.argsort(sizes)
+                if decreasing_order:
+                    labels_sorted_sizes = np.flip(labels_sorted_sizes)
+                # Erode for each label if still existent
+                for label in labels_sorted_sizes:
+                    mask = labels == label
+                    mask = skimage.morphology.binary_dilation(
+                        mask, skimage.morphology.disk(footprint)
+                    )
+                    labels[mask] = label
+                return labels
+
+            # Extend internals to the boundary
+            def _boundary(labels, thickness=10):
+                # Top
+                labels[:thickness, :] = labels[thickness : 2 * thickness, :]
+                # Bottom
+                labels[-thickness - 1 : -1, :] = labels[-2 * thickness : -thickness, :]
+                # Left
+                labels[:, :thickness] = labels[:, thickness : 2 * thickness]
+                # Right
+                labels[:, -thickness - 1 : -1] = labels[:, -2 * thickness : -thickness]
+                return labels
+
+            # Simplify the segmentation drastically by removing small entities, and correct for boundary effects.
+            labels = _reset(labels)
+            labels = _dilate_by_size(labels, 10, False)
+            labels = _reset(labels)
+            labels = _fill_holes(labels)
+            labels = _reset(labels)
+            labels = _dilate_by_size(labels, 10, True)
+            labels = _reset(labels)
+            labels = _boundary(labels)
+            labels = _boundary(labels, 55)
+
+            # Hardcoded: Remove area in water zone
+            labels[labels == 1] = 0
+            labels = _reset(labels)
+
+            # Store to file
+            np.save("labels.npy", labels)
+
+        # Hardcoded: Identify ESF layer with ids 1, 4, 6
+        self.esf = np.zeros(labels.shape[:2], dtype=bool)
+        for i in [1, 4, 6]:
+            self.esf = np.logical_or(self.esf, labels == i)
+
+        # Hardcoded: Identify water layer
+        self.water = labels == 0
 
     def _determine_effective_volumes(self) -> None:
         """
@@ -118,8 +238,6 @@ class BenchmarkRig:
         X_pixel, Y_pixel = np.meshgrid(x, y)
         pixel_vector = np.transpose(np.vstack((np.ravel(X_pixel), np.ravel(Y_pixel))))
         coords_vector = self.base.coordinatesystem.pixelToCoordinate(pixel_vector)
-        X_coords = coords_vector[:, 0].reshape((Ny, Nx))
-        Y_coords = coords_vector[:, 1].reshape((Ny, Nx))
 
         # Fetch physical dimensions
         width = self.config["physical_asset"]["dimensions"]["width"]
@@ -162,33 +280,44 @@ class BenchmarkRig:
         porosity = self.config["physical_asset"]["parameters"]["porosity"]
 
         # Compute effective volume per porous voxel
-        self.effective_volume = porosity * width * height * depth / (Nx * Ny * Nz)
+        self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
     def _setup_concentration_analysis(
-        self, config: dict, baseline_images: list[Union[str, Path]]
+        self, baseline_images: list[Union[str, Path]], update: bool = False
     ) -> None:
         """
         Wrapper to find cleaning filter of the concentration analysis.
 
         Args:
-            config (dict): dictionary with scaling parameters
             baseline_images (list of str or Path): paths to baseline images.
+            update (bool): flag controlling whether the calibration and setup should
+                be updated.
         """
-        # TODO uncomment!
 
-        ## Define scaling factor
-        # if "scaling" in config:
-        #    self.concentration_analysis.scaling = config["scaling"]
+        # Fetch or generate cleaning filter
+        if (
+            not update
+            and "calibration" in self.config
+            and Path("cleaning_filter.npy").exists()
+        ):
+            self.concentration_analysis.read_calibration_from_file(
+                self.config["calibration"], "cleaning_filter.npy"
+            )
+        else:
+            # Construct and store the cleaning filter.
+            images = [self._read(path) for path in baseline_images]
+            self.concentration_analysis.find_cleaning_filter(images)
+            self.concentration_analysis.write_calibration_to_file(
+                "tmp", "cleaning_filter.npy"
+            )
 
-        ## Find cleaning filter
-        # images = [self._read(path) for path in baseline_images]
-        # self.concentration_analysis.find_cleaning_filter(images)
-
-        pass
+            # TODO separate cleaning from calibration
+            # TODO perform actual calibration to obtain scaling.
+            # TODO update config
 
     # ! ---- Auxiliary calibration routines
 
-    def calibrate_concentration_analysis(
+    def _calibrate_concentration_analysis(
         self,
         paths: list[Path],
         injection_rate: float,
@@ -236,7 +365,19 @@ class BenchmarkRig:
         Args:
             path (str or Path): path to image
         """
+        # Read and process
         self.img = self._read(path)
+
+        # Align with base image
+        self.translation_estimator.match_roi(
+            img_src=self.img,
+            img_dst=self.base,
+            roi_src=self.roi["color"],
+            roi_dst=self.roi["color"],
+        )
+
+        # Neutralize water
+        self.img = self._neutralize_water_zone(self.img)
 
     def store(
         self,
@@ -275,7 +416,23 @@ class BenchmarkRig:
 
         return True
 
-    # ! ----- Concentration analysis
+    # ! ----- Cleaning routines
+
+    def _neutralize_water_zone(self, img: daria.Image) -> daria.Image:
+        """
+        Deactivate water zone in the provided image.
+
+        Args:
+            img (daria.Image): image
+
+        Returns:
+            daria.Image: cleaned image
+        """
+        img_copy = img.copy()
+        img_copy.img[self.water] = 0
+        return img_copy
+
+    # ! ----- Analysis tools
 
     def determine_concentration(self) -> daria.Image:
         """Extract tracer from currently loaded image, based on a reference image.
@@ -290,3 +447,9 @@ class BenchmarkRig:
         concentration = self.concentration_analysis(img)
 
         return concentration
+
+    def segment_concentration_profile(self, concentration: daria.Image) -> np.ndarray:
+        """
+        Provide segmentation into water, water with CO2, pure CO2.
+        """
+        pass
