@@ -4,11 +4,9 @@
 from pathlib import Path
 
 import cv2
-import matplotlib.pyplot as plt
-
-import skimage
-
 import daria
+import matplotlib.pyplot as plt
+import skimage
 
 # !----- 1. Step: Read curved image and initialize the config file
 
@@ -22,7 +20,7 @@ img = cv2.imread(str(img))
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 # Brighten up image for better control
-img = skimage.exposure.adjust_gamma(img, gamma = 0.7)
+img = skimage.exposure.adjust_gamma(img, gamma=0.7)
 
 # All relevant config parameters will be stored in a dictionary collecting several configs.
 # Initialize the config dict.
@@ -37,8 +35,8 @@ plt.show()
 # In some cases it might be necessary to define offsets for the image center;
 # the default is to use the numerical center.
 config["init"] = {
-    "horizontal_bulge": 0.,
-    "vertical_bulge": 0.,
+    "horizontal_bulge": 0.0,
+    "vertical_bulge": 0.0,
 }
 
 # Apply bulge 'correction'
@@ -48,8 +46,8 @@ img = curvature_correction.simple_curvature_correction(img, **config["init"])
 
 # Read coordinates of 4 points, defining a rectangular of known dimensions.
 # Here, we choose a bounding box with corners on the laser grid.
-#plt.imshow(img)
-#plt.show()
+# plt.imshow(img)
+# plt.show()
 
 fluidflower_width = 2.745
 fluidflower_height = 1.5
@@ -78,8 +76,8 @@ img = daria.extract_quadrilateral_ROI(img, **config["crop"])
 # !----- 3. Step: Straighten the laser grid lines by correcting for bulge
 
 ## Plot...
-#plt.imshow(img)
-#plt.show()
+# plt.imshow(img)
+# plt.show()
 
 # ... and determine the parameters as described in the daria-notes
 # For this, require the dimensions of the image
@@ -114,30 +112,32 @@ img = curvature_correction.simple_curvature_correction(img, **config["bulge"])
 
 # Compare with a 'perfect' grid layed on top
 # Determine coordinates of some point which is off
-da_img = daria.Image(img, width=config["crop"]["width"], height=config["crop"]["height"]).add_grid(dx=0.1, dy=0.1)
+da_img = daria.Image(
+    img, width=config["crop"]["width"], height=config["crop"]["height"]
+).add_grid(dx=0.1, dy=0.1)
 plt.imshow(da_img.img)
 plt.show()
 
 # # Use [x,y] in pixels, and specify the current location, and the ought to be location
-# 
+#
 # # Find the position of the mark to the right below the most right, lowest tile of
 # # the color palette, and provide the pixels in [x,y] order.
 # pt_src = [446, 532]
-# 
+#
 # # Determine the destination position for the mark based on the exact location
 # # and the frame width
 # distance_frame_cc_lower_right_corner = 0.176 # in meters
 # cc_lower_right_corner_x = distance_frame_cc_lower_right_corner + frame_width
 # pt_dst = [da_img.coordinatesystem.lengthToPixels(cc_lower_right_corner_x), pt_src[1]]
-# 
+#
 # # Define 'center' as the point which can be trusted the most - can be omitted if a
 # # second reference point is considered # FIXME
 # stretch_center = [int(Nx/2), int(Ny/2)]
-# 
+#
 # # Update the offset to the center
 # horizontal_stretch_center_offset = stretch_center[0] - int(Nx / 2)
 # vertical_stretch_center_offset = stretch_center[1] - int(Ny / 2)
-# 
+#
 # # Compute the tuning parameter as explained in the notes
 # # TODO add to the notes
 # horizontal_stretch = -(pt_dst[0] - pt_src[0]) / (
@@ -146,7 +146,7 @@ plt.show()
 # vertical_stretch = -(pt_dst[1] - pt_src[1]) / (
 #     (pt_src[1] - stretch_center[1]) * pt_src[1] * (Ny - pt_src[1])
 # )
-# 
+#
 # # Choose horizontal and vertical bulge such that all laser grid lines are bulged inwards
 # config["stretch"] = {
 #     "horizontal_stretch": horizontal_stretch,
@@ -157,7 +157,7 @@ plt.show()
 
 # # Apply final curvature correction
 # img = curvature_correction.simple_curvature_correction(img, **config["stretch"])
-# 
+#
 # # !----- 6. Step: Validation - Compare with a 'perfect' grid layed on top
 # da_img = daria.Image(img, width=config["crop"]["width"], height=config["crop"]["height"]).add_grid(dx=0.1, dy=0.1)
 # plt.imshow(da_img.img)
