@@ -82,8 +82,27 @@ class BenchmarkRig:
         # Determine effective volumes, required for calibration, determining total mass etc.
         self._determine_effective_volumes()
 
-        # Analysis tools
+        # ! ---- Analysis tools
+
+        # Translation estimator to match different images such that color checker
+        # is at same location
         self.translation_estimator = daria.TranslationEstimator()
+
+        # Concentration analysis to detect CO2. Hue serves as basis for the analysis.
+        def hue(img):
+            return cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:, :, 0]
+
+        self.co2_mask_analysis = daria.ConcentrationAnalysis(
+            self.base_with_clean_water,
+            color=hue,
+        )
+        print("Warning: Concentration analysis is not calibrated.")
+        self._setup_concentration_analysis(
+            self.co2_mask_analysis,
+            "co2_mask_cleaning_filter.npy",
+            baseline,
+            update_setup,
+        )
 
         # Define concentration analysis. To speed up significantly the process,
         # invoke resizing of signals within the concentration analysis.
@@ -283,33 +302,42 @@ class BenchmarkRig:
         self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
     def _setup_concentration_analysis(
-        self, baseline_images: list[Union[str, Path]], update: bool = False
+        self,
+        concentration_analysis: daria.ConcentrationAnalysis,
+        cleaning_filter: Union[str, Path],
+        baseline_images: list[Union[str, Path]],
+        update: bool = False,
     ) -> None:
         """
         Wrapper to find cleaning filter of the concentration analysis.
 
         Args:
+            concentration_analysis (daria.ConcentrationAnalysis): concentration analysis
+                to be set up.
+            cleaning_filter (str or Path): path to cleaning filter array.
             baseline_images (list of str or Path): paths to baseline images.
             update (bool): flag controlling whether the calibration and setup should
                 be updated.
         """
+        # Set volume information
+        concentration_analysis.update_volumes(self.effective_volumes)
 
         # Fetch or generate cleaning filter
         if (
             not update
             and "calibration" in self.config
-            and Path("cleaning_filter.npy").exists()
+            and Path(cleaning_filter).exists()
         ):
-            self.concentration_analysis.read_calibration_from_file(
-                self.config["calibration"], "cleaning_filter.npy"
+            # TODO take care of calibration!
+            concentration_analysis.read_calibration_from_file(
+                self.config["calibration"], cleaning_filter
             )
         else:
             # Construct and store the cleaning filter.
             images = [self._read(path) for path in baseline_images]
-            self.concentration_analysis.find_cleaning_filter(images)
-            self.concentration_analysis.write_calibration_to_file(
-                "tmp", "cleaning_filter.npy"
-            )
+            concentration_analysis.find_cleaning_filter(images)
+            # TODO take care of calibration!
+            concentration_analysis.write_calibration_to_file("tmp", cleaning_filter)
 
             # TODO separate cleaning from calibration
             # TODO perform actual calibration to obtain scaling.
@@ -434,22 +462,52 @@ class BenchmarkRig:
 
     # ! ----- Analysis tools
 
-    def determine_concentration(self) -> daria.Image:
-        """Extract tracer from currently loaded image, based on a reference image.
+    def determine_co2_mask(self) -> daria.Image:
+        """Segment domain into CO2 (mobile or dissolved) and water.
 
         Returns:
-            daria.Image: image array of spatial concentration map
+            daria.Image: image array with segmentation
         """
         # Make a copy of the current image
         img = self.img.copy()
 
         # Extract concentration map
-        concentration = self.concentration_analysis(img)
+        co2 = self.co2_mask_analysis(img)
 
-        return concentration
+        # Apply aggresive coarsening to make TVD feasible
+        factor = 4
+        co2_coarse = cv2.resize(
+            co2.img, (factor * 280, factor * 150), interpolation=cv2.INTER_AREA
+        )
 
-    def segment_concentration_profile(self, concentration: daria.Image) -> np.ndarray:
+        # Apply TVD to get rid of grains
+        co2_denoised = skimage.restoration.denoise_tv_chambolle(co2_coarse, 0.0001)
+
+        # Apply dynamic thresholding
+        thresh = skimage.filters.threshold_otsu(co2_denoised)
+        mask = co2_denoised > 0.6 * thresh
+
+        # Remove small objects
+        clean_mask = ndi.morphology.binary_opening(mask, structure=np.ones((2, 2)))
+
+        # Resize to original size
+        shape = self.base.img.shape[:2]
+        co2_mask = skimage.img_as_ubyte(
+            cv2.resize(clean_mask.astype(float), tuple(reversed(shape))).astype(bool)
+        )
+
+        return daria.Image(img=co2_mask, metadata=self.img.metadata)
+
+    def determine_mobile_co2_mask(self) -> daria.Image:
+        """Segment domain into mobile CO2 and rest.
+
+        Returns:
+            daria.Image: image array with segmentation
         """
-        Provide segmentation into water, water with CO2, pure CO2.
-        """
-        pass
+        # Make a copy of the current image
+        img = self.img.copy()
+
+        # Extract concentration map
+        mobile_co2 = self.mobile_co2_analysis(img)
+
+        return mobile_co2
