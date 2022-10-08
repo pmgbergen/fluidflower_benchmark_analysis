@@ -12,6 +12,22 @@ import numpy as np
 import skimage
 from scipy import ndimage as ndi
 from scipy.interpolate import RBFInterpolator
+from scipy.optimize import bisect, minimize
+
+
+class MobileCO2Analysis(daria.ConcentrationAnalysis):
+    def set_esf(self, esf: np.ndarray) -> None:
+        self.esf = esf
+
+    def set_co2(self, co2: np.ndarray) -> None:
+        self.co2 = co2
+
+    def _extract_scalar_information(self, img: daria.Image) -> None:
+        pass
+
+    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
+        blue = signal[:, :, 2]
+        return blue
 
 
 class TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
@@ -104,14 +120,17 @@ class BenchmarkRig:
             update_setup,
         )
 
-        # Define concentration analysis. To speed up significantly the process,
-        # invoke resizing of signals within the concentration analysis.
-        # Also use pre-calibrated information.
-        self.concentration_analysis = TailoredConcentrationAnalysis(
-            self.base_with_clean_water, color="gray", resize_factor=0.2
+        self.mobile_co2_analysis = MobileCO2Analysis(
+            self.base_with_clean_water,
+            color="empty",
         )
         print("Warning: Concentration analysis is not calibrated.")
-        self._setup_concentration_analysis(baseline, update_setup)
+        self._setup_concentration_analysis(
+            self.mobile_co2_analysis,
+            "mobile_co2_cleaning_filter.npy",
+            baseline,
+            update_setup,
+        )
 
         # Forward volumes to the concentration analysis, required for calibration
         self.concentration_analysis.update_volumes(self.effective_volumes)
@@ -498,7 +517,7 @@ class BenchmarkRig:
 
         return daria.Image(img=co2_mask, metadata=self.img.metadata)
 
-    def determine_mobile_co2_mask(self) -> daria.Image:
+    def determine_mobile_co2_mask(self, co2: daria.Image) -> daria.Image:
         """Segment domain into mobile CO2 and rest.
 
         Returns:
@@ -507,7 +526,34 @@ class BenchmarkRig:
         # Make a copy of the current image
         img = self.img.copy()
 
+        # Fetch masks
+        co2_mask = skimage.util.img_as_bool(co2.img)
+        esf = self.esf
+
         # Extract concentration map
         mobile_co2 = self.mobile_co2_analysis(img)
 
-        return mobile_co2
+        # Turn off signals from ESF (a priori knowledge)
+        active = np.logical_and(co2_mask, ~esf)
+        mobile_co2.img[~active] = 0
+
+        # Cut off low signals - results in mask
+        thresh = skimage.filters.threshold_otsu(
+            np.ravel(mobile_co2.img)[np.ravel(active)]
+        )
+        print(thresh)
+        # thresh = 0.065
+        # thresh = 0.045 # Works really bad in the end
+        thresh = 0.05
+        mask = skimage.util.img_as_float(mobile_co2.img > thresh)
+
+        # Clean signal
+        mask = skimage.filters.rank.median(mask, skimage.morphology.disk(5))
+        mask = skimage.morphology.binary_closing(
+            skimage.util.img_as_bool(mask), footprint=np.ones((10, 10))
+        )
+        mask = skimage.morphology.remove_small_holes(mask, 50**2)
+        mask = ndi.morphology.binary_opening(mask, structure=np.ones((5, 5)))
+        mobile_co2_mask = mask
+
+        return daria.Image(img=mobile_co2_mask, metadata=self.img.metadata)
