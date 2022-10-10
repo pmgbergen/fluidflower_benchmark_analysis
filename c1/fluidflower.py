@@ -16,12 +16,6 @@ from scipy.optimize import bisect, minimize
 
 
 class MobileCO2Analysis(daria.ConcentrationAnalysis):
-    def set_esf(self, esf: np.ndarray) -> None:
-        self.esf = esf
-
-    def set_co2(self, co2: np.ndarray) -> None:
-        self.co2 = co2
-
     def _extract_scalar_information(self, img: daria.Image) -> None:
         pass
 
@@ -30,10 +24,62 @@ class MobileCO2Analysis(daria.ConcentrationAnalysis):
         return blue
 
 
+class MobileCO2AnalysisII(daria.ConcentrationAnalysis):
+    def _extract_scalar_information(self, img: daria.Image) -> None:
+        pass
+
+    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
+        red = signal[:, :, 0]
+        red = skimage.filters.rank.median(red, skimage.morphology.disk(5))
+        red = skimage.restoration.denoise_tv_bregman(
+            red, weight=100, max_num_iter=1000, eps=1e-5, isotropic=False
+        )
+        return red
+
+
+class CO2Analysis(daria.ConcentrationAnalysis):
+    def _extract_scalar_information(self, img: daria.Image) -> None:
+        pass
+
+    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
+        red = signal[:, :, 0]
+        # red = skimage.filters.rank.median(red, skimage.morphology.disk(5))
+        # red = skimage.restoration.denoise_tv_bregman(red, weight=100, max_num_iter=1000, eps=1e-5, isotropic=False)
+        return red
+
+
 class TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
     def __init__(self, base, color, resize_factor, **kwargs) -> None:
         super().__init__(base, color, **kwargs)
         self.resize_factor = resize_factor
+
+    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
+        np.save("signal_mid.npy", signal)
+        assert False
+        signal = cv2.resize(
+            signal,
+            None,
+            fx=self.resize_factor,
+            fy=self.resize_factor,
+            interpolation=cv2.INTER_AREA,
+        )
+        plt.imshow(signal)
+        plt.show()
+        signal = skimage.restoration.denoise_tv_chambolle(signal, 0.1)
+        signal = np.atleast_3d(signal)
+        return super().postprocess_signal(signal)
+
+
+class _TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
+    def __init__(self, base, segmentation, color, resize_factor, **kwargs) -> None:
+        super().__init__(base, color, **kwargs)
+        self.resize_factor = resize_factor
+
+        # Initialize scaling parameters for all facies
+        self.segmentation = segmentation
+        self.number_segments = np.unique(segmentation).shape[0]
+        assert np.isclose(np.unique(segmentation), np.arange(self.number_segments))
+        self.scaling = np.ones(self.number_segments, dtype=float)
 
     def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
         signal = cv2.resize(
@@ -46,6 +92,128 @@ class TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
         signal = skimage.restoration.denoise_tv_chambolle(signal, 0.1)
         signal = np.atleast_3d(signal)
         return super().postprocess_signal(signal)
+
+    def convert_signal(self, signal: np.ndarray) -> np.ndarray:
+        return np.clip(
+            np.multiply(self.scaling_array, processed_signal) + self.offset, 0, 1
+        )
+
+    def _determine_scaling(self) -> None:
+        self.scaling_array = np.ones(self.base.shape[:2], dtype=float)
+        for i in np.unique(self.segmentation):
+            mask = self.segmentation == i
+            self.scaling_array[mask] = self.scaling[i]
+
+    def calibrate(
+        self,
+        injection_rate: float,
+        images: list[daria.Image],
+        initial_guess: Optional[list[tuple[float]]] = None,
+        tol: float = 1e-3,
+        maxiter: int = 20,
+    ) -> None:
+        """
+        Calibrate the conversion used in __call__ such that the provided
+        injection rate is matched for the given set of images.
+
+        Args:
+            injection_rate (float): constant injection rate in ml/hrs.
+            images (list of daria.Image): images used for the calibration.
+            initial_guess (list of tuple): intervals of scaling values to be considered
+                in the calibration; need to define lower and upper bounds on
+                the optimal scaling parameter.
+            tol (float): tolerance for the bisection algorithm.
+            maxiter (int): maximal number of bisection iterations used for
+                calibration.
+        """
+        # TODO wrap in another loop?
+        converged = np.zeros(self.num_segments, dtype=bool)
+        visited = np.zeros(self.num_segments, dtype=bool)
+
+        while False:
+
+            # Visit each pos once
+            for i in range(self.num_segments):
+
+                # Find pos with largest sensitivity which
+                sensitivity = -1
+                for pos_candidate in np.where(~visited)[0]:
+                    # TODO quantiy sensitivity
+                    pos_sensisitivity = None
+                    if pos_sensitivity > sensitivity:
+                        pos = pos_candidate
+                        sensitivity = pos_sensitivity
+
+                # TODO need to perform minimization and not strict root problem.
+
+                # Define a function which is zero when the conversion parameters are chosen properly.
+                def deviation_sqr(scaling: float):
+                    self.scaling[~visited] = scaling
+                    return (injection_rate - self._estimate_rate(images)[0]) ** 2
+
+                # Perform bisection
+                self.scaling, success, _ = minimize(
+                    deviation,
+                    initial_guess[pos],
+                    method="BFGS",
+                    xtol=tol,
+                    maxiter=maxiter,
+                )
+
+                # Mark position as visited
+                visited[pos] = True
+                converged[pos] = sucess
+
+            if converged.all():
+                break
+
+        print(f"Calibration results in scaling factor {self.scaling}.")
+
+    def _estimate_rate(self, images: list[daria.Image]) -> tuple[float]:
+        """
+        Estimate the injection rate for the given series of images.
+
+        Args:
+            images (list of daria.Image): basis for computing the injection rate.
+
+        Returns:
+            float: estimated injection rate.
+            float: offset at time 0, useful to determine the actual start time,
+                or plot the total concentration over time compared to the expected
+                volumes.
+        """
+        # Conversion constants
+        SECONDS_TO_HOURS = 1.0 / 3600.0
+        M3_TO_ML = 1e6
+
+        # Define reference time (not important which image serves as basis)
+        ref_time = images[0].timestamp
+
+        # For each image, compute the total concentration, based on the currently
+        # set tuning parameters, and compute the relative time.
+        total_volumes = []
+        relative_times = []
+        for img in images:
+
+            # Fetch associated time for image, relate to reference time, and store.
+            time = img.timestamp
+            relative_time = (time - ref_time).total_seconds() * SECONDS_TO_HOURS
+            relative_times.append(relative_time)
+
+            # Convert signal image to concentration, compute the total volumetric
+            # concentration in ml, and store.
+            concentration = self(img)
+            total_volume = self._determine_total_volume(concentration) * M3_TO_ML
+            total_volumes.append(total_volume)
+
+        # Determine slope in time by linear regression
+        relative_times = np.array(relative_times).reshape(-1, 1)
+        total_volumes = np.array(total_volumes)
+        ransac = RANSACRegressor()
+        ransac.fit(relative_times, total_volumes)
+
+        # Extract the slope and convert to
+        return ransac.estimator_.coef_[0], ransac.estimator_.intercept_
 
 
 class BenchmarkRig:
@@ -120,20 +288,63 @@ class BenchmarkRig:
             update_setup,
         )
 
-        self.mobile_co2_analysis = MobileCO2Analysis(
+        ## CO2 analysis based on mulit-channel diff and afterwards red extraction
+        ## combined with local convexification to determine the total co2 plume
+        ## seem to work nicely. Only CO2 in the ESF layer is not super well detected
+        ## at later stage and holes are quickly filled where it is not super clear
+        ## whether they should be filled.
+        # self.co2_mask_analysis = CO2Analysis(
+        #    self.base_with_clean_water,
+        #    color="",
+        # )
+        # print("Warning: Concentration analysis is not calibrated.")
+        # self._setup_concentration_analysis(
+        #    self.co2_mask_analysis,
+        #    "co2_mask_new_cleaning_filter.npy",
+        #    baseline,
+        #    update_setup,
+        # )
+
+        # self.mobile_co2_analysis = MobileCO2Analysis(
+        #    self.base_with_clean_water,
+        #    color="empty",
+        # )
+        # print("Warning: Concentration analysis is not calibrated.")
+        # self._setup_concentration_analysis(
+        #    self.mobile_co2_analysis,
+        #    "mobile_co2_cleaning_filter_blue.npy",
+        #    baseline,
+        #    update_setup,
+        # )
+
+        self.mobile_co2_analysis = MobileCO2AnalysisII(
             self.base_with_clean_water,
             color="empty",
         )
         print("Warning: Concentration analysis is not calibrated.")
         self._setup_concentration_analysis(
             self.mobile_co2_analysis,
-            "mobile_co2_cleaning_filter.npy",
+            "mobile_co2_cleaning_filter_red.npy",
             baseline,
             update_setup,
         )
 
-        # Forward volumes to the concentration analysis, required for calibration
-        self.concentration_analysis.update_volumes(self.effective_volumes)
+        # Define concentration analysis. To speed up significantly the process,
+        # invoke resizing of signals within the concentration analysis.
+        # Also use pre-calibrated information.
+        def scalar(img):
+            # alpha = np.array([1,1,0]) # yellow
+            # alpha = np.array([126,93,48]) # brown
+            # alpha = np.array([81, 34, 6]) # dark red
+            # alpha = np.array([123, 75, 34]) # light brown
+            # alpha = np.array([66, 59, 25]) # background
+            alpha = np.array([25, 31, 66])  # background
+            alpha = alpha / np.sum(alpha)
+            return (
+                alpha[0] * img[:, :, 0]
+                + alpha[1] * img[:, :, 1]
+                + alpha[2] * img[:, :, 2]
+            )
 
     # ! ---- Auxiliary setup routines
 
@@ -364,28 +575,29 @@ class BenchmarkRig:
 
     # ! ---- Auxiliary calibration routines
 
-    def _calibrate_concentration_analysis(
-        self,
-        paths: list[Path],
-        injection_rate: float,
-        initial_guess: tuple[float],
-        tol: float,
-    ) -> None:
-        """
-        Manager for calibration of concentration analysis, based on a
-        constant injection rate.
-
-        Args:
-            images (list of daria.Image): images used for the calibration
-            injection_rate (float): constant injection rate, assumed for the images
-        """
-        # Read in images
-        images = [self._read(path) for path in paths]
-
-        # Calibrate concentration analysis
-        self.concentration_analysis.calibrate(
-            injection_rate, images, initial_guess, tol
-        )
+    # TODO update
+    #    def _calibrate_concentration_analysis(
+    #        self,
+    #        paths: list[Path],
+    #        injection_rate: float,
+    #        initial_guess: tuple[float],
+    #        tol: float,
+    #    ) -> None:
+    #        """
+    #        Manager for calibration of concentration analysis, based on a
+    #        constant injection rate.
+    #
+    #        Args:
+    #            images (list of daria.Image): images used for the calibration
+    #            injection_rate (float): constant injection rate, assumed for the images
+    #        """
+    #        # Read in images
+    #        images = [self._read(path) for path in paths]
+    #
+    #        # Calibrate concentration analysis
+    #        self.concentration_analysis.calibrate(
+    #            injection_rate, images, initial_guess, tol
+    #        )
 
     # ! ----- I/O
 
@@ -481,6 +693,49 @@ class BenchmarkRig:
 
     # ! ----- Analysis tools
 
+    # Routine for hue based co2 analysis
+
+    # def determine_co2_mask(self) -> daria.Image:
+    #    """Segment domain into CO2 (mobile or dissolved) and water.
+
+    #    Returns:
+    #        daria.Image: image array with segmentation
+    #    """
+    #    # Make a copy of the current image
+    #    img = self.img.copy()
+
+    #    # Extract concentration map
+    #    co2 = self.co2_mask_analysis(img)
+
+    #    # Apply aggresive coarsening to make TVD feasible
+    #    factor = 4
+    #    co2_coarse = cv2.resize(
+    #        co2.img, (factor * 280, factor * 150), interpolation=cv2.INTER_AREA
+    #    )
+
+    #    # Apply TVD to get rid of grains
+    #    co2_denoised = skimage.restoration.denoise_tv_chambolle(co2_coarse, 0.0001)
+
+    #    # Apply dynamic thresholding
+    #    thresh = skimage.filters.threshold_otsu(co2_denoised)
+
+    #    # Hardcoded thresh
+
+    #    mask = co2_denoised > 0.6 * thresh
+
+    #    # Remove small objects
+    #    clean_mask = ndi.morphology.binary_opening(mask, structure=np.ones((2, 2)))
+
+    #    # Resize to original size
+    #    shape = self.base.img.shape[:2]
+    #    co2_mask = skimage.img_as_ubyte(
+    #        cv2.resize(clean_mask.astype(float), tuple(reversed(shape))).astype(bool)
+    #    )
+
+    #    return daria.Image(img=co2_mask, metadata=self.img.metadata)
+
+    # Routine for hue based co2 analysis
+
     def determine_co2_mask(self) -> daria.Image:
         """Segment domain into CO2 (mobile or dissolved) and water.
 
@@ -493,29 +748,102 @@ class BenchmarkRig:
         # Extract concentration map
         co2 = self.co2_mask_analysis(img)
 
-        # Apply aggresive coarsening to make TVD feasible
-        factor = 4
-        co2_coarse = cv2.resize(
-            co2.img, (factor * 280, factor * 150), interpolation=cv2.INTER_AREA
+        # Apply thresholding
+        thresh = skimage.filters.threshold_otsu(co2.img)
+        print("co2", thresh)
+
+        # TODO find through calibration!
+        # thresh = 0.129
+        thresh = 0.02
+        mask = co2.img > thresh
+
+        # Fill holes
+        mask = skimage.morphology.remove_small_holes(mask, area_threshold=20**2)
+
+        # Loop through patches and fill up
+        convex_mask = np.zeros(mask.shape[:2], dtype=bool)
+        size = 10
+        Ny, Nx = mask.shape[:2]
+        for row in range(int(Ny / size) + 1):
+            for col in range(int(Nx / size) + 1):
+                roi = (
+                    slice(row * size, (row + 1) * size),
+                    slice(col * size, (col + 1) * size),
+                )
+                convex_mask[roi] = skimage.morphology.convex_hull_image(mask[roi])
+
+        # Clean up by resizing and denoising
+        convex_mask = cv2.resize(convex_mask.astype(np.float32), None, fx=0.25, fy=0.25)
+        convex_mask = skimage.restoration.denoise_tv_chambolle(
+            convex_mask, 1, eps=1e-5, max_num_iter=100
         )
 
-        # Apply TVD to get rid of grains
-        co2_denoised = skimage.restoration.denoise_tv_chambolle(co2_coarse, 0.0001)
-
-        # Apply dynamic thresholding
-        thresh = skimage.filters.threshold_otsu(co2_denoised)
-        mask = co2_denoised > 0.6 * thresh
-
-        # Remove small objects
-        clean_mask = ndi.morphology.binary_opening(mask, structure=np.ones((2, 2)))
+        # Extract mask from smooth image
+        # thresh = skimage.filters.threshold_otsu(convex_mask)
+        thresh = 0.5
+        mask = convex_mask > thresh
 
         # Resize to original size
-        shape = self.base.img.shape[:2]
-        co2_mask = skimage.img_as_ubyte(
-            cv2.resize(clean_mask.astype(float), tuple(reversed(shape))).astype(bool)
+        mask = skimage.util.img_as_bool(
+            cv2.resize(mask.astype(np.float32), tuple(reversed(self.img.img.shape[:2])))
         )
 
+        # Define final result
+        co2_mask = mask
+
         return daria.Image(img=co2_mask, metadata=self.img.metadata)
+
+    # Routine for CO2Analysis (multichannel diff and red)
+
+    # def determine_co2_mask(self) -> daria.Image:
+    #    """Segment domain into CO2 (mobile or dissolved) and water.
+
+    #    Returns:
+    #        daria.Image: image array with segmentation
+    #    """
+    #    # Make a copy of the current image
+    #    img = self.img.copy()
+
+    #    # Extract concentration map
+    #    co2 = self.co2_mask_analysis(img)
+
+    #    # Apply thresholding
+    #    thresh = skimage.filters.threshold_otsu(co2.img)
+    #    print("co2", thresh)
+
+    #    # TODO find through calibration!
+    #    #thresh = 0.129
+    #    thresh = 0.078
+    #    mask = co2.img > thresh
+    #
+    #    # Fill holes
+    #    mask = skimage.morphology.remove_small_holes(mask, area_threshold = 20**2)
+    #
+    #    # Loop through patches and fill up
+    #    convex_mask = np.zeros(mask.shape[:2], dtype=bool)
+    #    size = 10
+    #    Ny, Nx = mask.shape[:2]
+    #    for row in range(int(Ny / size) + 1):
+    #        for col in range(int(Nx / size) + 1):
+    #            roi = (slice(row * size, (row+1) * size), slice(col * size, (col+1) * size))
+    #            convex_mask[roi] = skimage.morphology.convex_hull_image(mask[roi])
+    #
+    #    # Clean up by resizing and denoising
+    #    convex_mask = cv2.resize(convex_mask.astype(np.float32), None, fx = 0.25, fy = 0.25)
+    #    convex_mask = skimage.restoration.denoise_tv_chambolle(convex_mask, 1, eps = 1e-5, max_num_iter = 100)
+    #
+    #    # Extract mask from smooth image
+    #    #thresh = skimage.filters.threshold_otsu(convex_mask)
+    #    thresh = 0.5
+    #    mask = convex_mask > thresh
+
+    #    # Resize to original size
+    #    mask = skimage.util.img_as_bool(cv2.resize(mask.astype(np.float32), tuple(reversed(self.img.img.shape[:2]))))
+
+    #    # Define final result
+    #    co2_mask = mask
+
+    #    return daria.Image(img=co2_mask, metadata=self.img.metadata)
 
     def determine_mobile_co2_mask(self, co2: daria.Image) -> daria.Image:
         """Segment domain into mobile CO2 and rest.
@@ -533,6 +861,10 @@ class BenchmarkRig:
         # Extract concentration map
         mobile_co2 = self.mobile_co2_analysis(img)
 
+        plt.figure()
+        plt.imshow(mobile_co2.img)
+        plt.show()
+
         # Turn off signals from ESF (a priori knowledge)
         active = np.logical_and(co2_mask, ~esf)
         mobile_co2.img[~active] = 0
@@ -541,10 +873,20 @@ class BenchmarkRig:
         thresh = skimage.filters.threshold_otsu(
             np.ravel(mobile_co2.img)[np.ravel(active)]
         )
-        print(thresh)
-        # thresh = 0.065
-        # thresh = 0.045 # Works really bad in the end
-        thresh = 0.05
+        print("mobile", thresh)
+
+        # When using BLUE:
+        ## thresh = 0.065
+        ## thresh = 0.045 # Works really bad in the end
+        # thresh = 0.05
+
+        # When using RED:
+        thresh = 0.24  # * 1.1
+
+        # To identify nitrogen: Try
+        thresh = 0.26
+
+        # Define mask
         mask = skimage.util.img_as_float(mobile_co2.img > thresh)
 
         # Clean signal
