@@ -15,6 +15,7 @@ from scipy.interpolate import RBFInterpolator
 from scipy.optimize import bisect, minimize
 
 
+# Define specific concentration analysis class to detect mobile CO2
 class MobileCO2Analysis(daria.ConcentrationAnalysis):
     def _extract_scalar_information(self, img: daria.Image) -> None:
         pass
@@ -272,7 +273,7 @@ class BenchmarkRig:
         # is at same location
         self.translation_estimator = daria.TranslationEstimator()
 
-        # Concentration analysis to detect CO2. Hue serves as basis for the analysis.
+        # Concentration analysis to detect (mobile and dissolved) CO2. Hue serves as basis for the analysis.
         def hue(img):
             return cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:, :, 0]
 
@@ -288,63 +289,18 @@ class BenchmarkRig:
             update_setup,
         )
 
-        ## CO2 analysis based on mulit-channel diff and afterwards red extraction
-        ## combined with local convexification to determine the total co2 plume
-        ## seem to work nicely. Only CO2 in the ESF layer is not super well detected
-        ## at later stage and holes are quickly filled where it is not super clear
-        ## whether they should be filled.
-        # self.co2_mask_analysis = CO2Analysis(
-        #    self.base_with_clean_water,
-        #    color="",
-        # )
-        # print("Warning: Concentration analysis is not calibrated.")
-        # self._setup_concentration_analysis(
-        #    self.co2_mask_analysis,
-        #    "co2_mask_new_cleaning_filter.npy",
-        #    baseline,
-        #    update_setup,
-        # )
-
-        # self.mobile_co2_analysis = MobileCO2Analysis(
-        #    self.base_with_clean_water,
-        #    color="empty",
-        # )
-        # print("Warning: Concentration analysis is not calibrated.")
-        # self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis,
-        #    "mobile_co2_cleaning_filter_blue.npy",
-        #    baseline,
-        #    update_setup,
-        # )
-
-        self.mobile_co2_analysis = MobileCO2AnalysisII(
+        # Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
+        self.mobile_co2_analysis = MobileCO2Analysis(
             self.base_with_clean_water,
             color="empty",
         )
         print("Warning: Concentration analysis is not calibrated.")
         self._setup_concentration_analysis(
             self.mobile_co2_analysis,
-            "mobile_co2_cleaning_filter_red.npy",
+            "mobile_co2_cleaning_filter_blue.npy",
             baseline,
             update_setup,
         )
-
-        # Define concentration analysis. To speed up significantly the process,
-        # invoke resizing of signals within the concentration analysis.
-        # Also use pre-calibrated information.
-        def scalar(img):
-            # alpha = np.array([1,1,0]) # yellow
-            # alpha = np.array([126,93,48]) # brown
-            # alpha = np.array([81, 34, 6]) # dark red
-            # alpha = np.array([123, 75, 34]) # light brown
-            # alpha = np.array([66, 59, 25]) # background
-            alpha = np.array([25, 31, 66])  # background
-            alpha = alpha / np.sum(alpha)
-            return (
-                alpha[0] * img[:, :, 0]
-                + alpha[1] * img[:, :, 1]
-                + alpha[2] * img[:, :, 2]
-            )
 
     # ! ---- Auxiliary setup routines
 
@@ -695,48 +651,9 @@ class BenchmarkRig:
 
     # Routine for hue based co2 analysis
 
-    # def determine_co2_mask(self) -> daria.Image:
-    #    """Segment domain into CO2 (mobile or dissolved) and water.
-
-    #    Returns:
-    #        daria.Image: image array with segmentation
-    #    """
-    #    # Make a copy of the current image
-    #    img = self.img.copy()
-
-    #    # Extract concentration map
-    #    co2 = self.co2_mask_analysis(img)
-
-    #    # Apply aggresive coarsening to make TVD feasible
-    #    factor = 4
-    #    co2_coarse = cv2.resize(
-    #        co2.img, (factor * 280, factor * 150), interpolation=cv2.INTER_AREA
-    #    )
-
-    #    # Apply TVD to get rid of grains
-    #    co2_denoised = skimage.restoration.denoise_tv_chambolle(co2_coarse, 0.0001)
-
-    #    # Apply dynamic thresholding
-    #    thresh = skimage.filters.threshold_otsu(co2_denoised)
-
-    #    # Hardcoded thresh
-
-    #    mask = co2_denoised > 0.6 * thresh
-
-    #    # Remove small objects
-    #    clean_mask = ndi.morphology.binary_opening(mask, structure=np.ones((2, 2)))
-
-    #    # Resize to original size
-    #    shape = self.base.img.shape[:2]
-    #    co2_mask = skimage.img_as_ubyte(
-    #        cv2.resize(clean_mask.astype(float), tuple(reversed(shape))).astype(bool)
-    #    )
-
-    #    return daria.Image(img=co2_mask, metadata=self.img.metadata)
-
-    # Routine for hue based co2 analysis
-
-    def determine_co2_mask(self) -> daria.Image:
+    def determine_co2_mask(
+        self, presmoothing: bool = False, convexification: bool = False
+    ) -> daria.Image:
         """Segment domain into CO2 (mobile or dissolved) and water.
 
         Returns:
@@ -854,48 +771,111 @@ class BenchmarkRig:
         # Make a copy of the current image
         img = self.img.copy()
 
-        # Fetch masks
-        co2_mask = skimage.util.img_as_bool(co2.img)
-        esf = self.esf
-
         # Extract concentration map
         mobile_co2 = self.mobile_co2_analysis(img)
 
-        plt.figure()
-        plt.imshow(mobile_co2.img)
-        plt.show()
-
         # Turn off signals from ESF (a priori knowledge)
+        co2_mask = skimage.util.img_as_bool(co2.img)
+        esf = self.esf
         active = np.logical_and(co2_mask, ~esf)
         mobile_co2.img[~active] = 0
 
-        # Cut off low signals - results in mask
-        thresh = skimage.filters.threshold_otsu(
-            np.ravel(mobile_co2.img)[np.ravel(active)]
-        )
-        print("mobile", thresh)
+        # Smooth tiny bit
+        if presmoothing:
+            mobile_co2.img = cv2.resize(mobile_co2.img, None, fx=0.25, fy=0.25)
+            # TODO standardize regularization parameter
+            mobile_co2.img = skimage.restoration.denoise_tv_chambolle(
+                mobile_co2.img, 0.05, eps=1e-5, max_num_iter=100
+            )
+            mobile_co2.img = cv2.resize(
+                mobile_co2.img, tuple(reversed(self.img.img.shape[:2]))
+            )
 
-        # When using BLUE:
-        ## thresh = 0.065
-        ## thresh = 0.045 # Works really bad in the end
-        # thresh = 0.05
+        # Apply thresholding
+        active_img = np.ravel(mobile_co2.img)[np.ravel(active)]
+        thresh = skimage.filters.threshold_otsu(active_img)
+        print("mobile co2", thresh)
 
-        # When using RED:
-        thresh = 0.24  # * 1.1
+        # TODO calibration - depends most likely on presmoothing!
+        thresh = 0.05
 
-        # To identify nitrogen: Try
-        thresh = 0.26
+        mask = mobile_co2.img > thresh
 
-        # Define mask
-        mask = skimage.util.img_as_float(mobile_co2.img > thresh)
+        # Fill holes
+        mask = skimage.morphology.remove_small_holes(mask, area_threshold=20**2)
 
-        # Clean signal
-        mask = skimage.filters.rank.median(mask, skimage.morphology.disk(5))
-        mask = skimage.morphology.binary_closing(
-            skimage.util.img_as_bool(mask), footprint=np.ones((10, 10))
-        )
-        mask = skimage.morphology.remove_small_holes(mask, 50**2)
-        mask = ndi.morphology.binary_opening(mask, structure=np.ones((5, 5)))
-        mobile_co2_mask = mask
+        if convexification:
+            # Loop through patches and fill up
+            convex_mask = np.zeros(mask.shape[:2], dtype=bool)
+            size = 10
+            Ny, Nx = mask.shape[:2]
+            for row in range(int(Ny / size) + 1):
+                for col in range(int(Nx / size) + 1):
+                    roi = (
+                        slice(row * size, (row + 1) * size),
+                        slice(col * size, (col + 1) * size),
+                    )
+                    convex_mask[roi] = skimage.morphology.convex_hull_image(mask[roi])
 
-        return daria.Image(img=mobile_co2_mask, metadata=self.img.metadata)
+            # Define final result
+            co2_mask = convex_mask
+        else:
+            co2_mask = mask
+
+        return daria.Image(img=co2_mask, metadata=self.img.metadata)
+
+    # OLD
+    # def determine_mobile_co2_mask(self, co2: daria.Image) -> daria.Image:
+    #    """Segment domain into mobile CO2 and rest.
+
+    #    Returns:
+    #        daria.Image: image array with segmentation
+    #    """
+    #    # Make a copy of the current image
+    #    img = self.img.copy()
+
+    #    # Fetch masks
+    #    co2_mask = skimage.util.img_as_bool(co2.img)
+    #    esf = self.esf
+
+    #    # Extract concentration map
+    #    mobile_co2 = self.mobile_co2_analysis(img)
+
+    #    plt.figure()
+    #    plt.imshow(mobile_co2.img)
+    #    plt.show()
+
+    #    # Turn off signals from ESF (a priori knowledge)
+    #    active = np.logical_and(co2_mask, ~esf)
+    #    mobile_co2.img[~active] = 0
+
+    #    # Cut off low signals - results in mask
+    #    thresh = skimage.filters.threshold_otsu(
+    #        np.ravel(mobile_co2.img)[np.ravel(active)]
+    #    )
+    #    print("mobile", thresh)
+
+    #    # When using BLUE:
+    #    ## thresh = 0.065
+    #    ## thresh = 0.045 # Works really bad in the end
+    #    # thresh = 0.05
+
+    #    # When using RED:
+    #    thresh = 0.24  # * 1.1
+
+    #    # To identify nitrogen: Try
+    #    thresh = 0.26
+
+    #    # Define mask
+    #    mask = skimage.util.img_as_float(mobile_co2.img > thresh)
+
+    #    # Clean signal
+    #    mask = skimage.filters.rank.median(mask, skimage.morphology.disk(5))
+    #    mask = skimage.morphology.binary_closing(
+    #        skimage.util.img_as_bool(mask), footprint=np.ones((10, 10))
+    #    )
+    #    mask = skimage.morphology.remove_small_holes(mask, 50**2)
+    #    mask = ndi.morphology.binary_opening(mask, structure=np.ones((5, 5)))
+    #    mobile_co2_mask = mask
+
+    #    return daria.Image(img=mobile_co2_mask, metadata=self.img.metadata)
