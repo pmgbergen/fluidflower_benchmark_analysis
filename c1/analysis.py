@@ -49,7 +49,7 @@ for img in images:
     )
     original_img = np.copy(ff.img.img)
     cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
-    cv2.drawContours(original_img, contours_mobile_co2, -1, (0, 0, 255), 3)
+    cv2.drawContours(original_img, contours_mobile_co2, -1, (255, 255, 0), 3)
 
     # Test plot
     plt.figure()
