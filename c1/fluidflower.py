@@ -16,205 +16,41 @@ from scipy.optimize import bisect, minimize
 
 
 # Define specific concentration analysis class to detect mobile CO2
-class MobileCO2Analysis(daria.ConcentrationAnalysis):
+class MobileCO2Analysis(daria.BinaryConcentrationAnalysis):
     def _extract_scalar_information(self, img: daria.Image) -> None:
         pass
 
     def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
-        blue = signal[:, :, 2]
-        return blue
+        blue = signal[:, :, 0]
+        # blue = signal[:, :, 2]
+        # signal = skimage.util.img_as_ubyte(signal)
+        # blue = skimage.util.img_as_float(cv2.cvtColor(signal, cv2.COLOR_RGB2GRAY))
+        postprocessed_signal = super().postprocess_signal(blue)
+        return postprocessed_signal
 
 
-class MobileCO2AnalysisII(daria.ConcentrationAnalysis):
+class MobileCO2AnalysisNew(daria.BinaryConcentrationAnalysis):
     def _extract_scalar_information(self, img: daria.Image) -> None:
         pass
 
     def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
-        red = signal[:, :, 0]
-        red = skimage.filters.rank.median(red, skimage.morphology.disk(5))
-        red = skimage.restoration.denoise_tv_bregman(
-            red, weight=100, max_num_iter=1000, eps=1e-5, isotropic=False
-        )
-        return red
+        # Convert to HSV color space
+        signal = skimage.util.img_as_ubyte(signal)
+        signal = cv2.cvtColor(signal, cv2.COLOR_RGB2HSV)
 
+        # Threshold between two colors
+        low = (1, 1, 50)
+        high = (255, 200, 255)
+        mask = skimage.util.img_as_bool(cv2.inRange(signal, low, high))
+        signal[~mask] = 0
 
-class CO2Analysis(daria.ConcentrationAnalysis):
-    def _extract_scalar_information(self, img: daria.Image) -> None:
-        pass
-
-    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
-        red = signal[:, :, 0]
-        # red = skimage.filters.rank.median(red, skimage.morphology.disk(5))
-        # red = skimage.restoration.denoise_tv_bregman(red, weight=100, max_num_iter=1000, eps=1e-5, isotropic=False)
-        return red
-
-
-class TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
-    def __init__(self, base, color, resize_factor, **kwargs) -> None:
-        super().__init__(base, color, **kwargs)
-        self.resize_factor = resize_factor
-
-    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
-        np.save("signal_mid.npy", signal)
-        assert False
-        signal = cv2.resize(
-            signal,
-            None,
-            fx=self.resize_factor,
-            fy=self.resize_factor,
-            interpolation=cv2.INTER_AREA,
-        )
-        plt.imshow(signal)
+        # Consider the Value component
+        value = signal[:, :, 2]
+        plt.figure()
+        plt.imshow(value)
         plt.show()
-        signal = skimage.restoration.denoise_tv_chambolle(signal, 0.1)
-        signal = np.atleast_3d(signal)
-        return super().postprocess_signal(signal)
-
-
-class _TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
-    def __init__(self, base, segmentation, color, resize_factor, **kwargs) -> None:
-        super().__init__(base, color, **kwargs)
-        self.resize_factor = resize_factor
-
-        # Initialize scaling parameters for all facies
-        self.segmentation = segmentation
-        self.number_segments = np.unique(segmentation).shape[0]
-        assert np.isclose(np.unique(segmentation), np.arange(self.number_segments))
-        self.scaling = np.ones(self.number_segments, dtype=float)
-
-    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
-        signal = cv2.resize(
-            signal,
-            None,
-            fx=self.resize_factor,
-            fy=self.resize_factor,
-            interpolation=cv2.INTER_AREA,
-        )
-        signal = skimage.restoration.denoise_tv_chambolle(signal, 0.1)
-        signal = np.atleast_3d(signal)
-        return super().postprocess_signal(signal)
-
-    def convert_signal(self, signal: np.ndarray) -> np.ndarray:
-        return np.clip(
-            np.multiply(self.scaling_array, processed_signal) + self.offset, 0, 1
-        )
-
-    def _determine_scaling(self) -> None:
-        self.scaling_array = np.ones(self.base.shape[:2], dtype=float)
-        for i in np.unique(self.segmentation):
-            mask = self.segmentation == i
-            self.scaling_array[mask] = self.scaling[i]
-
-    def calibrate(
-        self,
-        injection_rate: float,
-        images: list[daria.Image],
-        initial_guess: Optional[list[tuple[float]]] = None,
-        tol: float = 1e-3,
-        maxiter: int = 20,
-    ) -> None:
-        """
-        Calibrate the conversion used in __call__ such that the provided
-        injection rate is matched for the given set of images.
-
-        Args:
-            injection_rate (float): constant injection rate in ml/hrs.
-            images (list of daria.Image): images used for the calibration.
-            initial_guess (list of tuple): intervals of scaling values to be considered
-                in the calibration; need to define lower and upper bounds on
-                the optimal scaling parameter.
-            tol (float): tolerance for the bisection algorithm.
-            maxiter (int): maximal number of bisection iterations used for
-                calibration.
-        """
-        # TODO wrap in another loop?
-        converged = np.zeros(self.num_segments, dtype=bool)
-        visited = np.zeros(self.num_segments, dtype=bool)
-
-        while False:
-
-            # Visit each pos once
-            for i in range(self.num_segments):
-
-                # Find pos with largest sensitivity which
-                sensitivity = -1
-                for pos_candidate in np.where(~visited)[0]:
-                    # TODO quantiy sensitivity
-                    pos_sensisitivity = None
-                    if pos_sensitivity > sensitivity:
-                        pos = pos_candidate
-                        sensitivity = pos_sensitivity
-
-                # TODO need to perform minimization and not strict root problem.
-
-                # Define a function which is zero when the conversion parameters are chosen properly.
-                def deviation_sqr(scaling: float):
-                    self.scaling[~visited] = scaling
-                    return (injection_rate - self._estimate_rate(images)[0]) ** 2
-
-                # Perform bisection
-                self.scaling, success, _ = minimize(
-                    deviation,
-                    initial_guess[pos],
-                    method="BFGS",
-                    xtol=tol,
-                    maxiter=maxiter,
-                )
-
-                # Mark position as visited
-                visited[pos] = True
-                converged[pos] = sucess
-
-            if converged.all():
-                break
-
-        print(f"Calibration results in scaling factor {self.scaling}.")
-
-    def _estimate_rate(self, images: list[daria.Image]) -> tuple[float]:
-        """
-        Estimate the injection rate for the given series of images.
-
-        Args:
-            images (list of daria.Image): basis for computing the injection rate.
-
-        Returns:
-            float: estimated injection rate.
-            float: offset at time 0, useful to determine the actual start time,
-                or plot the total concentration over time compared to the expected
-                volumes.
-        """
-        # Conversion constants
-        SECONDS_TO_HOURS = 1.0 / 3600.0
-        M3_TO_ML = 1e6
-
-        # Define reference time (not important which image serves as basis)
-        ref_time = images[0].timestamp
-
-        # For each image, compute the total concentration, based on the currently
-        # set tuning parameters, and compute the relative time.
-        total_volumes = []
-        relative_times = []
-        for img in images:
-
-            # Fetch associated time for image, relate to reference time, and store.
-            time = img.timestamp
-            relative_time = (time - ref_time).total_seconds() * SECONDS_TO_HOURS
-            relative_times.append(relative_time)
-
-            # Convert signal image to concentration, compute the total volumetric
-            # concentration in ml, and store.
-            concentration = self(img)
-            total_volume = self._determine_total_volume(concentration) * M3_TO_ML
-            total_volumes.append(total_volume)
-
-        # Determine slope in time by linear regression
-        relative_times = np.array(relative_times).reshape(-1, 1)
-        total_volumes = np.array(total_volumes)
-        ransac = RANSACRegressor()
-        ransac.fit(relative_times, total_volumes)
-
-        # Extract the slope and convert to
-        return ransac.estimator_.coef_[0], ransac.estimator_.intercept_
+        postprocessed_signal = super().postprocess_signal(value)
+        return postprocessed_signal
 
 
 class BenchmarkRig:
@@ -277,11 +113,41 @@ class BenchmarkRig:
         def hue(img):
             return cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:, :, 0]
 
-        self.co2_mask_analysis = daria.ConcentrationAnalysis(
+        config_co2_analysis = {
+            # Presmoothing
+            "presmoothing": True,
+            # "presmoothing resize": 1.,
+            # "presmoothing weight": 10,
+            # "presmoothing eps": 1e-5,
+            # "presmoothing max_num_iter": 1000,
+            "presmoothing resize": 0.25,
+            "presmoothing weight": 0.5,
+            "presmoothing eps": 1e-5,
+            "presmoothing max_num_iter": 100,
+            "presmoothing method": "chambolle",
+            # Thresholding
+            "threshold value": 0.02,
+            # Hole filling
+            "max hole size": 20**2,
+            # Local convex cover
+            "local convex cover patch size": 10,
+            # Postsmoothing
+            "postsmoothing": True,
+            "postsmoothing resize": 0.25,
+            "postsmoothing weight": 1.0,
+            "postsmoothing eps": 1e-5,
+            "postsmoothing max_num_iter": 100,
+            "postsmoothing method": "chambolle",
+        }
+
+        self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
             self.base_with_clean_water,
             color=hue,
+            **config_co2_analysis,
         )
+
         print("Warning: Concentration analysis is not calibrated.")
+
         self._setup_concentration_analysis(
             self.co2_mask_analysis,
             "co2_mask_cleaning_filter.npy",
@@ -289,15 +155,74 @@ class BenchmarkRig:
             update_setup,
         )
 
+        ## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
+        # config_mobile_co2_analysis = {
+        #    # Presmoothing
+        #    "presmoothing": True,
+        #    "presmoothing resize": 1.,
+        #    "presmoothing weight": 1,
+        #    "presmoothing eps": 1e-5,
+        #    "presmoothing max_num_iter": 100,
+        #    "presmoothing method": "chambolle",
+
+        #    # Thresholding
+        #    "threshold value": 0.048, # for blue
+        #    #"threshold value": 0.25, # for red
+
+        #    # Hole filling
+        #    "max hole size": 20**2,
+
+        #    # Local convex cover
+        #    "local convex cover patch size": 10,
+
+        #    # Postsmoothing
+        #    "postsmoothing": True,
+        #    "postsmoothing resize": 0.25,
+        #    "postsmoothing weight": 4, # 4 if resize=0.25
+        #    "postsmoothing eps": 1e-5,
+        #    "postsmoothing max_num_iter": 100,
+        #    "postsmoothing method": "chambolle"
+        # }
+        #
+        # self.mobile_co2_analysis = MobileCO2Analysis(
+        #    self.base_with_clean_water,
+        #    color="empty",
+        #    **config_mobile_co2_analysis
+        # )
+
         # Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
-        self.mobile_co2_analysis = MobileCO2Analysis(
-            self.base_with_clean_water,
-            color="empty",
+        config_mobile_co2_analysis = {
+            # Presmoothing
+            "presmoothing": True,
+            "presmoothing resize": 0.5,
+            "presmoothing weight": 0.02,
+            "presmoothing eps": 1e-5,
+            "presmoothing max_num_iter": 1000,
+            "presmoothing method": "anisotropic bregman",
+            # Thresholding
+            "threshold value": 10,
+            # Hole filling
+            "max hole size": 20**2,
+            # Local convex cover
+            "local convex cover patch size": 10,
+            # Postsmoothing
+            "postsmoothing": False,
+            # "postsmoothing resize": 0.25,
+            # "postsmoothing weight": 4, # 4 if resize=0.25
+            # "postsmoothing eps": 1e-5,
+            # "postsmoothing max_num_iter": 100,
+            # "postsmoothing method": "chambolle"
+        }
+
+        self.mobile_co2_analysis = MobileCO2AnalysisNew(
+            self.base_with_clean_water, color="empty", **config_mobile_co2_analysis
         )
+
         print("Warning: Concentration analysis is not calibrated.")
+
         self._setup_concentration_analysis(
             self.mobile_co2_analysis,
-            "mobile_co2_cleaning_filter_blue.npy",
+            "mobile_co2_cleaning_filter_new.npy",
             baseline,
             update_setup,
         )
@@ -528,32 +453,6 @@ class BenchmarkRig:
             # TODO separate cleaning from calibration
             # TODO perform actual calibration to obtain scaling.
             # TODO update config
-
-    # ! ---- Auxiliary calibration routines
-
-    # TODO update
-    #    def _calibrate_concentration_analysis(
-    #        self,
-    #        paths: list[Path],
-    #        injection_rate: float,
-    #        initial_guess: tuple[float],
-    #        tol: float,
-    #    ) -> None:
-    #        """
-    #        Manager for calibration of concentration analysis, based on a
-    #        constant injection rate.
-    #
-    #        Args:
-    #            images (list of daria.Image): images used for the calibration
-    #            injection_rate (float): constant injection rate, assumed for the images
-    #        """
-    #        # Read in images
-    #        images = [self._read(path) for path in paths]
-    #
-    #        # Calibrate concentration analysis
-    #        self.concentration_analysis.calibrate(
-    #            injection_rate, images, initial_guess, tol
-    #        )
 
     # ! ----- I/O
 
