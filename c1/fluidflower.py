@@ -377,8 +377,10 @@ class BenchmarkRig:
         # Values taken from the benchmark description.
         # TODO: Have these values been updated after opening disassembling the FluidFlower?
         x_coords_measurements, y_coords_measurements = np.meshgrid(
-            np.array([0.0, 0.7, 1.3, 2.1, 2.8]),
+            np.array([0.0, 0.4, 0.7, 1.4, 2.8]),
             np.array([0.0, 0.3, 0.6, 0.9, 1.2, 1.5]),
+            # np.array([0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8]),
+            # np.array([
         )
         depth_measurements = np.array(
             [
@@ -390,6 +392,15 @@ class BenchmarkRig:
                 [0.019, 0.019, 0.023, 0.020, 0.019],
             ]
         )
+        ## Correct measurements
+        # depth_measurements = np.array([20.72,20.7,20.9,21.2,21.4,21.3,21.3,20.5,20.1,21.1,20.8,20.0,19.4,19,20,
+        # 20.43,23.1,24.4,25.8,25.7,25.8,25.6,25.1,25,25.6,25.3,23.8,21.7,19.7,20.2,
+        # 20.9,23.8,27.1,28.9,27.9,28.4,27.8,27.1,27.3,27.4,27.6,25.6,22.7,20.5,20,
+        # 20.7,24.5,28,29.3,29,29.6,29.1,27.9,28.6,28.4,28.1,26.9,23.2,20.9,19.7,
+        # 20.7,23.6,27,28.8,29.6,29.8,28.5,27.7,28.7,28.9,27.5,27.5,22.7,20.7,20,
+        # 20.7,22.4,25.3,27.8,29.3,29.2,28.4,27,28,28.4,26.8,26,22.4,19.9,20,
+        # 20.7,21.5,24.2,26.3,27.2,27.4,27.5,26,26.8,27.7,26.8,25.2,22.4,19.9,20])
+
         depth_interpolator = RBFInterpolator(
             np.transpose(
                 np.vstack(
@@ -412,6 +423,7 @@ class BenchmarkRig:
         # Compute effective volume per porous voxel
         self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
+    # TODO split methods and move to daria.ConcentrationAnalysis
     def _setup_concentration_analysis(
         self,
         concentration_analysis: daria.ConcentrationAnalysis,
@@ -564,50 +576,103 @@ class BenchmarkRig:
         # Extract concentration map
         co2 = self.co2_mask_analysis(img)
 
-        # Apply thresholding
-        thresh = skimage.filters.threshold_otsu(co2.img)
-        print("co2", thresh)
+        return co2
 
-        # TODO find through calibration!
-        # thresh = 0.129
-        thresh = 0.02
-        mask = co2.img > thresh
+    ## NOTE: Latest version!
+    # def determine_co2_mask(
+    #    self, presmoothing: bool = False, convexification: bool = False
+    # ) -> daria.Image:
+    #    """Segment domain into CO2 (mobile or dissolved) and water.
 
-        # Fill holes
-        mask = skimage.morphology.remove_small_holes(mask, area_threshold=20**2)
+    #    Returns:
+    #        daria.Image: image array with segmentation
+    #    """
+    #    # Make a copy of the current image
+    #    img = self.img.copy()
 
-        # Loop through patches and fill up
-        convex_mask = np.zeros(mask.shape[:2], dtype=bool)
-        size = 10
-        Ny, Nx = mask.shape[:2]
-        for row in range(int(Ny / size) + 1):
-            for col in range(int(Nx / size) + 1):
-                roi = (
-                    slice(row * size, (row + 1) * size),
-                    slice(col * size, (col + 1) * size),
-                )
-                convex_mask[roi] = skimage.morphology.convex_hull_image(mask[roi])
+    #    # Extract concentration map
+    #    co2 = self.co2_mask_analysis(img)
 
-        # Clean up by resizing and denoising
-        convex_mask = cv2.resize(convex_mask.astype(np.float32), None, fx=0.25, fy=0.25)
-        convex_mask = skimage.restoration.denoise_tv_chambolle(
-            convex_mask, 1, eps=1e-5, max_num_iter=100
-        )
+    #    ## TODO try using aggressive smoothing here.
+    #    #if presmoothing:
+    #    #    co2.img = cv2.resize(co2.img.astype(np.float32), None, fx = 0.25, fy = 0.25)
+    #    #    co2.img = skimage.restoration.denoise_tv_chambolle(co2.img, 0.05, eps = 1e-5, max_num_iter = 100)
+    #    #    co2.img = cv2.resize(co2.img, tuple(reversed(original.shape[:2])))
+    #    co2.img = skimage.restoration.denoise_tv_chambolle(
+    #        co2.img, 10., eps=1e-5, max_num_iter=1000
+    #    )
 
-        # Extract mask from smooth image
-        # thresh = skimage.filters.threshold_otsu(convex_mask)
-        thresh = 0.5
-        mask = convex_mask > thresh
+    #    # Apply thresholding
+    #    thresh = skimage.filters.threshold_otsu(co2.img)
+    #    print("co2", thresh)
 
-        # Resize to original size
-        mask = skimage.util.img_as_bool(
-            cv2.resize(mask.astype(np.float32), tuple(reversed(self.img.img.shape[:2])))
-        )
+    #    # TODO find through calibration!
+    #    thresh = 0.02
+    #    mask = co2.img > thresh
 
-        # Define final result
-        co2_mask = mask
+    #    # Fill holes
+    #    mask = skimage.morphology.remove_small_holes(mask, area_threshold=20**2)
 
-        return daria.Image(img=co2_mask, metadata=self.img.metadata)
+    #    # Loop through patches and fill up
+    #    convex_mask = np.zeros(mask.shape[:2], dtype=bool)
+    #    size = 10
+    #    Ny, Nx = mask.shape[:2]
+    #    for row in range(int(Ny / size) + 1):
+    #        for col in range(int(Nx / size) + 1):
+    #            roi = (
+    #                slice(row * size, (row + 1) * size),
+    #                slice(col * size, (col + 1) * size),
+    #            )
+    #            convex_mask[roi] = skimage.morphology.convex_hull_image(mask[roi])
+
+    #    # Clean up by resizing and denoising
+    #    convex_mask = cv2.resize(convex_mask.astype(np.float32), None, fx=0.25, fy=0.25)
+    #    convex_mask = skimage.restoration.denoise_tv_chambolle(
+    #        convex_mask, 1, eps=1e-5, max_num_iter=100
+    #    )
+
+    #    # Extract mask from smooth image
+    #    thresh = 0.5
+    #    mask = convex_mask > thresh
+
+    #    # Resize to original size
+    #    mask = skimage.util.img_as_bool(
+    #        cv2.resize(mask.astype(np.float32), tuple(reversed(self.img.img.shape[:2])))
+    #    )
+
+    #    # Define final result
+    #    co2_mask = mask
+
+    #    return daria.Image(img=co2_mask, metadata=self.img.metadata)
+
+    # def determine_co2_mask(self) -> daria.Image:
+    #    """Segment domain into CO2 (mobile or dissolved) and water.
+
+    #    Returns:
+    #        daria.Image: image array with segmentation
+    #    """
+    #    # Make a copy of the current image
+    #    img = self.img.copy()
+
+    #    # Extract concentration map
+    #    co2 = self.co2_mask_analysis(img)
+
+    #    img = cv2.resize(co2.img.astype(np.float32), None, fx = 0.25, fy = 0.25)
+    #    img = skimage.restoration.denoise_tv_chambolle(img, 0.05, eps = 1e-5, max_num_iter = 100)
+    #    img = cv2.resize(img, tuple(reversed(self.img.img.shape[:2])))
+
+    #    # Apply thresholding
+    #    thresh = skimage.filters.threshold_otsu(img)
+    #    print("co2", thresh)
+
+    #    # TODO find through calibration!
+    #    thresh = 0.020
+    #    mask = img > thresh
+
+    #    # Define final result
+    #    co2_mask = mask
+
+    #    return daria.Image(img=co2_mask, metadata=self.img.metadata)
 
     # Routine for CO2Analysis (multichannel diff and red)
 
@@ -670,58 +735,122 @@ class BenchmarkRig:
         # Make a copy of the current image
         img = self.img.copy()
 
+        # Mark co2 as active set, but turn off esf
+        self.mobile_co2_analysis.update_active_roi(
+            np.logical_and(
+                co2.img,
+                np.logical_not(self.esf),
+            )
+        )
+
         # Extract concentration map
         mobile_co2 = self.mobile_co2_analysis(img)
 
-        # Turn off signals from ESF (a priori knowledge)
-        co2_mask = skimage.util.img_as_bool(co2.img)
-        esf = self.esf
-        active = np.logical_and(co2_mask, ~esf)
-        mobile_co2.img[~active] = 0
+        return mobile_co2
 
-        # Smooth tiny bit
-        if presmoothing:
-            mobile_co2.img = cv2.resize(mobile_co2.img, None, fx=0.25, fy=0.25)
-            # TODO standardize regularization parameter
-            mobile_co2.img = skimage.restoration.denoise_tv_chambolle(
-                mobile_co2.img, 0.05, eps=1e-5, max_num_iter=100
-            )
-            mobile_co2.img = cv2.resize(
-                mobile_co2.img, tuple(reversed(self.img.img.shape[:2]))
-            )
+    ## NOTE: Latest version!
+    # def determine_mobile_co2_mask_(
+    #    self, co2: daria.Image, presmoothing: bool = True, convexification: bool = True
+    # ) -> daria.Image:
+    #    """Segment domain into mobile CO2 and rest.
 
-        # Apply thresholding
-        active_img = np.ravel(mobile_co2.img)[np.ravel(active)]
-        thresh = skimage.filters.threshold_otsu(active_img)
-        print("mobile co2", thresh)
+    #    Returns:
+    #        daria.Image: image array with segmentation
+    #    """
+    #    # Make a copy of the current image
+    #    img = self.img.copy()
 
-        # TODO calibration - depends most likely on presmoothing!
-        thresh = 0.05
+    #    # Extract concentration map
+    #    mobile_co2 = self.mobile_co2_analysis(img)
 
-        mask = mobile_co2.img > thresh
+    #    # Turn off signals from ESF (a priori knowledge)
+    #    co2_mask = skimage.util.img_as_bool(co2.img)
+    #    esf = self.esf
+    #    active = np.logical_and(co2_mask, ~esf)
+    #    mobile_co2.img[~active] = 0
 
-        # Fill holes
-        mask = skimage.morphology.remove_small_holes(mask, area_threshold=20**2)
+    #    plt.figure()
+    #    plt.imshow(mobile_co2.img)
 
-        if convexification:
-            # Loop through patches and fill up
-            convex_mask = np.zeros(mask.shape[:2], dtype=bool)
-            size = 10
-            Ny, Nx = mask.shape[:2]
-            for row in range(int(Ny / size) + 1):
-                for col in range(int(Nx / size) + 1):
-                    roi = (
-                        slice(row * size, (row + 1) * size),
-                        slice(col * size, (col + 1) * size),
-                    )
-                    convex_mask[roi] = skimage.morphology.convex_hull_image(mask[roi])
+    #    # Smooth tiny bit
+    #    if presmoothing:
+    #        mobile_co2.img = cv2.resize(mobile_co2.img, None, fx=0.25, fy=0.25)
+    #        # TODO standardize regularization parameter
+    #        #mobile_co2.img = skimage.restoration.denoise_tv_chambolle(
+    #        #    mobile_co2.img, 0.05, eps=1e-5, max_num_iter=100
+    #        #)
+    #        plt.figure()
+    #        plt.imshow(mobile_co2.img)
 
-            # Define final result
-            co2_mask = convex_mask
-        else:
-            co2_mask = mask
+    #        mobile_co2.img = skimage.restoration.denoise_tv_chambolle(
+    #            mobile_co2.img, 0.5, eps=1e-5, max_num_iter=100
+    #        )
+    #        plt.figure()
+    #        plt.imshow(mobile_co2.img)
+    #        mobile_co2.img = cv2.resize(
+    #            mobile_co2.img, tuple(reversed(self.img.img.shape[:2]))
+    #        )
 
-        return daria.Image(img=co2_mask, metadata=self.img.metadata)
+    #        #mobile_co2.img = cv2.resize(mobile_co2.img, None, fx=0.25, fy=0.25)
+    #        # TODO standardize regularization parameter
+    #        #mobile_co2.img = skimage.restoration.denoise_tv_chambolle(
+    #        #    mobile_co2.img, 0.05, eps=1e-5, max_num_iter=100
+    #        #)
+    #        #plt.figure()
+    #        #plt.imshow(mobile_co2.img)
+
+    #        #mobile_co2.img = skimage.restoration.denoise_tv_chambolle(
+    #        #    mobile_co2.img, 10., eps=1e-5, max_num_iter=1000
+    #        #)
+    #        #plt.figure()
+    #        #plt.imshow(mobile_co2.img)
+    #        #mobile_co2.img = cv2.resize(
+    #        #    mobile_co2.img, tuple(reversed(self.img.img.shape[:2]))
+    #        #)
+
+    #    plt.figure()
+    #    plt.imshow(mobile_co2.img)
+
+    #    # Apply thresholding
+    #    active_img = np.ravel(mobile_co2.img)[np.ravel(active)]
+    #    thresh = skimage.filters.threshold_otsu(active_img)
+    #    print("mobile co2", thresh)
+
+    #    # TODO calibration - depends most likely on presmoothing!
+    #    # When coarsening and using simple smoothing
+    #    #thresh = 0.02
+    #    # No coarsening and some smoothing
+    #    #thresh = 0.043
+    #    thresh = 0.048
+
+    #    mask = mobile_co2.img > thresh
+
+    #    plt.figure()
+    #    plt.imshow(mask)
+    #    plt.show()
+
+    #    # Fill holes
+    #    mask = skimage.morphology.remove_small_holes(mask, area_threshold=20**2)
+
+    #    if convexification:
+    #        # Loop through patches and fill up
+    #        convex_mask = np.zeros(mask.shape[:2], dtype=bool)
+    #        size = 10
+    #        Ny, Nx = mask.shape[:2]
+    #        for row in range(int(Ny / size) + 1):
+    #            for col in range(int(Nx / size) + 1):
+    #                roi = (
+    #                    slice(row * size, (row + 1) * size),
+    #                    slice(col * size, (col + 1) * size),
+    #                )
+    #                convex_mask[roi] = skimage.morphology.convex_hull_image(mask[roi])
+
+    #        # Define final result
+    #        co2_mask = convex_mask
+    #    else:
+    #        co2_mask = mask
+
+    #    return daria.Image(img=co2_mask, metadata=self.img.metadata)
 
     # OLD
     # def determine_mobile_co2_mask(self, co2: daria.Image) -> daria.Image:
