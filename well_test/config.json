@@ -1,0 +1,24 @@
+{
+    "description": "config file for FluidFlower Benchmark well/tracer test",
+
+    "geometry": {
+        "init": {"horizontal_bulge": 1e-09, "vertical_bulge": 0.0},
+        "crop": {
+            "pts_src": [[30, 21], [47, 4409], [7915, 4393], [7913, 10]],
+            "width": 2.745,
+            "height": 1.5
+        },
+        "bulge": {
+            "horizontal_bulge": -0.0,
+            "vertical_bulge": -4.07606560621726e-09,
+            "horizontal_center_offset": 0,
+            "vertical_center_offset": -8
+        },
+        "stretch": {
+            "horizontal_stretch": -3.95466460890734e-09,
+            "horizontal_center_offset": 0,
+            "vertical_stretch": -0.0,
+            "vertical_center_offset": 0
+        }
+    }
+}
