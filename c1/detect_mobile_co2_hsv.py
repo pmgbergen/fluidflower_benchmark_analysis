@@ -40,7 +40,7 @@ co2_images = [
     "segmentation_develop/co2/co2_125.npy",
 ]
 
-key = 6
+key = 13
 
 # Masks
 esf = np.load("segmentation_develop/esf.npy").astype(bool)
@@ -205,7 +205,9 @@ plt.figure()
 plt.imshow(v_signal)
 plt.show()
 
+# For prior use v_signal, s_signal for posterior possibly
 signal = v_signal
+#signal = s_signal
 
 # Smoothing
 apply_presmoothing = True
@@ -280,7 +282,9 @@ plt.show()
 active_img = np.ravel(smooth_signal)[np.ravel(active)]
 thresh = skimage.filters.threshold_otsu(active_img)
 print(thresh)
-mask = smooth_signal > 0.08
+# For s_signal use 0.03
+# For v_signal use 0.08
+mask = smooth_signal > 0.05
 
 # Remove small objects
 mask = skimage.morphology.remove_small_objects(mask, 50**2) 
