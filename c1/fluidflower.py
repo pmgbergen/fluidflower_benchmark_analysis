@@ -130,18 +130,28 @@ class BenchmarkRig:
         # Some hardcoded config data (incl. not JSON serializable data)
         self.roi = {
             "color": (slice(0, 600, None), slice(0, 600, None)),
+            "sealed fault top": (slice(1080, 1320), slice(2650, 2900)),
+            "color_checker_marks": np.array([
+                [377, 504],
+                [560, 511],
+                [562, 251],
+                [380, 242],
+            ])
         }
 
+        # Define set of baseline images
+        if not isinstance(baseline, list):
+            baseline = [baseline]
+        reference_base = baseline[0]
+
         # Define correction objects
-        self.color_correction = daria.ColorCorrection(roi=self.roi["color"])
+        self.drift_correction = daria.DriftCorrection(base = reference_base, roi = self.roi["sealed fault top"])
+        self.color_correction = daria.ColorCorrection(roi=self.roi["color_checker_marks"])
         self.curvature_correction = daria.CurvatureCorrection(
             config=self.config["geometry"]
         )
 
-        # Store the baseline image
-        if not isinstance(baseline, list):
-            baseline = [baseline]
-        reference_base = baseline[0]
+        # Define baseline image as corrected daria Image
         self.base = self._read(reference_base)
 
         # Segment the baseline image; identidy water and esf layer.
@@ -528,8 +538,12 @@ class BenchmarkRig:
         Returns:
             daria.Image: image corrected for curvature and color.
         """
+
+        print(f"Reading image from {str(path)}.")
+
         return daria.Image(
             img=path,
+            drift_correction = self.drift_correction,
             curvature_correction=self.curvature_correction,
             color_correction=self.color_correction,
         )
@@ -544,16 +558,9 @@ class BenchmarkRig:
         # Read and process
         self.img = self._read(path)
 
-        # Align with base image
-        self.translation_estimator.match_roi(
-            img_src=self.img,
-            img_dst=self.base,
-            roi_src=self.roi["color"],
-            roi_dst=self.roi["color"],
-        )
-
         # Neutralize water
         self.img = self._neutralize_water_zone(self.img)
+
 
     def store(
         self,
