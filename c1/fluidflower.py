@@ -16,6 +16,56 @@ from scipy.optimize import bisect, minimize
 
 
 # Define specific concentration analysis class to detect mobile CO2
+class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
+    """Binary concentration analysis based on a multichromatic HSV comparison
+    and further analysis on the third component, i.e., V, identifying signal
+    strength.
+    """
+
+    def __init__(self, base, color, esf, **kwargs) -> None:
+        super().__init__(base, color, **kwargs)
+
+        # Heterogeneous thresholding
+        self.threshold_value = np.zeros(self.base.img.shape[:2], dtype=float)
+        self.threshold_value[esf] = kwargs.pop("threshold value esf")
+        self.threshold_value[~esf] = kwargs.pop("threshold value non-esf")
+
+        # Fetch parameters for HUE based thresholding
+        self.hue_low_threshold = kwargs.pop("threshold min hue", 0.)
+        self.hue_high_threshold = kwargs.pop("threshold max hue", 360)
+
+
+    def _extract_scalar_information(self, img: daria.Image) -> None:
+        """Transform to HSV.
+        
+        Args:
+            img (daria.Image): Input image which shall be modified.
+        """
+        img.img = cv2.cvtColor(img.img.astype(np.float32), cv2.COLOR_RGB2HSV)
+
+
+    def _extract_scalar_information_after(self, img: np.ndarray) -> np.ndarray:
+        """Return 3rd component of HSV (value), identifying signal strength.
+        
+        Args:
+            img (np.ndarray): trichromatic image in HSV color space.
+        
+        Returns:
+            np.ndarray: monochromatic image
+        """
+
+        # Clip values in hue - from calibration.
+        h_img = img[:,:,0]
+        mask = skimage.filters.apply_hysteresis_threshold(h_img, self.hue_low_threshold, self.hue_high_threshold)
+
+        # Restrict to co2 mask
+        img[~mask] = 0
+
+        # Consider Value (3rd component from HSV) to detect signal strength.
+        return img[:,:,2]
+
+
+# Define specific concentration analysis class to detect mobile CO2
 class MobileCO2Analysis(daria.BinaryConcentrationAnalysis):
     def _extract_scalar_information(self, img: daria.Image) -> None:
         pass
