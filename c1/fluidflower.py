@@ -165,44 +165,33 @@ class BenchmarkRig:
 
         # ! ---- Analysis tools
 
-        # Translation estimator to match different images such that color checker
-        # is at same location
-        self.translation_estimator = daria.TranslationEstimator()
-
         # Concentration analysis to detect (mobile and dissolved) CO2. Hue serves as basis for the analysis.
-        def hue(img):
-            return cv2.cvtColor(img, cv2.COLOR_RGB2HSV)[:, :, 0]
-
+        
+        # Works - simpler than hue based BinaryConcentrationAnalysis
         config_co2_analysis = {
-            # Presmoothing
+            # Color spectrum of interest
+            "threshold min hue": 14,
+            "threshold max hue": 70,
+            # Presmoothing - acting on a signal (be careful with the weight, rather expect low tolerances)
             "presmoothing": True,
-            # "presmoothing resize": 1.,
-            # "presmoothing weight": 10,
-            # "presmoothing eps": 1e-5,
-            # "presmoothing max_num_iter": 1000,
-            "presmoothing resize": 0.25,
-            "presmoothing weight": 0.5,
-            "presmoothing eps": 1e-5,
-            "presmoothing max_num_iter": 100,
-            "presmoothing method": "chambolle",
-            # Thresholding
-            "threshold value": 0.02,
-            # Hole filling
-            "max hole size": 20**2,
-            # Local convex cover
-            "local convex cover patch size": 10,
-            # Postsmoothing
+            "presmoothing resize": 0.5,
+            "presmoothing weight": 5,
+            "presmoothing eps": 1e-4,
+            "presmoothing max_num_iter": 200,
+            # Heterogeneous thresholding
+            "threshold value esf": 0.02,
+            "threshold value non-esf": 0.05,
+            # Postsmoothing - acting on a boolean mask (high weight OK)
             "postsmoothing": True,
-            "postsmoothing resize": 0.25,
-            "postsmoothing weight": 1.0,
+            "postsmoothing resize": 0.5,
+            "postsmoothing weight": 5,
             "postsmoothing eps": 1e-5,
-            "postsmoothing max_num_iter": 100,
-            "postsmoothing method": "chambolle",
+            "postsmoothing max_num_iter": 1000,
         }
-
-        self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
+        self.co2_mask_analysis = CO2MaskAnalysis(
             self.base_with_clean_water,
-            color=hue,
+            color="",
+            esf = self.esf,
             **config_co2_analysis,
         )
 
