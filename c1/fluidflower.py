@@ -17,7 +17,8 @@ from scipy.optimize import bisect, minimize
 
 # Define specific concentration analysis class to detect mobile CO2
 class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
-    """Binary concentration analysis based on a multichromatic HSV comparison
+    """
+    Binary concentration analysis based on a multichromatic HSV comparison
     and further analysis on the third component, i.e., V, identifying signal
     strength.
     """
@@ -31,79 +32,45 @@ class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
         self.threshold_value[~esf] = kwargs.pop("threshold value non-esf")
 
         # Fetch parameters for HUE based thresholding
-        self.hue_low_threshold = kwargs.pop("threshold min hue", 0.)
+        self.hue_low_threshold = kwargs.pop("threshold min hue", 0.0)
         self.hue_high_threshold = kwargs.pop("threshold max hue", 360)
-
 
     def _extract_scalar_information(self, img: daria.Image) -> None:
         """Transform to HSV.
-        
+
         Args:
             img (daria.Image): Input image which shall be modified.
         """
         img.img = cv2.cvtColor(img.img.astype(np.float32), cv2.COLOR_RGB2HSV)
 
-
     def _extract_scalar_information_after(self, img: np.ndarray) -> np.ndarray:
         """Return 3rd component of HSV (value), identifying signal strength.
-        
+
         Args:
             img (np.ndarray): trichromatic image in HSV color space.
-        
+
         Returns:
             np.ndarray: monochromatic image
         """
 
         # Clip values in hue - from calibration.
-        h_img = img[:,:,0]
-        mask = skimage.filters.apply_hysteresis_threshold(h_img, self.hue_low_threshold, self.hue_high_threshold)
+        h_img = img[:, :, 0]
+        mask = skimage.filters.apply_hysteresis_threshold(
+            h_img, self.hue_low_threshold, self.hue_high_threshold
+        )
 
         # Restrict to co2 mask
         img[~mask] = 0
 
         # Consider Value (3rd component from HSV) to detect signal strength.
-        return img[:,:,2]
-
-
-# Define specific concentration analysis class to detect mobile CO2
-class MobileCO2Analysis(daria.BinaryConcentrationAnalysis):
-    def _extract_scalar_information(self, img: daria.Image) -> None:
-        pass
-
-    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
-        blue = signal[:, :, 0]
-        # blue = signal[:, :, 2]
-        # signal = skimage.util.img_as_ubyte(signal)
-        # blue = skimage.util.img_as_float(cv2.cvtColor(signal, cv2.COLOR_RGB2GRAY))
-        postprocessed_signal = super().postprocess_signal(blue)
-        return postprocessed_signal
-
-
-class MobileCO2AnalysisNew(daria.BinaryConcentrationAnalysis):
-    def _extract_scalar_information(self, img: daria.Image) -> None:
-        pass
-
-    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
-        # Convert to HSV color space
-        signal = skimage.util.img_as_ubyte(signal)
-        signal = cv2.cvtColor(signal, cv2.COLOR_RGB2HSV)
-
-        # Threshold between two colors
-        low = (1, 1, 50)
-        high = (255, 200, 255)
-        mask = skimage.util.img_as_bool(cv2.inRange(signal, low, high))
-        signal[~mask] = 0
-
-        # Consider the Value component
-        value = signal[:, :, 2]
-        plt.figure()
-        plt.imshow(value)
-        plt.show()
-        postprocessed_signal = super().postprocess_signal(value)
-        return postprocessed_signal
+        return img[:, :, 2]
 
 
 class BenchmarkRig:
+    """
+    Class for managing the analysis of C1.
+    """
+
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
@@ -122,6 +89,9 @@ class BenchmarkRig:
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
+        # TODO
+        # fetch paths from config files. Replace for instance tmp.
+
         # Read general config file
         f = open(config_source, "r")
         self.config = json.load(f)
@@ -131,28 +101,50 @@ class BenchmarkRig:
         self.roi = {
             "color": (slice(0, 600, None), slice(0, 600, None)),
             "sealed fault top": (slice(1080, 1320), slice(2650, 2900)),
-            "color_checker_marks": np.array([
-                [377, 504],
-                [560, 511],
-                [562, 251],
-                [380, 242],
-            ])
+            "color_checker_marks": np.array(
+                [
+                    [377, 504],
+                    [560, 511],
+                    [562, 251],
+                    [380, 242],
+                ]
+            ),
         }
 
-        # Define set of baseline images
+        # Define set of baseline images and initiate object for caching
+        # processed baseline images.
         if not isinstance(baseline, list):
             baseline = [baseline]
         reference_base = baseline[0]
+        self.processed_baseline_images = None
 
         # Define correction objects
-        self.drift_correction = daria.DriftCorrection(base = reference_base, roi = self.roi["sealed fault top"])
-        self.color_correction = daria.ColorCorrection(roi=self.roi["color_checker_marks"])
+        self.drift_correction = daria.DriftCorrection(
+            base=reference_base, roi=self.roi["sealed fault top"]
+        )
+        self.color_correction = daria.ColorCorrection(
+            roi=self.roi["color_checker_marks"]
+        )
         self.curvature_correction = daria.CurvatureCorrection(
             config=self.config["geometry"]
         )
 
-        # Define baseline image as corrected daria Image
-        self.base = self._read(reference_base)
+        # Define baseline image as corrected daria Image - if exists use cached image
+        if Path("tmp/processed_baseline.npy").exists() and not update_setup and False:
+            processed_base = np.load("tmp/processed_baseline.npy")
+            self.base = daria.Image(
+                processed_base,
+                width=self.config["physical_asset"]["dimensions"]["width"],
+                height=self.config["physical_asset"]["dimensions"]["height"],
+            )
+        else:
+            print("Init: Read baseline image.")
+            self.base = self._read(reference_base)
+            np.save("tmp/processed_baseline.npy", self.base.img)
+            print("Init: Finish processing baseline image.")
+
+            plt.imshow(self.base.img)
+            plt.show()
 
         # Segment the baseline image; identidy water and esf layer.
         self._segment_geometry()
@@ -166,10 +158,13 @@ class BenchmarkRig:
         # ! ---- Analysis tools
 
         # Concentration analysis to detect (mobile and dissolved) CO2. Hue serves as basis for the analysis.
-        
-        # Works - simpler than hue based BinaryConcentrationAnalysis
+
+        # TODO instead of using heterogeneous thresholding, the goal could be also (as for tracers)
+        # to heterogeneously scale the signal prior to further analysis.
+
+        # Works - very similar to value based. But uses a heterogeneous thresholding scheme.
         config_co2_analysis = {
-            # Color spectrum of interest
+            # Color spectrum of interest - hue
             "threshold min hue": 14,
             "threshold max hue": 70,
             # Presmoothing - acting on a signal (be careful with the weight, rather expect low tolerances)
@@ -179,19 +174,20 @@ class BenchmarkRig:
             "presmoothing eps": 1e-4,
             "presmoothing max_num_iter": 200,
             # Heterogeneous thresholding
-            "threshold value esf": 0.02,
-            "threshold value non-esf": 0.05,
-            # Postsmoothing - acting on a boolean mask (high weight OK)
+            "threshold value esf": 0.01,
+            "threshold value non-esf": 0.04,
+            # Light postsmoothing
             "postsmoothing": True,
             "postsmoothing resize": 0.5,
             "postsmoothing weight": 5,
-            "postsmoothing eps": 1e-5,
-            "postsmoothing max_num_iter": 1000,
+            "postsmoothing eps": 1e-4,
+            "postsmoothing max_num_iter": 100,
         }
         self.co2_mask_analysis = CO2MaskAnalysis(
             self.base_with_clean_water,
             color="",
-            esf = self.esf,
+            esf=self.esf,
+            verbosity=True,
             **config_co2_analysis,
         )
 
@@ -199,82 +195,78 @@ class BenchmarkRig:
 
         self._setup_concentration_analysis(
             self.co2_mask_analysis,
-            "co2_mask_cleaning_filter.npy",
+            "tmp/co2_mask_cleaning_filter_hsv2.npy",
             baseline,
             update_setup,
         )
 
-        ## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
-        # config_mobile_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 1.,
-        #    "presmoothing weight": 1,
-        #    "presmoothing eps": 1e-5,
-        #    "presmoothing max_num_iter": 100,
-        #    "presmoothing method": "chambolle",
+        # ! ---- Mobile phase
 
-        #    # Thresholding
-        #    "threshold value": 0.048, # for blue
-        #    #"threshold value": 0.25, # for red
-
-        #    # Hole filling
-        #    "max hole size": 20**2,
-
-        #    # Local convex cover
-        #    "local convex cover patch size": 10,
-
-        #    # Postsmoothing
-        #    "postsmoothing": True,
-        #    "postsmoothing resize": 0.25,
-        #    "postsmoothing weight": 4, # 4 if resize=0.25
-        #    "postsmoothing eps": 1e-5,
-        #    "postsmoothing max_num_iter": 100,
-        #    "postsmoothing method": "chambolle"
-        # }
-        #
-        # self.mobile_co2_analysis = MobileCO2Analysis(
-        #    self.base_with_clean_water,
-        #    color="empty",
-        #    **config_mobile_co2_analysis
-        # )
-
-        # Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
+        # Blue based
         config_mobile_co2_analysis = {
             # Presmoothing
             "presmoothing": True,
             "presmoothing resize": 0.5,
-            "presmoothing weight": 0.02,
-            "presmoothing eps": 1e-5,
-            "presmoothing max_num_iter": 1000,
-            "presmoothing method": "anisotropic bregman",
+            "presmoothing weight": 5,
+            "presmoothing eps": 1e-4,
+            "presmoothing max_num_iter": 100,
             # Thresholding
-            "threshold value": 10,
-            # Hole filling
-            "max hole size": 20**2,
-            # Local convex cover
-            "local convex cover patch size": 10,
-            # Postsmoothing
-            "postsmoothing": False,
-            # "postsmoothing resize": 0.25,
-            # "postsmoothing weight": 4, # 4 if resize=0.25
-            # "postsmoothing eps": 1e-5,
-            # "postsmoothing max_num_iter": 100,
-            # "postsmoothing method": "chambolle"
+            "threshold value": 0.04,
+            # Presmoothing
+            "postsmoothing": True,
+            "postsmoothing resize": 0.5,
+            "postsmoothing weight": 5,
+            "postsmoothing eps": 1e-4,
+            "postsmoothing max_num_iter": 100,
+            # Posterior thresholding
+            "posterior": True,
+            "threshold posterior gradient modulus": 0.002,
         }
 
-        self.mobile_co2_analysis = MobileCO2AnalysisNew(
-            self.base_with_clean_water, color="empty", **config_mobile_co2_analysis
+        self.mobile_co2_analysis = daria.BinaryConcentrationAnalysis(
+            self.base_with_clean_water,
+            color="blue",
+            # verbosity = True, # Set to True to tune the parameters
+            **config_mobile_co2_analysis,
         )
-
-        print("Warning: Concentration analysis is not calibrated.")
 
         self._setup_concentration_analysis(
             self.mobile_co2_analysis,
-            "mobile_co2_cleaning_filter_new.npy",
+            "tmp/co2_mask_cleaning_filter_blue.npy",
             baseline,
             update_setup,
         )
+
+        ## Red based
+        # config_mobile_co2_analysis = {
+        #    # Presmoothing
+        #    "presmoothing": True,
+        #    "presmoothing resize": 0.5,
+        #    "presmoothing weight": 5,
+        #    "presmoothing eps": 1e-4,
+        #    "presmoothing max_num_iter": 100,
+        #    # Thresholding
+        #    "threshold value": 0.24,
+        #    ## Presmoothing
+        #    #"postsmoothing": True,
+        #    #"postsmoothing resize": 0.5,
+        #    #"postsmoothing weight": 5,
+        #    #"postsmoothing eps": 1e-4,
+        #    #"postsmoothing max_num_iter": 100,
+        # }
+
+        # self.mobile_co2_analysis = daria.BinaryConcentrationAnalysis(
+        #    self.base_with_clean_water,
+        #    color="red",
+        #    **config_mobile_co2_analysis,
+        # )
+
+        # self._setup_concentration_analysis(
+        #    self.mobile_co2_analysis,
+        #    "co2_mask_cleaning_filter_red.npy",
+        #    baseline,
+        #    update_setup,
+        # )
 
     # ! ---- Auxiliary setup routines
 
@@ -289,8 +281,8 @@ class BenchmarkRig:
         """
 
         # Fetch or generate labels
-        if Path("labels.npy").exists() and not update:
-            labels = np.load("labels.npy")
+        if Path("tmp/labels.npy").exists() and not update:
+            labels = np.load("tmp/labels.npy")
         else:
             # Require scalar representation - work with grayscale image. Alternatives exist, but with little difference.
             basis = cv2.cvtColor(self.base.img, cv2.COLOR_RGB2GRAY)
@@ -389,7 +381,7 @@ class BenchmarkRig:
             labels = _reset(labels)
 
             # Store to file
-            np.save("labels.npy", labels)
+            np.save("tmp/labels.npy", labels)
 
         # Hardcoded: Identify ESF layer with ids 1, 4, 6
         self.esf = np.zeros(labels.shape[:2], dtype=bool)
@@ -418,13 +410,14 @@ class BenchmarkRig:
         pixel_vector = np.transpose(np.vstack((np.ravel(X_pixel), np.ravel(Y_pixel))))
         coords_vector = self.base.coordinatesystem.pixelToCoordinate(pixel_vector)
 
+        # TODO use the updated depth map.
+
         # Fetch physical dimensions
         width = self.config["physical_asset"]["dimensions"]["width"]
         height = self.config["physical_asset"]["dimensions"]["height"]
 
         # Depth of the rig, measured in discrete points, taking into account expansion.
         # Values taken from the benchmark description.
-        # TODO: Have these values been updated after opening disassembling the FluidFlower?
         x_coords_measurements, y_coords_measurements = np.meshgrid(
             np.array([0.0, 0.4, 0.7, 1.4, 2.8]),
             np.array([0.0, 0.3, 0.6, 0.9, 1.2, 1.5]),
@@ -472,7 +465,8 @@ class BenchmarkRig:
         # Compute effective volume per porous voxel
         self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
-    # TODO split methods and move to daria.ConcentrationAnalysis
+        # TODO store depth map
+
     def _setup_concentration_analysis(
         self,
         concentration_analysis: daria.ConcentrationAnalysis,
@@ -495,25 +489,22 @@ class BenchmarkRig:
         concentration_analysis.update_volumes(self.effective_volumes)
 
         # Fetch or generate cleaning filter
-        if (
-            not update
-            and "calibration" in self.config
-            and Path(cleaning_filter).exists()
-        ):
-            # TODO take care of calibration!
-            concentration_analysis.read_calibration_from_file(
-                self.config["calibration"], cleaning_filter
-            )
+        if not update and Path(cleaning_filter).exists():
+            concentration_analysis.read_cleaning_filter_from_file(cleaning_filter)
         else:
-            # Construct and store the cleaning filter.
-            images = [self._read(path) for path in baseline_images]
-            concentration_analysis.find_cleaning_filter(images)
-            # TODO take care of calibration!
-            concentration_analysis.write_calibration_to_file("tmp", cleaning_filter)
+            # Process baseline images used for setting up the cleaning filter
+            if self.processed_baseline_images is None:
+                self.processed_baseline_images = [
+                    self._read(path) for path in baseline_images
+                ]
 
-            # TODO separate cleaning from calibration
-            # TODO perform actual calibration to obtain scaling.
-            # TODO update config
+            # Construct the concentration analysis specific cleaning filter
+            concentration_analysis.find_cleaning_filter(self.processed_baseline_images)
+
+            # Store the cleaning filter to file for later reuse.
+            concentration_analysis.write_cleaning_filter_to_file(cleaning_filter)
+
+        # TODO take care of calibration! and update config accordingly
 
     # ! ----- I/O
 
@@ -532,9 +523,10 @@ class BenchmarkRig:
 
         return daria.Image(
             img=path,
-            drift_correction = self.drift_correction,
+            drift_correction=self.drift_correction,
             curvature_correction=self.curvature_correction,
             color_correction=self.color_correction,
+            get_timestamp=True,
         )
 
     def load_and_process_image(self, path: Union[str, Path]) -> None:
@@ -544,49 +536,19 @@ class BenchmarkRig:
         Args:
             path (str or Path): path to image
         """
+
         # Read and process
         self.img = self._read(path)
 
-        # Neutralize water
-        self.img = self._neutralize_water_zone(self.img)
-
-
-    def store(
-        self,
-        img: daria.Image,
-        path: Union[str, Path],
-        cartesian_indexing: bool = True,
-        store_image: bool = False,
-    ) -> bool:
-        """Convert to correct format (use Cartesian indexing by default)
-        and store to file.
-
-        Args:
-            img (daria.Image): image
-            path (str or Path): path for storage
-            cartesian_indexing (bool): flag whether the stored numpy array should
-                use cartesian indexing instead of matrix indexing.
-            store_image (bool): flag whether a low-resolution image should be
-                stored as well.
-        """
-        # Remove the suffix from the provided path
-        plain_path = path.with_suffix("")
-
-        # Store the lowe-resolution image
-        if store_image:
-            cv2.imwrite(
-                str(plain_path) + "_img.jpg",
-                skimage.util.img_as_ubyte(img.img),
-                [int(cv2.IMWRITE_JPEG_QUALITY), 90],
-            )
-
-        # Store array
-        np.save(
-            str(plain_path) + "_array.npy",
-            daria.matrixToCartesianIndexing(img.img) if cartesian_indexing else img.img,
+        print(
+            f"Image {str(path)} is considered, with rel. time {(self.img.timestamp - self.base.timestamp).total_seconds() / 3600.} hours."
         )
 
-        return True
+        # Keep the original, processed image for visualization
+        self.img_with_colorchecker = self.img.copy()
+
+        # Neutralize water
+        self.img = self._neutralize_water_zone(self.img)
 
     # ! ----- Cleaning routines
 
@@ -633,15 +595,7 @@ class BenchmarkRig:
         # Make a copy of the current image
         img = self.img.copy()
 
-        # Mark co2 as active set, but turn off esf
-        self.mobile_co2_analysis.update_active_roi(
-            np.logical_and(
-                co2.img,
-                np.logical_not(self.esf),
-            )
-        )
-
-        # Extract concentration map
+        # Determine mobile CO2 mask
         mobile_co2 = self.mobile_co2_analysis(img)
 
         return mobile_co2
