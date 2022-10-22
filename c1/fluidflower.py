@@ -178,7 +178,6 @@ class BenchmarkRig:
         if (
             Path(self.config["segmentation"]["labels"]).exists()
             and not update
-            and False
         ):
             labels = np.load(self.config["segmentation"]["labels"])
         else:
