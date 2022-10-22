@@ -15,8 +15,8 @@ folder = Path("/home/jakub/images/ift/benchmark/c2")
 baseline = Path("baseline")
 
 # Define FluidFlower with first 20 baseline images
-baseline_images = list(sorted((folder / baseline).glob("*.JPG")))[:20]
-ff = BenchmarkRig(baseline_images, config_source="./config.json", update_setup=False)
+baseline_images = list(sorted((folder / baseline).glob("*.JPG")))
+ff = BenchmarkRig(baseline_images, config="./config.json", update_setup=False)
 
 # Extract concentration.
 images = list(sorted(folder.glob("*.JPG")))
