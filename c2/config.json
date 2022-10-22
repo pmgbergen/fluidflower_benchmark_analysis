@@ -10,6 +10,10 @@
         "roi": [[1050, 2630], [1340, 2920]]
     },
 
+    "color": {
+        "roi": [[331, 466], [505, 467], [506, 203], [333, 202]]
+    },
+
     "geometry": {
         "crop": {
             "pts_src": [[0, 0], [0, 4260], [7952, 4260], [7952, 0]],
@@ -24,7 +28,7 @@
         "median disk radius": 20,
         "rescaling factor": 0.1,
         "markers disk radius": 10,
-        "threshold": 20,
+        "threshold": 14,
         "gradient disk radius": 2,
         "dilation size": 10,
         "boundary size": 80,
@@ -34,7 +38,7 @@
     "co2": {
         "cleaning_filter": "tmp/co2_mask_cleaning_filter.npy",
 
-        "threshold min hue": 10,
+        "threshold min hue": 1,
         "threshold max hue": 70,
 
         "presmoothing": true,
@@ -43,8 +47,8 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "threshold value esf": 0.01,
-        "threshold value non-esf": 0.04,
+        "threshold value esf": 0.02,
+        "threshold value non-esf": 0.05,
 
         "postsmoothing": true,
         "postsmoothing resize": 0.5,
