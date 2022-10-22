@@ -55,6 +55,7 @@ class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
 
         # Clip values in hue - from calibration.
         h_img = img[:, :, 0]
+
         mask = skimage.filters.apply_hysteresis_threshold(
             h_img, self.hue_low_threshold, self.hue_high_threshold
         )
@@ -89,27 +90,10 @@ class BenchmarkRig:
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
-        # TODO
-        # fetch paths from config files. Replace for instance tmp.
-
         # Read general config file
         f = open(config_source, "r")
         self.config = json.load(f)
         f.close()
-
-        # Some hardcoded config data (incl. not JSON serializable data)
-        self.roi = {
-            "color": (slice(0, 600, None), slice(0, 600, None)),
-            "sealed fault top": (slice(1080, 1320), slice(2650, 2900)),
-            "color_checker_marks": np.array(
-                [
-                    [377, 504],
-                    [560, 511],
-                    [562, 251],
-                    [380, 242],
-                ]
-            ),
-        }
 
         # Define set of baseline images and initiate object for caching
         # processed baseline images.
@@ -120,34 +104,18 @@ class BenchmarkRig:
 
         # Define correction objects
         self.drift_correction = daria.DriftCorrection(
-            base=reference_base, roi=self.roi["sealed fault top"]
+            base=reference_base, roi=self.config["drift"]["roi"]
         )
-        self.color_correction = daria.ColorCorrection(
-            roi=self.roi["color_checker_marks"]
-        )
+        self.color_correction = daria.ColorCorrection(roi=self.config["color"]["roi"])
         self.curvature_correction = daria.CurvatureCorrection(
             config=self.config["geometry"]
         )
 
         # Define baseline image as corrected daria Image - if exists use cached image
-        if Path("tmp/processed_baseline.npy").exists() and not update_setup and False:
-            processed_base = np.load("tmp/processed_baseline.npy")
-            self.base = daria.Image(
-                processed_base,
-                width=self.config["physical_asset"]["dimensions"]["width"],
-                height=self.config["physical_asset"]["dimensions"]["height"],
-            )
-        else:
-            print("Init: Read baseline image.")
-            self.base = self._read(reference_base)
-            np.save("tmp/processed_baseline.npy", self.base.img)
-            print("Init: Finish processing baseline image.")
-
-            plt.imshow(self.base.img)
-            plt.show()
+        self.base = self._read(reference_base)
 
         # Segment the baseline image; identidy water and esf layer.
-        self._segment_geometry()
+        self._segment_geometry(update=update_setup)
 
         # Neutralize the water zone in the baseline image
         self.base_with_clean_water = self._neutralize_water_zone(self.base)
@@ -155,118 +123,44 @@ class BenchmarkRig:
         # Determine effective volumes, required for calibration, determining total mass etc.
         self._determine_effective_volumes()
 
-        # ! ---- Analysis tools
+        # ! ---- Analysis tools for detecting the different CO2 phases
 
-        # Concentration analysis to detect (mobile and dissolved) CO2. Hue serves as basis for the analysis.
+        # ! ---- Concentration analysis to detect (mobile and dissolved) CO2. Hue serves as basis for the analysis.
 
         # TODO instead of using heterogeneous thresholding, the goal could be also (as for tracers)
         # to heterogeneously scale the signal prior to further analysis.
 
         # Works - very similar to value based. But uses a heterogeneous thresholding scheme.
-        config_co2_analysis = {
-            # Color spectrum of interest - hue
-            "threshold min hue": 14,
-            "threshold max hue": 70,
-            # Presmoothing - acting on a signal (be careful with the weight, rather expect low tolerances)
-            "presmoothing": True,
-            "presmoothing resize": 0.5,
-            "presmoothing weight": 5,
-            "presmoothing eps": 1e-4,
-            "presmoothing max_num_iter": 200,
-            # Heterogeneous thresholding
-            "threshold value esf": 0.01,
-            "threshold value non-esf": 0.04,
-            # Light postsmoothing
-            "postsmoothing": True,
-            "postsmoothing resize": 0.5,
-            "postsmoothing weight": 5,
-            "postsmoothing eps": 1e-4,
-            "postsmoothing max_num_iter": 100,
-        }
         self.co2_mask_analysis = CO2MaskAnalysis(
-            self.base_with_clean_water,
-            color="",
-            esf=self.esf,
-            verbosity=True,
-            **config_co2_analysis,
+            self.base_with_clean_water, color="", esf=self.esf, **self.config["co2"]
         )
 
         print("Warning: Concentration analysis is not calibrated.")
 
         self._setup_concentration_analysis(
             self.co2_mask_analysis,
-            "tmp/co2_mask_cleaning_filter_hsv2.npy",
+            self.config["co2"]["cleaning_filter"],
             baseline,
             update_setup,
         )
 
         # ! ---- Mobile phase
 
-        # Blue based
-        config_mobile_co2_analysis = {
-            # Presmoothing
-            "presmoothing": True,
-            "presmoothing resize": 0.5,
-            "presmoothing weight": 5,
-            "presmoothing eps": 1e-4,
-            "presmoothing max_num_iter": 100,
-            # Thresholding
-            "threshold value": 0.04,
-            # Presmoothing
-            "postsmoothing": True,
-            "postsmoothing resize": 0.5,
-            "postsmoothing weight": 5,
-            "postsmoothing eps": 1e-4,
-            "postsmoothing max_num_iter": 100,
-            # Posterior thresholding
-            "posterior": True,
-            "threshold posterior gradient modulus": 0.002,
-        }
+        # TODO/NOTE: For C1, more tvd could be a possibility, as well as a higher threshold in the upper part, than lower.
+        # However, there exist only adhoc justification for why the upper zone should be treated differently than the lower.
+        # The lower has larger grain sizes, which however, also are represented in the upper zone, yet not the top layer of
+        # the upper zone.
 
         self.mobile_co2_analysis = daria.BinaryConcentrationAnalysis(
-            self.base_with_clean_water,
-            color="blue",
-            # verbosity = True, # Set to True to tune the parameters
-            **config_mobile_co2_analysis,
+            self.base_with_clean_water, color="blue", **self.config["mobile_co2"]
         )
 
         self._setup_concentration_analysis(
             self.mobile_co2_analysis,
-            "tmp/co2_mask_cleaning_filter_blue.npy",
+            self.config["mobile_co2"]["cleaning_filter"],
             baseline,
             update_setup,
         )
-
-        ## Red based
-        # config_mobile_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 5,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 100,
-        #    # Thresholding
-        #    "threshold value": 0.24,
-        #    ## Presmoothing
-        #    #"postsmoothing": True,
-        #    #"postsmoothing resize": 0.5,
-        #    #"postsmoothing weight": 5,
-        #    #"postsmoothing eps": 1e-4,
-        #    #"postsmoothing max_num_iter": 100,
-        # }
-
-        # self.mobile_co2_analysis = daria.BinaryConcentrationAnalysis(
-        #    self.base_with_clean_water,
-        #    color="red",
-        #    **config_mobile_co2_analysis,
-        # )
-
-        # self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis,
-        #    "co2_mask_cleaning_filter_red.npy",
-        #    baseline,
-        #    update_setup,
-        # )
 
     # ! ---- Auxiliary setup routines
 
@@ -280,116 +174,26 @@ class BenchmarkRig:
             update (bool): flag whether
         """
 
-        # Fetch or generate labels
-        if Path("tmp/labels.npy").exists() and not update:
-            labels = np.load("tmp/labels.npy")
+        # Fetch or generate and store labels
+        if (
+            Path(self.config["segmentation"]["labels"]).exists()
+            and not update
+            and False
+        ):
+            labels = np.load(self.config["segmentation"]["labels"])
         else:
-            # Require scalar representation - work with grayscale image. Alternatives exist, but with little difference.
-            basis = cv2.cvtColor(self.base.img, cv2.COLOR_RGB2GRAY)
+            labels = daria.segment(self.base.img, **self.config["segmentation"])
+            np.save(self.config["segmentation"]["labels"], labels)
 
-            # Smooth the image to get rid of sand grains
-            denoised = skimage.filters.rank.median(basis, skimage.morphology.disk(20))
-
-            # Resize image
-            denoised = skimage.util.img_as_ubyte(
-                skimage.transform.rescale(denoised, 0.1, anti_aliasing=False)
-            )
-
-            # Find continuous region, i.e., areas with low local gradient
-            markers_basis = skimage.filters.rank.gradient(
-                denoised, skimage.morphology.disk(10)
-            )
-            markers = markers_basis < 20  # hardcoded
-            markers = ndi.label(markers)[0]
-
-            # Find edges
-            gradient = skimage.filters.rank.gradient(
-                denoised, skimage.morphology.disk(2)
-            )
-
-            # Process the watershed and resize to the original size
-            labels_rescaled = skimage.util.img_as_ubyte(
-                skimage.segmentation.watershed(gradient, markers)
-            )
-            labels = skimage.util.img_as_ubyte(
-                skimage.transform.resize(labels_rescaled, self.base.img.shape[:2])
-            )
-
-            # NOTE: Segmentation needs some cleaning, as some areas are just small,
-            # tiny lines, etc. Define some auxiliary methods for this.
-
-            # Make labels increasing in steps of 1 starting from zero
-            def _reset(labels):
-                pre_labels = np.unique(labels)
-                for i, label in enumerate(pre_labels):
-                    mask = labels == label
-                    labels[mask] = i
-                return labels
-
-            # Fill holes
-            def _fill_holes(labels):
-                pre_labels = np.unique(labels)
-                for label in pre_labels:
-                    mask = labels == label
-                    mask = ndi.binary_fill_holes(mask).astype(bool)
-                    labels[mask] = label
-                return labels
-
-            # Dilate objects
-            def _dilate_by_size(labels, footprint, decreasing_order):
-                # Determine sizes of all marked areas
-                pre_labels = np.unique(labels)
-                sizes = [np.count_nonzero(labels == label) for label in pre_labels]
-                # Sort from small to large
-                labels_sorted_sizes = np.argsort(sizes)
-                if decreasing_order:
-                    labels_sorted_sizes = np.flip(labels_sorted_sizes)
-                # Erode for each label if still existent
-                for label in labels_sorted_sizes:
-                    mask = labels == label
-                    mask = skimage.morphology.binary_dilation(
-                        mask, skimage.morphology.disk(footprint)
-                    )
-                    labels[mask] = label
-                return labels
-
-            # Extend internals to the boundary
-            def _boundary(labels, thickness=10):
-                # Top
-                labels[:thickness, :] = labels[thickness : 2 * thickness, :]
-                # Bottom
-                labels[-thickness - 1 : -1, :] = labels[-2 * thickness : -thickness, :]
-                # Left
-                labels[:, :thickness] = labels[:, thickness : 2 * thickness]
-                # Right
-                labels[:, -thickness - 1 : -1] = labels[:, -2 * thickness : -thickness]
-                return labels
-
-            # Simplify the segmentation drastically by removing small entities, and correct for boundary effects.
-            labels = _reset(labels)
-            labels = _dilate_by_size(labels, 10, False)
-            labels = _reset(labels)
-            labels = _fill_holes(labels)
-            labels = _reset(labels)
-            labels = _dilate_by_size(labels, 10, True)
-            labels = _reset(labels)
-            labels = _boundary(labels)
-            labels = _boundary(labels, 55)
-
-            # Hardcoded: Remove area in water zone
-            labels[labels == 1] = 0
-            labels = _reset(labels)
-
-            # Store to file
-            np.save("tmp/labels.npy", labels)
+        # Hardcoded: Identify water layer
+        self.water = np.zeros(labels.shape[:2], dtype=bool)
+        for i in [0, 1]:
+            self.water = np.logical_or(self.water, labels == i)
 
         # Hardcoded: Identify ESF layer with ids 1, 4, 6
         self.esf = np.zeros(labels.shape[:2], dtype=bool)
-        for i in [1, 4, 6]:
+        for i in [2, 5, 7]:
             self.esf = np.logical_or(self.esf, labels == i)
-
-        # Hardcoded: Identify water layer
-        self.water = labels == 0
 
     def _determine_effective_volumes(self) -> None:
         """
@@ -568,15 +372,11 @@ class BenchmarkRig:
 
     # ! ----- Analysis tools
 
-    # Routine for hue based co2 analysis
-
-    def determine_co2_mask(
-        self, presmoothing: bool = False, convexification: bool = False
-    ) -> daria.Image:
+    def determine_co2_mask(self) -> daria.Image:
         """Segment domain into CO2 (mobile or dissolved) and water.
 
         Returns:
-            daria.Image: image array with segmentation
+            daria.Image: boolean image detecting any co2.
         """
         # Make a copy of the current image
         img = self.img.copy()
@@ -587,13 +387,21 @@ class BenchmarkRig:
         return co2
 
     def determine_mobile_co2_mask(self, co2: daria.Image) -> daria.Image:
-        """Segment domain into mobile CO2 and rest.
+        """Determine mobile CO2.
+
+        Args:
+            co2 (daria.Image): boolean image detecting all co2.
 
         Returns:
-            daria.Image: image array with segmentation
+            daria.Image: boolean image detecting mobile co2.
         """
         # Make a copy of the current image
         img = self.img.copy()
+
+        # Expect mobile CO2 only among CO2 but not in the ESF layer
+        self.mobile_co2_analysis.update_mask(
+            np.logical_and(co2.img, np.logical_not(self.esf))
+        )
 
         # Determine mobile CO2 mask
         mobile_co2 = self.mobile_co2_analysis(img)
