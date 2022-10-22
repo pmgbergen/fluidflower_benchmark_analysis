@@ -1,13 +1,13 @@
 """
 Analysis of FluidFlower Benchmark Run C1.
 """
+import time
 from pathlib import Path
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-import time
 
 from fluidflower import BenchmarkRig
 
@@ -24,6 +24,7 @@ images = list(sorted(folder.glob("*.JPG")))
 for num, img in enumerate(images):
 
     print(f"working on {num}: {img.name}")
+    img_id = Path(img.name).with_suffix("")
 
     tic = time.time()
     ff.load_and_process_image(img)
@@ -56,22 +57,23 @@ for num, img in enumerate(images):
 
     # Write corrected image with contours to file
     original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(f"segmentation/img_with_contour_{img.name}.jpg", original_img)
+    cv2.imwrite(f"segmentation/img_with_contour_{img_id}.jpg", original_img)
 
     # Store fine scale segmentation
     segmentation = np.zeros(ff.img.img.shape[:2], dtype=int)
     segmentation[co2.img] += 1
     segmentation[mobile_co2.img] += 1
-    np.save(f"segmentation/segmentation_{img.name}.npy", segmentation)
+    np.save(f"segmentation/segmentation_{img_id}.npy", segmentation)
 
     # Store coarse scale segmentation
     coarse_shape = (150, 280)
     coarse_segmentation = np.zeros(coarse_shape, dtype=int)
     co2_coarse = skimage.img_as_bool(skimage.transform.resize(co2.img, coarse_shape))
-    mobile_co2_coarse = skimage.img_as_bool(skimage.transform.resize(mobile_co2.img, coarse_shape))
+    mobile_co2_coarse = skimage.img_as_bool(
+        skimage.transform.resize(mobile_co2.img, coarse_shape)
+    )
     coarse_segmentation[co2_coarse] += 1
     coarse_segmentation[mobile_co2_coarse] += 1
-    np.save(f"segmentation/coarse_segmentation_{img.name}.npy", coarse_segmentation)
+    np.save(f"segmentation/coarse_segmentation_{img_id}.npy", coarse_segmentation)
 
     print(f"Elapsed time for {img.name}: {time.time()- tic}.")
-
