@@ -57,12 +57,9 @@ class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
 
         # Clip values in hue - from calibration.
         h_img = img[:, :, 0]
-
         mask = skimage.filters.apply_hysteresis_threshold(
             h_img, self.hue_low_threshold, self.hue_high_threshold
         )
-
-        # Restrict to co2 mask
         img[~mask] = 0
 
         # Consider Value (3rd component from HSV) to detect signal strength.
@@ -77,7 +74,7 @@ class BenchmarkRig:
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
-        config_source: Union[str, Path],
+        config: Union[str, Path],
         update_setup: bool = False,
     ) -> None:
         """
@@ -88,12 +85,12 @@ class BenchmarkRig:
         Args:
             base (str, Path or list of such): baseline images, used to
                 set up analysis tools and cleaning tools
-            config_source (str or Path): path to config dict
+            config (str or Path): path to config dict
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
         # Read general config file
-        f = open(config_source, "r")
+        f = open(config, "r")
         self.config = json.load(f)
         f.close()
 
@@ -108,7 +105,7 @@ class BenchmarkRig:
         self.drift_correction = daria.DriftCorrection(
             base=reference_base, roi=self.config["drift"]["roi"]
         )
-        #self.color_correction = daria.ColorCorrection(roi=self.config["color"]["roi"])
+        self.color_correction = daria.ColorCorrection(roi=self.config["color"]["roi"])
         self.curvature_correction = daria.CurvatureCorrection(
             config=self.config["geometry"]
         )
@@ -121,16 +118,6 @@ class BenchmarkRig:
 
         # Neutralize the water zone in the baseline image
         self.base_with_clean_water = self._neutralize_water_zone(self.base)
-
-        plt.figure()
-        plt.imshow(self.base.img)
-        plt.figure()
-        plt.imshow(self.base_with_clean_water.img)
-        plt.figure()
-        plt.imshow(self.esf)
-        plt.figure()
-        plt.imshow(self.water)
-        plt.show()
 
         # Determine effective volumes, required for calibration, determining total mass etc.
         self._determine_effective_volumes()
@@ -187,11 +174,10 @@ class BenchmarkRig:
         """
 
         # Fetch or generate and store labels
-        if (
-            Path(self.config["segmentation"]["labels"]).exists()
-            and not update
-        ):
+        if Path(self.config["segmentation"]["labels"]).exists() and not update:
             labels = np.load(self.config["segmentation"]["labels"])
+            # TODO: Think of some general strategy - compaction analysis?
+            labels = cv2.resize(labels, tuple(reversed(self.base.img.shape[:2])))
         else:
             labels = daria.segment(self.base.img, **self.config["segmentation"])
             np.save(self.config["segmentation"]["labels"], labels)
@@ -344,8 +330,8 @@ class BenchmarkRig:
             img=path,
             drift_correction=self.drift_correction,
             curvature_correction=self.curvature_correction,
-            #color_correction=self.color_correction,
-            get_timestamp=True,
+            color_correction=self.color_correction,
+            # get_timestamp=True,
         )
 
     def load_and_process_image(self, path: Union[str, Path]) -> None:
@@ -359,9 +345,10 @@ class BenchmarkRig:
         # Read and process
         self.img = self._read(path)
 
-        print(
-            f"Image {str(path)} is considered, with rel. time {(self.img.timestamp - self.base.timestamp).total_seconds() / 3600.} hours."
-        )
+        # TODO read time from name
+        # print(
+        #    f"Image {str(path)} is considered, with rel. time {(self.img.timestamp - self.base.timestamp).total_seconds() / 3600.} hours."
+        # )
 
         # Keep the original, processed image for visualization
         self.img_with_colorchecker = self.img.copy()
