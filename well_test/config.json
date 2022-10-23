@@ -1,6 +1,19 @@
 {
     "description": "config file for FluidFlower Benchmark well/tracer test",
 
+    "physical_asset": {
+        "dimensions": {"width": 2.745, "height": 1.5},
+        "parameters": {"porosity": 0.44}
+    },
+
+    "drift": {
+        "roi": [[1050, 2630], [1340, 2920]]
+    },
+
+    "color": {
+        "roi": [[375, 493], [558, 501], [560, 240], [378, 230]]
+    },
+
     "geometry": {
         "init": {"horizontal_bulge": 1e-09, "vertical_bulge": 0.0},
         "crop": {
@@ -20,5 +33,20 @@
             "vertical_stretch": -0.0,
             "vertical_center_offset": 0
         }
+    },
+
+    "segmentation": {
+        "labels": "tmp/labels.npy",
+        "median disk radius": 20,
+        "rescaling factor": 0.1,
+        "markers disk radius": 10,
+        "threshold": 20,
+        "gradient disk radius": 2,
+        "dilation size": 10,
+        "boundary size": 80
+    },
+
+    "concentration": {
+        "cleaning_filter": "tmp/cleaning_filter.npy"
     }
 }
