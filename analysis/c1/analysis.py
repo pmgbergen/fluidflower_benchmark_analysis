@@ -8,8 +8,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-
-from fluidflower import BenchmarkCO2Analysis
+from benchmark.utils.fluidflower import BenchmarkCO2Analysis
 
 # NOTE: Path needs update for each user - general process planned
 folder = Path("/home/jakub/images/ift/benchmark/c1")
