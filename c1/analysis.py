@@ -20,7 +20,7 @@ baseline_images = list(sorted((folder / baseline).glob("*.JPG")))
 ff = BenchmarkCO2Analysis(baseline_images, config="./config.json", update_setup=False)
 
 # Extract concentration.
-images = list(sorted(folder.glob("*.JPG")))[120:122]
+images = list(sorted(folder.glob("*.JPG")))
 for num, img in enumerate(images):
 
     # Information to the user
