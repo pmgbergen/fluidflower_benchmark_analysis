@@ -3,7 +3,7 @@ Analysis of FluidFlower Benchmark Run C1.
 """
 from pathlib import Path
 
-from benchmark.utils.fluidflower import BenchmarkCO2Analysis
+from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 
 # Define the location for images of C1 (all images in the folder)
 images_folder = Path("/home/jakub/images/ift/benchmark/c1")
