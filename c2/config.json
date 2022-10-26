@@ -47,17 +47,17 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "threshold value esf": 0.02,
-        "threshold value non-esf": 0.05,
+        "threshold value esf": 0.04,
+        "threshold value non-esf": 0.04,
 
-        "postsmoothing": true,
+        "postsmoothing": false,
         "postsmoothing resize": 0.5,
         "postsmoothing weight": 5,
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 100
     },
 
-    "mobile_co2": {
+    "co2(g)": {
         "cleaning_filter": "tmp/mobile_co2_mask_cleaning_filter.npy",
 
         "presmoothing": true,
