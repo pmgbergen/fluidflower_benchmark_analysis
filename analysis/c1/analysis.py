@@ -8,6 +8,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
+
 from benchmark.utils.fluidflower import BenchmarkCO2Analysis
 
 # NOTE: Path needs update for each user - general process planned
@@ -24,6 +25,7 @@ for num, img in enumerate(images):
 
     # Information to the user
     print(f"working on {num}: {img.name}")
+
     tic = time.time()
 
     # Load the current image
@@ -58,13 +60,13 @@ for num, img in enumerate(images):
     # Write corrected image with contours to file
     img_id = Path(img.name).with_suffix("")
     original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(f"segmentation/img_with_contour_{img_id}.jpg", original_img)
+    cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
 
     # Store fine scale segmentation
     segmentation = np.zeros(ff.img.img.shape[:2], dtype=int)
     segmentation[co2.img] += 1
     segmentation[co2_gas.img] += 1
-    np.save(f"segmentation/segmentation_{img_id}.npy", segmentation)
+    np.save(f"segmentation/{img_id}_segmentation.npy", segmentation)
 
     # Store coarse scale segmentation
     coarse_shape = (150, 280)
@@ -75,6 +77,6 @@ for num, img in enumerate(images):
     )
     coarse_segmentation[co2_coarse] += 1
     coarse_segmentation[co2_gas_coarse] += 1
-    np.save(f"segmentation/coarse_segmentation_{img_id}.npy", coarse_segmentation)
+    np.save(f"segmentation/{img_id}_coarse_segmentation.npy", coarse_segmentation)
 
     print(f"Elapsed time for {img.name}: {time.time()- tic}.")

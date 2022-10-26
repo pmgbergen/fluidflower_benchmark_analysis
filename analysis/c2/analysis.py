@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 
-from fluidflower import BenchmarkCO2Analysis
+from benchmark.utils.fluidflower import BenchmarkCO2Analysis
 
 # NOTE: Path needs update for each user - general process planned
 folder = Path("/home/jakub/images/ift/benchmark/c2")
 baseline = Path("baseline")
 
-# Define FluidFlower with first 20 baseline images
+# Define FluidFlower based on a full set of basline images
 baseline_images = list(sorted((folder / baseline).glob("*.JPG")))
 ff = BenchmarkCO2Analysis(baseline_images, config="./config.json", update_setup=False)
 
@@ -23,10 +23,12 @@ ff = BenchmarkCO2Analysis(baseline_images, config="./config.json", update_setup=
 images = list(sorted(folder.glob("*.JPG")))
 for num, img in enumerate(images):
 
+    # Information to the user
     print(f"working on {num}: {img.name}")
-    img_id = Path(img.name).with_suffix("")
 
     tic = time.time()
+
+    # Load the current image
     ff.load_and_process_image(img)
 
     # Determine binary mask detecting any(!) CO2
@@ -56,6 +58,7 @@ for num, img in enumerate(images):
         plt.show()
 
     # Write corrected image with contours to file
+    img_id = Path(img.name).with_suffix("")
     original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
     cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
 
