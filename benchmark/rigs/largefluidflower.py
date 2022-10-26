@@ -1,6 +1,6 @@
-# TODO This is temporary, the respectve file in rigs should be used.
 """
-Module containing the general setup for the large fluidflower rig. Valid for all runs. 
+Module containing the general setup for the large fluidflower rig.
+Includes segmentation and depth map.
 """
 from pathlib import Path
 from typing import Union
@@ -18,8 +18,7 @@ class LargeFluidFlower(daria.AnalysisBase):
         update_setup: bool = False,
     ) -> None:
         """
-        Constructor for well test analysis operating tailored to the well test
-        included in the FluidFlower benchmark.
+        Constructor for large FluidFlower rig specific data.
 
         Args:
             base (str, Path or list of such): baseline images, used to
