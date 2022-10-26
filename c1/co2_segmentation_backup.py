@@ -1,5 +1,5 @@
 ## Define specific concentration analysis class to detect mobile CO2
-#class MobileCO2Analysis(daria.BinaryConcentrationAnalysis):
+# class MobileCO2Analysis(daria.BinaryConcentrationAnalysis):
 #    def _extract_scalar_information(self, img: daria.Image) -> None:
 #        pass
 #
@@ -7,7 +7,7 @@
 #        return signal[:, :, 0]
 #
 #
-#class MobileCO2AnalysisPrior(daria.BinaryConcentrationAnalysis):
+# class MobileCO2AnalysisPrior(daria.BinaryConcentrationAnalysis):
 #
 #    def _extract_scalar_information(self, img: daria.Image) -> None:
 #        """Transform to HSV."""
@@ -27,7 +27,7 @@
 #        # Consider Value (3rd component from HSV).
 #        return img[:,:,2]
 #
-#class MobileCO2AnalysisPosterior(daria.BinaryConcentrationAnalysis):
+# class MobileCO2AnalysisPosterior(daria.BinaryConcentrationAnalysis):
 #
 #    def _extract_scalar_information(self, img: daria.Image) -> None:
 #        """Transform to HSV."""
@@ -49,464 +49,464 @@
 
 # ! ---- co2 mask - relevant
 
-        ## Works for detecting all CO2
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 1,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 1000,
-        #    # Thresholding
-        #    "threshold value": 0.04,
-        #}
+## Works for detecting all CO2
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 0.5,
+#    "presmoothing weight": 1,
+#    "presmoothing eps": 1e-4,
+#    "presmoothing max_num_iter": 1000,
+#    # Thresholding
+#    "threshold value": 0.04,
+# }
 
-        ## Works for detecting all CO2
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 5,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 1000,
-        #    # Thresholding
-        #    "threshold value": 0.04,
-        #}
+## Works for detecting all CO2
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 0.5,
+#    "presmoothing weight": 5,
+#    "presmoothing eps": 1e-4,
+#    "presmoothing max_num_iter": 1000,
+#    # Thresholding
+#    "threshold value": 0.04,
+# }
 
-        #self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
-        #    self.base_with_clean_water,
-        #    color="red",
-        #    **config_co2_analysis,
-        #)
+# self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
+#    self.base_with_clean_water,
+#    color="red",
+#    **config_co2_analysis,
+# )
 
-        #self._setup_concentration_analysis(
-        #    self.co2_mask_analysis,
-        #    "co2_mask_cleaning_filter_red.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self._setup_concentration_analysis(
+#    self.co2_mask_analysis,
+#    "co2_mask_cleaning_filter_red.npy",
+#    baseline,
+#    update_setup,
+# )
 
-        ## Value based, works well.
-        ## Pros:
-        ## Cons:
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 0.5,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 100,
-        #    # Thresholding
-        #    "threshold value": 0.04,
-        #}
+## Value based, works well.
+## Pros:
+## Cons:
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 0.5,
+#    "presmoothing weight": 0.5,
+#    "presmoothing eps": 1e-4,
+#    "presmoothing max_num_iter": 100,
+#    # Thresholding
+#    "threshold value": 0.04,
+# }
 
-        #self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
-        #    self.base_with_clean_water,
-        #    color="value",
-        #    **config_co2_analysis,
-        #)
+# self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
+#    self.base_with_clean_water,
+#    color="value",
+#    **config_co2_analysis,
+# )
 
-        #self._setup_concentration_analysis(
-        #    self.co2_mask_analysis,
-        #    "co2_mask_cleaning_filter_value.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self._setup_concentration_analysis(
+#    self.co2_mask_analysis,
+#    "co2_mask_cleaning_filter_value.npy",
+#    baseline,
+#    update_setup,
+# )
 
 
 # ! ---- co2 mask - old
 
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 1,
-        #    #"presmoothing weight": 100, # chambolle
-        #    "presmoothing weight": 0.001,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 100,
-        #    "presmoothing method": "anisotropic bregman",
-        #    # Thresholding
-        #    "threshold value": 0.24,
-        #    # Postsmoothing
-        #    "postsmoothing": False,
-        #}
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 1,
+#    #"presmoothing weight": 100, # chambolle
+#    "presmoothing weight": 0.001,
+#    "presmoothing eps": 1e-4,
+#    "presmoothing max_num_iter": 100,
+#    "presmoothing method": "anisotropic bregman",
+#    # Thresholding
+#    "threshold value": 0.24,
+#    # Postsmoothing
+#    "postsmoothing": False,
+# }
 
-        ## Red based filter for detecting the mobile CO2 phase.
-        ## Also detects wrong CO2 regions. In addition, tiny regions are not
-        ## correctly. Could potentially be used as prior.
-        ## Anisotropic TVD is not too satisfying. It generates quite
-        ## nonsmooth structures in fact.
-        ## When using chambolle with weight 10, threshold value 0.22 seems slightly
-        ## too low on the lower part, maybe OK for the upper part.
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 1,
-        #    "presmoothing weight": 10, # chambolle
-        #    #"presmoothing weight": 10,
-        #    "presmoothing eps": 1e-6,
-        #    "presmoothing max_num_iter": 1000,
-        #    #"presmoothing method": "anisotropic bregman",
-        #    # Thresholding
-        #    "threshold value": 0.22,
-        #    # Postsmoothing
-        #    "postsmoothing": False,
-        #}
+## Red based filter for detecting the mobile CO2 phase.
+## Also detects wrong CO2 regions. In addition, tiny regions are not
+## correctly. Could potentially be used as prior.
+## Anisotropic TVD is not too satisfying. It generates quite
+## nonsmooth structures in fact.
+## When using chambolle with weight 10, threshold value 0.22 seems slightly
+## too low on the lower part, maybe OK for the upper part.
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 1,
+#    "presmoothing weight": 10, # chambolle
+#    #"presmoothing weight": 10,
+#    "presmoothing eps": 1e-6,
+#    "presmoothing max_num_iter": 1000,
+#    #"presmoothing method": "anisotropic bregman",
+#    # Thresholding
+#    "threshold value": 0.22,
+#    # Postsmoothing
+#    "postsmoothing": False,
+# }
 
 
-        #self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
-        #    self.base_with_clean_water,
-        #    color="red",
-        #    **config_co2_analysis,
-        #)
+# self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
+#    self.base_with_clean_water,
+#    color="red",
+#    **config_co2_analysis,
+# )
 
-        #self._setup_concentration_analysis(
-        #    self.co2_mask_analysis,
-        #    "co2_mask_cleaning_filter_red.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self._setup_concentration_analysis(
+#    self.co2_mask_analysis,
+#    "co2_mask_cleaning_filter_red.npy",
+#    baseline,
+#    update_setup,
+# )
 
-        ## Hue based thresholding - has worked well before
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    #"presmoothing resize": 1.,
-        #    #"presmoothing weight": 10,
-        #    #"presmoothing eps": 1e-5,
-        #    #"presmoothing max_num_iter": 1000,
-        #    #"presmoothing resize": 0.25,
-        #    #"presmoothing weight": 1,
-        #    #"presmoothing eps": 1e-5,
-        #    #"presmoothing max_num_iter": 1000,
-        #    #"presmoothing method": "chambolle",
-        #    "presmoothing resize": 0.25,
-        #    "presmoothing weight": 1,
-        #    "presmoothing eps": 1e-5,
-        #    "presmoothing max_num_iter": 1000,
-        #    "presmoothing method": "anisotropic bregman",
-        #    # Thresholding
-        #    "threshold value": 10,
-        #    # Remove small objects
-        #    "min area size": 20**2,
-        #    # Hole filling
-        #    "max hole size": 20**2,
-        #    # Local convex cover
-        #    "local convex cover patch size": 10,
-        #    # Postsmoothing
-        #    "postsmoothing": True,
-        #    #"postsmoothing resize": 0.25,
-        #    #"postsmoothing weight": 10,
-        #    #"postsmoothing eps": 1e-5,
-        #    #"postsmoothing max_num_iter": 100,
-        #    #"postsmoothing method": "chambolle",
-        #    "presmoothing resize": 0.25,
-        #    "presmoothing weight": 1,
-        #    "presmoothing eps": 1e-5,
-        #    "presmoothing max_num_iter": 1000,
-        #    "presmoothing method": "anisotropic bregman",
-        #}
+## Hue based thresholding - has worked well before
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    #"presmoothing resize": 1.,
+#    #"presmoothing weight": 10,
+#    #"presmoothing eps": 1e-5,
+#    #"presmoothing max_num_iter": 1000,
+#    #"presmoothing resize": 0.25,
+#    #"presmoothing weight": 1,
+#    #"presmoothing eps": 1e-5,
+#    #"presmoothing max_num_iter": 1000,
+#    #"presmoothing method": "chambolle",
+#    "presmoothing resize": 0.25,
+#    "presmoothing weight": 1,
+#    "presmoothing eps": 1e-5,
+#    "presmoothing max_num_iter": 1000,
+#    "presmoothing method": "anisotropic bregman",
+#    # Thresholding
+#    "threshold value": 10,
+#    # Remove small objects
+#    "min area size": 20**2,
+#    # Hole filling
+#    "max hole size": 20**2,
+#    # Local convex cover
+#    "local convex cover patch size": 10,
+#    # Postsmoothing
+#    "postsmoothing": True,
+#    #"postsmoothing resize": 0.25,
+#    #"postsmoothing weight": 10,
+#    #"postsmoothing eps": 1e-5,
+#    #"postsmoothing max_num_iter": 100,
+#    #"postsmoothing method": "chambolle",
+#    "presmoothing resize": 0.25,
+#    "presmoothing weight": 1,
+#    "presmoothing eps": 1e-5,
+#    "presmoothing max_num_iter": 1000,
+#    "presmoothing method": "anisotropic bregman",
+# }
 
-        ## Does not work as nicely as before...
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 1,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 100,
-        #    # Small objects and holes
-        #    "min area size": 20**2,
-        #    "max hole size": 10**2,
-        #    # Thresholding
-        #    "threshold value": 5,
-        #    # Presmoothing
-        #    "postsmoothing": True,
-        #    "postsmoothing resize": 0.5,
-        #    "postsmoothing weight": 1,
-        #    "postsmoothing eps": 1e-4,
-        #    "postsmoothing max_num_iter": 100,
-        #}
+## Does not work as nicely as before...
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 0.5,
+#    "presmoothing weight": 1,
+#    "presmoothing eps": 1e-4,
+#    "presmoothing max_num_iter": 100,
+#    # Small objects and holes
+#    "min area size": 20**2,
+#    "max hole size": 10**2,
+#    # Thresholding
+#    "threshold value": 5,
+#    # Presmoothing
+#    "postsmoothing": True,
+#    "postsmoothing resize": 0.5,
+#    "postsmoothing weight": 1,
+#    "postsmoothing eps": 1e-4,
+#    "postsmoothing max_num_iter": 100,
+# }
 
-        #self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
-        #    self.base_with_clean_water,
-        #    color="hue",
-        #    **config_co2_analysis,
-        #)
+# self.co2_mask_analysis = daria.BinaryConcentrationAnalysis(
+#    self.base_with_clean_water,
+#    color="hue",
+#    **config_co2_analysis,
+# )
 
-        #self._setup_concentration_analysis(
-        #    self.co2_mask_analysis,
-        #    "co2_mask_cleaning_filter_hue.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self._setup_concentration_analysis(
+#    self.co2_mask_analysis,
+#    "co2_mask_cleaning_filter_hue.npy",
+#    baseline,
+#    update_setup,
+# )
 
-        #config_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    #"presmoothing resize": 1.,
-        #    #"presmoothing weight": 10,
-        #    #"presmoothing eps": 1e-5,
-        #    #"presmoothing max_num_iter": 1000,
-        #    #"presmoothing resize": 0.25,
-        #    #"presmoothing weight": 1,
-        #    #"presmoothing eps": 1e-5,
-        #    #"presmoothing max_num_iter": 1000,
-        #    #"presmoothing method": "chambolle",
-        #    "presmoothing resize": 0.25,
-        #    "presmoothing weight": 1,
-        #    "presmoothing eps": 1e-5,
-        #    "presmoothing max_num_iter": 100,
-        #    "presmoothing method": "anisotropic bregman",
-        #    # Thresholding
-        #    "threshold value": 10,
-        #    # Remove small objects
-        #    "min area size": 20**2,
-        #    # Hole filling
-        #    "max hole size": 20**2,
-        #    # Local convex cover
-        #    "local convex cover patch size": 10,
-        #    # Postsmoothing
-        #    "postsmoothing": True,
-        #    #"postsmoothing resize": 0.25,
-        #    #"postsmoothing weight": 10,
-        #    #"postsmoothing eps": 1e-5,
-        #    #"postsmoothing max_num_iter": 100,
-        #    #"postsmoothing method": "chambolle",
-        #    "presmoothing resize": 0.25,
-        #    "presmoothing weight": 1,
-        #    "presmoothing eps": 1e-5,
-        #    "presmoothing max_num_iter": 100,
-        #    "presmoothing method": "anisotropic bregman",
-        #}
+# config_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    #"presmoothing resize": 1.,
+#    #"presmoothing weight": 10,
+#    #"presmoothing eps": 1e-5,
+#    #"presmoothing max_num_iter": 1000,
+#    #"presmoothing resize": 0.25,
+#    #"presmoothing weight": 1,
+#    #"presmoothing eps": 1e-5,
+#    #"presmoothing max_num_iter": 1000,
+#    #"presmoothing method": "chambolle",
+#    "presmoothing resize": 0.25,
+#    "presmoothing weight": 1,
+#    "presmoothing eps": 1e-5,
+#    "presmoothing max_num_iter": 100,
+#    "presmoothing method": "anisotropic bregman",
+#    # Thresholding
+#    "threshold value": 10,
+#    # Remove small objects
+#    "min area size": 20**2,
+#    # Hole filling
+#    "max hole size": 20**2,
+#    # Local convex cover
+#    "local convex cover patch size": 10,
+#    # Postsmoothing
+#    "postsmoothing": True,
+#    #"postsmoothing resize": 0.25,
+#    #"postsmoothing weight": 10,
+#    #"postsmoothing eps": 1e-5,
+#    #"postsmoothing max_num_iter": 100,
+#    #"postsmoothing method": "chambolle",
+#    "presmoothing resize": 0.25,
+#    "presmoothing weight": 1,
+#    "presmoothing eps": 1e-5,
+#    "presmoothing max_num_iter": 100,
+#    "presmoothing method": "anisotropic bregman",
+# }
 
 # ! ---- mobile co2
 
-        ## Red based - works OKish for some time steps but not nice at the end.
-        # config_mobile_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 5,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 100,
-        #    # Thresholding
-        #    "threshold value": 0.24,
-        #    ## Presmoothing
-        #    #"postsmoothing": True,
-        #    #"postsmoothing resize": 0.5,
-        #    #"postsmoothing weight": 5,
-        #    #"postsmoothing eps": 1e-4,
-        #    #"postsmoothing max_num_iter": 100,
-        # }
+## Red based - works OKish for some time steps but not nice at the end.
+# config_mobile_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 0.5,
+#    "presmoothing weight": 5,
+#    "presmoothing eps": 1e-4,
+#    "presmoothing max_num_iter": 100,
+#    # Thresholding
+#    "threshold value": 0.24,
+#    ## Presmoothing
+#    #"postsmoothing": True,
+#    #"postsmoothing resize": 0.5,
+#    #"postsmoothing weight": 5,
+#    #"postsmoothing eps": 1e-4,
+#    #"postsmoothing max_num_iter": 100,
+# }
 
-        # self.mobile_co2_analysis = daria.BinaryConcentrationAnalysis(
-        #    self.base_with_clean_water,
-        #    color="red",
-        #    **config_mobile_co2_analysis,
-        # )
+# self.mobile_co2_analysis = daria.BinaryConcentrationAnalysis(
+#    self.base_with_clean_water,
+#    color="red",
+#    **config_mobile_co2_analysis,
+# )
 
-        # self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis,
-        #    "co2_mask_cleaning_filter_red.npy",
-        #    baseline,
-        #    update_setup,
-        # )
+# self._setup_concentration_analysis(
+#    self.mobile_co2_analysis,
+#    "co2_mask_cleaning_filter_red.npy",
+#    baseline,
+#    update_setup,
+# )
 
-        ## RGB on diff, restrict to blue afterwards
-        #config_mobile_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 5,
-        #    "presmoothing eps": 1e-4,
-        #    "presmoothing max_num_iter": 100,
-        #    # Thresholding
-        #    "threshold value": 0.04,
-        #    ## Presmoothing
-        #    #"postsmoothing": True,
-        #    #"postsmoothing resize": 0.5,
-        #    #"postsmoothing weight": 5,
-        #    #"postsmoothing eps": 1e-4,
-        #    #"postsmoothing max_num_iter": 100,
-        #}
+## RGB on diff, restrict to blue afterwards
+# config_mobile_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 0.5,
+#    "presmoothing weight": 5,
+#    "presmoothing eps": 1e-4,
+#    "presmoothing max_num_iter": 100,
+#    # Thresholding
+#    "threshold value": 0.04,
+#    ## Presmoothing
+#    #"postsmoothing": True,
+#    #"postsmoothing resize": 0.5,
+#    #"postsmoothing weight": 5,
+#    #"postsmoothing eps": 1e-4,
+#    #"postsmoothing max_num_iter": 100,
+# }
 
-        #self.mobile_co2_analysis = MobileCO2Analysis(
-        #    self.base_with_clean_water,
-        #    color="",
-        #    **config_mobile_co2_analysis,
-        #)
+# self.mobile_co2_analysis = MobileCO2Analysis(
+#    self.base_with_clean_water,
+#    color="",
+#    **config_mobile_co2_analysis,
+# )
 
-        #self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis,
-        #    "co2_mask_cleaning_filter_vector_blue.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self._setup_concentration_analysis(
+#    self.mobile_co2_analysis,
+#    "co2_mask_cleaning_filter_vector_blue.npy",
+#    baseline,
+#    update_setup,
+# )
 
-        ## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
-        #config_mobile_co2_analysis = {
-        #   # Presmoothing
-        #   "presmoothing": True,
-        #   "presmoothing resize": 0.5,
-        #   "presmoothing weight": 1,
-        #   "presmoothing eps": 1e-4,
-        #   "presmoothing max_num_iter": 100,
-        #   "presmoothing method": "chambolle",
+## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
+# config_mobile_co2_analysis = {
+#   # Presmoothing
+#   "presmoothing": True,
+#   "presmoothing resize": 0.5,
+#   "presmoothing weight": 1,
+#   "presmoothing eps": 1e-4,
+#   "presmoothing max_num_iter": 100,
+#   "presmoothing method": "chambolle",
 
-        #   # Thresholding
-        #   "threshold value": 0.05,
+#   # Thresholding
+#   "threshold value": 0.05,
 
-        #   ## Remove small objects
-        #   #"min area size": 50**2, # TODO 
+#   ## Remove small objects
+#   #"min area size": 50**2, # TODO
 
-        #   ## Hole filling
-        #   #"max hole size": 1,
+#   ## Hole filling
+#   #"max hole size": 1,
 
-        #   ## Local convex cover
-        #   #"local convex cover patch size": 1,
+#   ## Local convex cover
+#   #"local convex cover patch size": 1,
 
-        #   # Postsmoothing
-        #   "postsmoothing": False,
-        #}
+#   # Postsmoothing
+#   "postsmoothing": False,
+# }
 
-        #self.mobile_co2_analysis = MobileCO2AnalysisPrior(
-        #   self.base_with_clean_water,
-        #   color="",
-        #   **config_mobile_co2_analysis
-        #)
+# self.mobile_co2_analysis = MobileCO2AnalysisPrior(
+#   self.base_with_clean_water,
+#   color="",
+#   **config_mobile_co2_analysis
+# )
 
-        #print("Warning: Concentration analysis is not calibrated.")
+# print("Warning: Concentration analysis is not calibrated.")
 
-        #self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis,
-        #    "mobile_co2_prior_cleaning_filter.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self._setup_concentration_analysis(
+#    self.mobile_co2_analysis,
+#    "mobile_co2_prior_cleaning_filter.npy",
+#    baseline,
+#    update_setup,
+# )
 
-        ## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
-        #config_mobile_co2_analysis_posterior = {
-        #   # Presmoothing
-        #   "presmoothing": True,
-        #   "presmoothing resize": 0.5,
-        #   "presmoothing weight": 1,
-        #   "presmoothing eps": 1e-4,
-        #   "presmoothing max_num_iter": 100,
-        #   "presmoothing method": "chambolle",
+## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
+# config_mobile_co2_analysis_posterior = {
+#   # Presmoothing
+#   "presmoothing": True,
+#   "presmoothing resize": 0.5,
+#   "presmoothing weight": 1,
+#   "presmoothing eps": 1e-4,
+#   "presmoothing max_num_iter": 100,
+#   "presmoothing method": "chambolle",
 
-        #   # Thresholding
-        #   "threshold value": 0.03,
+#   # Thresholding
+#   "threshold value": 0.03,
 
-        #   # Remove small objects
-        #   "min area size": 50**2, # TODO 
+#   # Remove small objects
+#   "min area size": 50**2, # TODO
 
-        #   # Hole filling
-        #   "max hole size": 1,
+#   # Hole filling
+#   "max hole size": 1,
 
-        #   # Local convex cover
-        #   "local convex cover patch size": 1,
+#   # Local convex cover
+#   "local convex cover patch size": 1,
 
-        #   # Postsmoothing
-        #   "postsmoothing": False,
-        #}
+#   # Postsmoothing
+#   "postsmoothing": False,
+# }
 
-        #self.mobile_co2_analysis_posterior = MobileCO2Analysis(
-        #   self.base_with_clean_water,
-        #   color="",
-        #   **config_mobile_co2_analysis_posterior
-        #)
+# self.mobile_co2_analysis_posterior = MobileCO2Analysis(
+#   self.base_with_clean_water,
+#   color="",
+#   **config_mobile_co2_analysis_posterior
+# )
 
-        #print("Warning: Concentration analysis is not calibrated.")
+# print("Warning: Concentration analysis is not calibrated.")
 
-        #self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis_posterior,
-        #    "mobile_co2_posterior_cleaning_filter.npy",
-        #    baseline,
-        #    update_setup,
-        #)
-       
-        ## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
-        #config_mobile_co2_analysis = {
-        #   # Presmoothing
-        #   "presmoothing": True,
-        #   "presmoothing resize": 1.,
-        #   "presmoothing weight": 1,
-        #   "presmoothing eps": 1e-5,
-        #   "presmoothing max_num_iter": 100,
-        #   "presmoothing method": "chambolle",
+# self._setup_concentration_analysis(
+#    self.mobile_co2_analysis_posterior,
+#    "mobile_co2_posterior_cleaning_filter.npy",
+#    baseline,
+#    update_setup,
+# )
 
-        #   # Thresholding
-        #   "threshold value": 0.048, # for blue
-        #   #"threshold value": 0.25, # for red
+## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
+# config_mobile_co2_analysis = {
+#   # Presmoothing
+#   "presmoothing": True,
+#   "presmoothing resize": 1.,
+#   "presmoothing weight": 1,
+#   "presmoothing eps": 1e-5,
+#   "presmoothing max_num_iter": 100,
+#   "presmoothing method": "chambolle",
 
-        #   # Hole filling
-        #   "max hole size": 20**2,
+#   # Thresholding
+#   "threshold value": 0.048, # for blue
+#   #"threshold value": 0.25, # for red
 
-        #   # Local convex cover
-        #   "local convex cover patch size": 10,
+#   # Hole filling
+#   "max hole size": 20**2,
 
-        #   # Postsmoothing
-        #   "postsmoothing": True,
-        #   "postsmoothing resize": 0.25,
-        #   "postsmoothing weight": 4, # 4 if resize=0.25
-        #   "postsmoothing eps": 1e-5,
-        #   "postsmoothing max_num_iter": 100,
-        #   "postsmoothing method": "chambolle"
-        #}
-       
-        #self.mobile_co2_analysis = MobileCO2Analysis(
-        #   self.base_with_clean_water,
-        #   color="empty",
-        #   **config_mobile_co2_analysis
-        #)
+#   # Local convex cover
+#   "local convex cover patch size": 10,
 
-        #print("Warning: Concentration analysis is not calibrated.")
+#   # Postsmoothing
+#   "postsmoothing": True,
+#   "postsmoothing resize": 0.25,
+#   "postsmoothing weight": 4, # 4 if resize=0.25
+#   "postsmoothing eps": 1e-5,
+#   "postsmoothing max_num_iter": 100,
+#   "postsmoothing method": "chambolle"
+# }
 
-        #self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis,
-        #    "mobile_co2_cleaning_filter.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self.mobile_co2_analysis = MobileCO2Analysis(
+#   self.base_with_clean_water,
+#   color="empty",
+#   **config_mobile_co2_analysis
+# )
+
+# print("Warning: Concentration analysis is not calibrated.")
+
+# self._setup_concentration_analysis(
+#    self.mobile_co2_analysis,
+#    "mobile_co2_cleaning_filter.npy",
+#    baseline,
+#    update_setup,
+# )
 
 
-        ## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
-        #config_mobile_co2_analysis = {
-        #    # Presmoothing
-        #    "presmoothing": True,
-        #    "presmoothing resize": 0.5,
-        #    "presmoothing weight": 0.01,
-        #    "presmoothing eps": 1e-5,
-        #    "presmoothing max_num_iter": 1000,
-        #    "presmoothing method": "anisotropic bregman",
-        #    # Thresholding
-        #    "threshold value": 20,
-        #    # Hole filling
-        #    "max hole size": 20**2,
-        #    # Local convex cover
-        #    "local convex cover patch size": 10,
-        #    # Postsmoothing
-        #    "postsmoothing": False,
-        #    # "postsmoothing resize": 0.25,
-        #    # "postsmoothing weight": 4, # 4 if resize=0.25
-        #    # "postsmoothing eps": 1e-5,
-        #    # "postsmoothing max_num_iter": 100,
-        #    # "postsmoothing method": "chambolle"
-        #}
+## Concentration analysis to detect mobile CO2. Hue serves as basis for the analysis.
+# config_mobile_co2_analysis = {
+#    # Presmoothing
+#    "presmoothing": True,
+#    "presmoothing resize": 0.5,
+#    "presmoothing weight": 0.01,
+#    "presmoothing eps": 1e-5,
+#    "presmoothing max_num_iter": 1000,
+#    "presmoothing method": "anisotropic bregman",
+#    # Thresholding
+#    "threshold value": 20,
+#    # Hole filling
+#    "max hole size": 20**2,
+#    # Local convex cover
+#    "local convex cover patch size": 10,
+#    # Postsmoothing
+#    "postsmoothing": False,
+#    # "postsmoothing resize": 0.25,
+#    # "postsmoothing weight": 4, # 4 if resize=0.25
+#    # "postsmoothing eps": 1e-5,
+#    # "postsmoothing max_num_iter": 100,
+#    # "postsmoothing method": "chambolle"
+# }
 
-        #self.mobile_co2_analysis = MobileCO2AnalysisNew(
-        #    self.base_with_clean_water, color="empty", **config_mobile_co2_analysis
-        #)
+# self.mobile_co2_analysis = MobileCO2AnalysisNew(
+#    self.base_with_clean_water, color="empty", **config_mobile_co2_analysis
+# )
 
-        #print("Warning: Concentration analysis is not calibrated.")
+# print("Warning: Concentration analysis is not calibrated.")
 
-        #self._setup_concentration_analysis(
-        #    self.mobile_co2_analysis,
-        #    "mobile_co2_cleaning_filter_new.npy",
-        #    baseline,
-        #    update_setup,
-        #)
+# self._setup_concentration_analysis(
+#    self.mobile_co2_analysis,
+#    "mobile_co2_cleaning_filter_new.npy",
+#    baseline,
+#    update_setup,
+# )
 
 # ! ---- prior / posterior case
 
@@ -634,4 +634,3 @@
 #            # Check whether posterior marked in this area
 #            if np.any(mobile_co2_posterior[labeled_region]):
 #                mobile_co2[labeled_region] = True
-
