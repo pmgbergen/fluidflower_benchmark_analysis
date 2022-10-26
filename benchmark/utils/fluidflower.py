@@ -1,16 +1,15 @@
 """
-Module containing the setup for the fluidflower rig, used for the PoroTwin1 optimal control project.
-
-Applicable for uncorrected images (of C1).
+Module containing the standardized CO2 analysis applicable for C1, ..., C5.
 """
+import time
 from pathlib import Path
 from typing import Union
 
 import cv2
 import daria
+import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-
 from benchmark.rigs.largefluidflower import LargeFluidFlower
 
 
@@ -69,6 +68,8 @@ class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
 class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
     """
     Class for managing the FluidFlower benchmark analysis.
+    Identifiers for CO2 dissolved in water and CO2(g) are
+    tailored to the benchmark set of the large rig.
     """
 
     def __init__(
@@ -148,3 +149,84 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         co2_gas.img[self.esf] = 0
 
         return co2_gas
+
+    def batch_analysis(
+        self, images: list[Path], verbosity: bool = True, write_to_file: bool = False
+    ) -> None:
+        """
+        Standard batch analysis for C1, ..., C5.
+
+        Args:
+            images (list of Path): paths to batch of images.
+            verbosity (bool): flag controlling whether intermediate results
+                are plotted.
+            write_to_file (bool): flag controlling whether the final results
+                are written to file.
+        """
+
+        for num, img in enumerate(images):
+
+            # Information to the user
+            print(f"working on {num}: {img.name}")
+
+            tic = time.time()
+
+            # Load the current image
+            self.load_and_process_image(img)
+
+            # Determine binary mask detecting any(!) CO2
+            co2 = self.determine_co2_mask()
+
+            # Determine binary mask detecting mobile CO2.
+            co2_gas = self.determine_co2_gas_mask(co2)
+
+            # Create image with contours on top
+            contours_co2, _ = cv2.findContours(
+                skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+            )
+            contours_co2_gas, _ = cv2.findContours(
+                skimage.img_as_ubyte(co2_gas.img),
+                cv2.RETR_TREE,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            original_img = np.copy(self.img.img)
+            original_img = skimage.img_as_ubyte(original_img)
+            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
+            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
+
+            # Plot corrected image with contours
+            if verbosity:
+                plt.figure()
+                plt.imshow(original_img)
+                plt.show()
+
+            # Write to file
+            if write_to_file:
+                # Write corrected image with contours to file
+                img_id = Path(img.name).with_suffix("")
+                original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
+                cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
+
+                # Store fine scale segmentation
+                segmentation = np.zeros(self.img.img.shape[:2], dtype=int)
+                segmentation[co2.img] += 1
+                segmentation[co2_gas.img] += 1
+                np.save(f"segmentation/{img_id}_segmentation.npy", segmentation)
+
+                # Store coarse scale segmentation
+                coarse_shape = (150, 280)
+                coarse_segmentation = np.zeros(coarse_shape, dtype=int)
+                co2_coarse = skimage.img_as_bool(
+                    skimage.transform.resize(co2.img, coarse_shape)
+                )
+                co2_gas_coarse = skimage.img_as_bool(
+                    skimage.transform.resize(co2_gas.img, coarse_shape)
+                )
+                coarse_segmentation[co2_coarse] += 1
+                coarse_segmentation[co2_gas_coarse] += 1
+                np.save(
+                    f"segmentation/{img_id}_coarse_segmentation.npy",
+                    coarse_segmentation,
+                )
+
+            print(f"Elapsed time for {img.name}: {time.time()- tic}.")
