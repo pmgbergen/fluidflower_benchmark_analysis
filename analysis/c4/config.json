@@ -1,0 +1,82 @@
+{
+    "description": "FluidFlower Benchmark setup for run C2 - for previsouly corrected images - rest identical to c1.",
+
+    "physical_asset": {
+        "dimensions": {"width": 2.8, "height": 1.5},
+        "parameters": {"porosity": 0.44}
+    },
+
+    "drift": {
+        "roi": [[1050, 2630], [1340, 2920]]
+    },
+
+    "color": {
+        "roi": [[331, 466], [505, 467], [506, 203], [333, 202]]
+    },
+
+    "geometry": {
+        "crop": {
+            "pts_src": [[0, 0], [0, 4260], [7952, 4260], [7952, 0]],
+            "width": 2.8,
+            "height": 1.5
+        }
+    },
+
+
+    "segmentation": {
+        "labels": "tmp/labels.npy",
+        "median disk radius": 20,
+        "rescaling factor": 0.1,
+        "markers disk radius": 10,
+        "threshold": 14,
+        "gradient disk radius": 2,
+        "dilation size": 10,
+        "boundary size": 80,
+        "verbosity": true
+    },
+
+    "co2": {
+        "cleaning_filter": "tmp/co2_mask_cleaning_filter.npy",
+
+        "threshold min hue": 1,
+        "threshold max hue": 70,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value esf": 0.04,
+        "threshold value non-esf": 0.04,
+
+        "postsmoothing": false,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "tmp/mobile_co2_mask_cleaning_filter.npy",
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.05,
+
+        "postsmoothing": true,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "threshold posterior gradient modulus": 0.002
+    },
+
+    "calibration": {"scaling": 1.0}
+}
