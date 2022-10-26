@@ -1,5 +1,7 @@
 """
 Module containing the setup for the fluidflower rig, used for the PoroTwin1 optimal control project.
+
+Applicable for uncorrected images (of C1).
 """
 import json
 from pathlib import Path
@@ -69,13 +71,13 @@ class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
 
 class BenchmarkRig:
     """
-    Class for managing the analysis of C1.
+    Class for managing the FluidFlower benchmark analysis.
     """
 
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
-        config_source: Union[str, Path],
+        config: Union[str, Path],
         update_setup: bool = False,
     ) -> None:
         """
@@ -86,12 +88,12 @@ class BenchmarkRig:
         Args:
             base (str, Path or list of such): baseline images, used to
                 set up analysis tools and cleaning tools
-            config_source (str or Path): path to config dict
+            config (str or Path): path to config dict
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
         # Read general config file
-        f = open(config_source, "r")
+        f = open(config, "r")
         self.config = json.load(f)
         f.close()
 
