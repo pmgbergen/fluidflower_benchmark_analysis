@@ -150,35 +150,34 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         return co2_gas
 
-    def batch_analysis(
-        self, images: list[Path], verbosity: bool = True, write_to_file: bool = False
-    ) -> None:
+    def single_image_analysis(self, img: Path, **kwargs) -> tuple[np.ndarray]:
         """
-        Standard batch analysis for C1, ..., C5.
+        Standard workflow to analyze CO2 phases.
 
         Args:
-            images (list of Path): paths to batch of images.
-            verbosity (bool): flag controlling whether intermediate results
-                are plotted.
-            write_to_file (bool): flag controlling whether the final results
-                are written to file.
+            image (Path): path to single image.
+            kwargs: optional keyword arguments, see batch_analysis.
+
+        Returns:
+            np.ndarray: co2 mask
+            np.ndarray: co2(g) mask
         """
+        # Load the current image
+        self.load_and_process_image(img)
 
-        for num, img in enumerate(images):
+        # Determine binary mask detecting any(!) CO2
+        co2 = self.determine_co2_mask()
 
-            # Information to the user
-            print(f"working on {num}: {img.name}")
+        # Determine binary mask detecting mobile CO2.
+        co2_gas = self.determine_co2_gas_mask(co2)
 
-            tic = time.time()
+        # ! ---- Post-analysis
 
-            # Load the current image
-            self.load_and_process_image(img)
+        # Plot and store image with contours
+        plot_contours = kwargs.pop("plot_contours", False)
+        write_contours_to_file = kwargs.pop("write_contours_to_file", False)
 
-            # Determine binary mask detecting any(!) CO2
-            co2 = self.determine_co2_mask()
-
-            # Determine binary mask detecting mobile CO2.
-            co2_gas = self.determine_co2_gas_mask(co2)
+        if plot_contours or write_contours_to_file:
 
             # Create image with contours on top
             contours_co2, _ = cv2.findContours(
@@ -194,26 +193,40 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
             cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
 
-            # Plot corrected image with contours
-            if verbosity:
-                plt.figure()
+            # Plot
+            if plot_contours:
+                plt.figure("Image with contours of CO2 segmentation")
                 plt.imshow(original_img)
                 plt.show()
 
-            # Write to file
-            if write_to_file:
-                # Write corrected image with contours to file
+            # Write corrected image with contours to file
+            if write_contours_to_file:
                 img_id = Path(img.name).with_suffix("")
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
                 cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
 
-                # Store fine scale segmentation
-                segmentation = np.zeros(self.img.img.shape[:2], dtype=int)
-                segmentation[co2.img] += 1
-                segmentation[co2_gas.img] += 1
+        # Write segmentation to file
+        write_segmentation_to_file = kwargs.pop("write_segmentation_to_file", False)
+        write_coarse_segmentation_to_file = kwargs.pop(
+            "write_coarse_segmentation_to_file", False
+        )
+
+        if write_segmentation_to_file or write_coarse_segmentation_to_file:
+
+            # Generate segmentation with codes:
+            # 0 - water
+            # 1 - dissolved CO2
+            # 2 - gaseous CO2
+            segmentation = np.zeros(self.img.img.shape[:2], dtype=int)
+            segmentation[co2.img] += 1
+            segmentation[co2_gas.img] += 1
+
+            # Store fine scale segmentation
+            if write_segmentation_to_file:
                 np.save(f"segmentation/{img_id}_segmentation.npy", segmentation)
 
-                # Store coarse scale segmentation
+            # Store coarse scale segmentation
+            if write_coarse_segmentation_to_file:
                 coarse_shape = (150, 280)
                 coarse_segmentation = np.zeros(coarse_shape, dtype=int)
                 co2_coarse = skimage.img_as_bool(
@@ -229,4 +242,33 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                     coarse_segmentation,
                 )
 
+        return co2, co2_gas
+
+    def batch_analysis(self, images: list[Path], **kwargs) -> None:
+        """
+        Standard batch analysis for C1, ..., C5.
+
+        Args:
+            images (list of Path): paths to batch of images.
+            kwargs: optional keyword arguments:
+                plot_contours (bool): flag controlling whether the original image
+                    is plotted with contours of the two CO2 phases; default False.
+                write_contours_to_file (bool): flag controlling whether the plot from
+                    plot_contours is written to file; default False.
+                write_segmentation_to_file (bool): flag controlling whether the
+                    CO2 segmentation is written to file, where water, dissolved CO2
+                    and CO2(g) get decoded 0, 1, 2, respectively; default False.
+                write_coarse_segmentation_to_file (bool): flag controlling whether
+                    a coarse (280 x 150) representation of the CO2 segmentation from
+                    write_segmentation_to_file is written to file; default False.
+        """
+
+        for num, img in enumerate(images):
+
+            tic = time.time()
+
+            # Determine binary mask detecting any(!) CO2, and CO2(g), and apply post-analysis.
+            self.single_image_analysis(img)
+
+            # Information to the user
             print(f"Elapsed time for {img.name}: {time.time()- tic}.")
