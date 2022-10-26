@@ -24,7 +24,7 @@ img = skimage.exposure.adjust_gamma(img, gamma=0.7)
 
 # All relevant config parameters will be stored in a dictionary collecting several configs.
 # Initialize the config dict.
-curvature_correction = daria.CurvatureCorrection(image = img)
+curvature_correction = daria.CurvatureCorrection(image=img)
 config: dict() = {}
 
 # !----- 1. Step: Color correction
@@ -124,18 +124,20 @@ img = curvature_correction.simple_curvature_correction(img, **config["bulge"])
 # !----- 4. Step: Correct for stretch
 
 # Fetch stretch from previous studies based on images with laser grids
-config[ "stretch"] = {
+config["stretch"] = {
     "horizontal_stretch": -3.95466460890734e-09,
     "horizontal_center_offset": 0,
     "vertical_stretch": -0.0,
-    "vertical_center_offset": 0
+    "vertical_center_offset": 0,
 }
 
 # Apply final curvature correction
 img = curvature_correction.simple_curvature_correction(img, **config["stretch"])
 
 # !----- 5. Step: Validation - Compare with a 'perfect' grid layed on top
-da_img = daria.Image(img, width=config["crop"]["width"], height=config["crop"]["height"]).add_grid(dx=0.1, dy=0.1)
+da_img = daria.Image(
+    img, width=config["crop"]["width"], height=config["crop"]["height"]
+).add_grid(dx=0.1, dy=0.1)
 plt.imshow(da_img.img)
 plt.show()
 
