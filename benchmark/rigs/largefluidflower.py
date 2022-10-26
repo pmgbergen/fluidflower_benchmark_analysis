@@ -10,7 +10,7 @@ import numpy as np
 from scipy.interpolate import RBFInterpolator
 
 
-class LargeFluidFlower:
+class LargeFluidFlower(daria.AnalysisBase):
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
@@ -28,7 +28,7 @@ class LargeFluidFlower:
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
-        super().__init__(baseline, config, update_setup)
+        daria.AnalysisBase.__init__(self, baseline, config, update_setup)
 
         # Segment the baseline image; identidy water and esf layer.
         self._segment_geometry()
@@ -75,7 +75,7 @@ class LargeFluidFlower:
         # The setup takes approx. 30 seconds. So the cost is bareable when not switiching
         # between different boxes too often.
 
-        if not Path("volumes.npy").exists():
+        if not Path("tmp/volumes.npy").exists():
             # Determine number of voxels in each dimension - assume 2d image
             Ny, Nx = self.base.img.shape[:2]
             Nz = 1
@@ -274,7 +274,7 @@ class LargeFluidFlower:
             # Compute effective volume per porous voxel
             self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
-            np.save("volumes.npy", self.effective_volumes)
+            np.save("tmp/volumes.npy", self.effective_volumes)
 
         else:
-            self.effective_volumes = np.load("volumes.npy")
+            self.effective_volumes = np.load("tmp/volumes.npy")
