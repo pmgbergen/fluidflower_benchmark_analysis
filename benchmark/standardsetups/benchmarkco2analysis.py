@@ -2,6 +2,7 @@
 Module containing the standardized CO2 analysis applicable for C1, ..., C5.
 """
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Union
 
@@ -10,7 +11,9 @@ import daria
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
+
 from benchmark.rigs.largefluidflower import LargeFluidFlower
+from benchmark.utils.misc import read_time_from_path
 
 
 # Define specific concentration analysis class to detect mobile CO2
@@ -77,6 +80,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         baseline: Union[str, Path, list[str], list[Path]],
         config: Union[str, Path],
         update_setup: bool = False,
+        verbosity: bool = False,
     ) -> None:
         """
         Constructor for Benchmark rig.
@@ -89,9 +93,39 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             config (str or Path): path to config dict
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
+            verbosity  (bool): flag controlling whether results of the post-analysis
+                are printed to screen; default is False.
         """
         LargeFluidFlower.__init__(self, baseline, config, update_setup)
         daria.CO2Analysis.__init__(self, baseline, config, update_setup)
+
+        # The above constructors provide access to the config via self.config.
+        # Determine the injection start from the config file. Expect format
+        # complying with "%y%m%d %H%M%D", e.g., "211127 083412"
+        self.injection_start: datetime = datetime.strptime(
+            self.config["injection_start"], "%y%m%d %H%M%S"
+        )
+
+        # Initialize results dictionary for post-analysis
+        self.results: dict = {}
+
+        # Store verbosity
+        self.verbosity = verbosity
+
+    # ! ---- Setup tools
+    def load_and_process_image(self, path: Union[str, Path]) -> None:
+        """
+        Load image as before and read time from the title in addition.
+
+        Args:
+            path (str or Path): path to image
+        """
+        # Read image via parent class
+        daria.CO2Analysis.load_and_process_image(self, path)
+
+        # Ammend image with time, reading from title assuming title
+        # of format */yyMMdd_timeHHmmss*.
+        self.img.timestamp = read_time_from_path(path)
 
     # ! ---- Analysis tools for detecting the different CO2 phases
 
@@ -150,7 +184,9 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         return co2_gas
 
-    def single_image_analysis(self, img: Path, **kwargs) -> tuple[np.ndarray]:
+    def single_image_analysis(
+        self, img: Path, **kwargs
+    ) -> tuple[np.ndarray, np.ndarray, dict]:
         """
         Standard workflow to analyze CO2 phases.
 
@@ -161,6 +197,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         Returns:
             np.ndarray: co2 mask
             np.ndarray: co2(g) mask
+            dict: dictinary with all stored results from the post-analysis.
         """
         # Load the current image
         self.load_and_process_image(img)
@@ -173,25 +210,98 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         # ! ---- Post-analysis
 
+        # Define some general data first:
+        # Crop folder and ending from path - required for writing to file.
+        img_id = Path(img.name).with_suffix("")
+
+        # Determine the time increment (in terms of hours),
+        # referring to injection start, in hours.
+        SECONDS_TO_HOURS = 1.0 / 3600
+        relative_time = (
+            self.img.timestamp - self.injection_start
+        ).total_seconds() * SECONDS_TO_HOURS
+
+        # Fingering analysis in Box C
+        fingering_analysis_box_C = kwargs.pop("fingering_analysis_box_C", False)
+        if fingering_analysis_box_C:
+
+            # Fingers in box C are defines as contour of the CO2. To evaluate the length
+            # of the fingers, determine the length of the internal contour of the CO2 mask.
+            # Apply Venn diagram concept to exclude the boundary of box C. For this consider
+            # the CO2, the water, and the entire box, and take the correct difference.
+
+            contour_length_co2 = daria.contour_length(co2, roi=self.box_C)
+            contour_length_water = daria.contour_length(
+                co2, roi=self.box_C, values_of_interest=[False]
+            )
+            boundary_box_C = daria.perimeter(self.box_C)
+
+            # Venn diagram concept to determine the internal contour of the CO2.
+            # Cut values at 0, slightly negative values can occur e.g., when
+            # contour_length_co2 is very small due to a different evaluation
+            # routine for the contour length and the permiter of a box.
+            length_finger = max(
+                0.5 * (contour_length_co2 + contour_length_water - boundary_box_C), 0.0
+            )
+
+            # Keep track of result and store internally
+            if "fingering_analysis_box_C" not in self.results:
+                self.results["fingering_analysis_box_C"] = {}
+            self.results["fingering_analysis_box_C"][relative_time] = length_finger
+
+            if self.verbosity:
+                print(
+                    f"Total finger length in Box C at {relative_time} hours: {length_finger} m."
+                )
+                print(contour_length_co2, contour_length_water, boundary_box_C)
+
         # Plot and store image with contours
         plot_contours = kwargs.pop("plot_contours", False)
         write_contours_to_file = kwargs.pop("write_contours_to_file", False)
 
         if plot_contours or write_contours_to_file:
 
-            # Create image with contours on top
+            # Start with the original image
+            original_img = np.copy(self.img.img)
+            original_img = skimage.img_as_ubyte(original_img)
+
+            # Overlay the original image with contours for CO2
             contours_co2, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
+            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
+
+            # Overlay the original image with contours for CO2(g)
             contours_co2_gas, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2_gas.img),
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE,
             )
-            original_img = np.copy(self.img.img)
-            original_img = skimage.img_as_ubyte(original_img)
-            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
             cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
+
+            # Overlay the original image with contours of Box A
+            contours_box_A, _ = cv2.findContours(
+                skimage.img_as_ubyte(self.mask_box_A),
+                cv2.RETR_TREE,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            cv2.drawContours(original_img, contours_box_A, -1, (180, 180, 180), 3)
+
+            # Overlay the original image with contours of Box B
+            contours_box_B, _ = cv2.findContours(
+                skimage.img_as_ubyte(self.mask_box_B),
+                cv2.RETR_TREE,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            cv2.drawContours(original_img, contours_box_B, -1, (180, 180, 180), 3)
+
+            # Overlay the original image with contours of Box C
+            contours_box_C, _ = cv2.findContours(
+                skimage.img_as_ubyte(self.mask_box_C),
+                cv2.RETR_TREE,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            cv2.drawContours(original_img, contours_box_C, -1, (180, 180, 180), 3)
 
             # Plot
             if plot_contours:
@@ -201,46 +311,8 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
             # Write corrected image with contours to file
             if write_contours_to_file:
-                img_id = Path(img.name).with_suffix("")
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
                 cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
-
-        # Fingering analysis in Box A
-        fingering_analysis_box_A = kwargs.pop("fingering_analysis_box_A", False)
-        if fingering_analysis_box_A:
-
-            # Define box A in metric coordinates
-            boxA = np.array([[1.1, 0.6], [2.8, 0.0]])
-
-            # Add expert knowledge: Fingers in box A are defines as contour of
-            # the CO2 which does not lie in the ESF layer. Apply Venn diagram
-            # concept to determine the final contour length (in meters).
-
-            # Generate segmentation, mark CO2 (with values 1) and ESF (with values 2)
-            aux_fingering_array = daria.Image(
-                np.zeros(co2.img.shape[:2], dtype=int), metadata=co2.metadata
-            )
-            aux_fingering_array.img[co2.img] = 1
-            aux_fingering_array.img[np.logical_and(co2.img, self.esf)] += 1
-
-            # The finger length is given as contour of the CO2 outside the ESF, excl.
-            # the interface between the ESF and lower sand layer. Apply Venn diagram concept.
-            length_co2_and_esf = daria.contour_length(
-                aux_fingering_array, roi=boxA, values_of_interest=[1, 2]
-            )
-            length_co2 = daria.contour_length(
-                aux_fingering_array, roi=boxA, values_of_interest=[1]
-            )
-            length_esf = daria.contour_length(
-                aux_fingering_array, roi=boxA, values_of_interest=[2]
-            )
-            length_co2_esf_interface = 0.5 * (
-                length_co2 + length_esf - length_co2_and_esf
-            )
-            length_finger = length_co2 - length_co2_esf_interface
-
-            # TODO keep track of the finger length somehow (e.g. store to file).
-            print("Length finger box a", length_finger)
 
         # Write segmentation to file
         write_segmentation_to_file = kwargs.pop("write_segmentation_to_file", False)
@@ -279,9 +351,9 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                     coarse_segmentation,
                 )
 
-        return co2, co2_gas
+        return co2, co2_gas, self.results
 
-    def batch_analysis(self, images: list[Path], **kwargs) -> None:
+    def batch_analysis(self, images: list[Path], **kwargs) -> dict:
         """
         Standard batch analysis for C1, ..., C5.
 
@@ -292,14 +364,17 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                     is plotted with contours of the two CO2 phases; default False.
                 write_contours_to_file (bool): flag controlling whether the plot from
                     plot_contours is written to file; default False.
-                fingering_analysis_box_A (bool): flag controlling whether the length
-                    of the finger is performed in Box A; default is False.
+                fingering_analysis_box_C (bool): flag controlling whether the length
+                    of the finger is performed in Box C; default is False.
                 write_segmentation_to_file (bool): flag controlling whether the
                     CO2 segmentation is written to file, where water, dissolved CO2
                     and CO2(g) get decoded 0, 1, 2, respectively; default False.
                 write_coarse_segmentation_to_file (bool): flag controlling whether
                     a coarse (280 x 150) representation of the CO2 segmentation from
                     write_segmentation_to_file is written to file; default False.
+
+        Returns:
+            dict: dictinary with all stored results from the post-analysis.
         """
 
         for num, img in enumerate(images):
@@ -310,4 +385,25 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             self.single_image_analysis(img, **kwargs)
 
             # Information to the user
-            print(f"Elapsed time for {img.name}: {time.time()- tic}.")
+            if self.verbosity:
+                print(f"Elapsed time for {img.name}: {time.time()- tic}.")
+
+        return self.results
+
+    def return_results(self) -> dict:
+        """
+        Return all results collected throughout any analysis performed.
+        """
+        # TODO restrict to specific list of keywords.
+
+        return self.results
+
+    def write_results_to_file(self, folder: Path) -> None:
+        """
+        Write results in separate files.
+
+        Args:
+            folder (Path): folder where the results are stored.
+        """
+        for keys in self.results.keys():
+            pass

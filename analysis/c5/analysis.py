@@ -28,6 +28,6 @@ analysis.batch_analysis(
     images=images,  # paths to images to be considered
     plot_contours=False,  # print contour lines for CO2 onto image
     write_contours_to_file = True,
-    fingering_analysis_box_A = True,
+    fingering_analysis_box_C = True,
     # ...for more options, check the keyword arguments of BenchmarkCO2Analysis.batch_analysis.
 )

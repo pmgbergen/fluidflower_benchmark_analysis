@@ -20,14 +20,15 @@ config = Path("./config.json")
 co2_analysis = BenchmarkCO2Analysis(
     baseline=baseline,  # paths to baseline images
     config=config,  # path to config file
-    update_setup=False,  # flag controlling whether aux. data needs update
+    update_setup=False,     # flag controlling whether aux. data needs update
+    verbosity = True,   # print intermediate results to screen
 )
 
 # Perform standardized CO2 batch analysis on all images from C1.
 co2_analysis.batch_analysis(
     images=images,  # paths to images to be considered
-    plot_contours=False,  # print contour lines for CO2 onto image
-    fingering_analysis_box_A=True,  # determine and print the length of the fingers in box A
-    write_contours_to_file = True,
+    plot_contours=True,  # print contour lines for CO2 onto image
+    fingering_analysis_box_C=True,  # determine and print the length of the fingers in box C
+    write_contours_to_file = False,
     # ...for more options, check the keyword arguments of BenchmarkCO2Analysis.batch_analysis.
 )
