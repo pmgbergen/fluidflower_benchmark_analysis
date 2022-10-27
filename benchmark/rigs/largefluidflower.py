@@ -30,29 +30,29 @@ class LargeFluidFlower(daria.AnalysisBase):
         daria.AnalysisBase.__init__(self, baseline, config, update_setup)
 
         # Segment the baseline image; identidy water and esf layer.
-        self._segment_geometry()
+        self._segment_geometry(update_setup=update_setup)
 
         # Determine effective volumes, required for calibration, determining total mass etc.
         self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
 
-    def _segment_geometry(self, update: bool = False) -> None:
+    def _segment_geometry(self, update_setup: bool = False) -> None:
         """
         Use watershed segmentation and some cleaning to segment
         the geometry. Note that not all sand layers are detected
         by this approach.
 
         Args:
-            update (bool): flag whether
+            update_setup (bool): flag whether
         """
 
         # Fetch or generate and store labels
-        if Path(self.config["segmentation"]["labels"]).exists() and not update:
-            labels = np.load(self.config["segmentation"]["labels"])
+        if Path(self.config["segmentation"]["labels_path"]).exists() and not update_setup:
+            labels = np.load(self.config["segmentation"]["labels_path"])
         else:
             labels = daria.segment(self.base.img, **self.config["segmentation"])
-            np.save(self.config["segmentation"]["labels"], labels)
+            np.save(self.config["segmentation"]["labels_path"], labels)
 
         # Hardcoded: Identify water layer
         self.water = np.zeros(labels.shape[:2], dtype=bool)

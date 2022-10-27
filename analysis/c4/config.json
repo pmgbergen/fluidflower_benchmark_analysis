@@ -24,7 +24,7 @@
 
 
     "segmentation": {
-        "labels": "tmp/labels.npy",
+        "labels_path": "tmp/labels.npy",
         "median disk radius": 20,
         "rescaling factor": 0.1,
         "markers disk radius": 10,
