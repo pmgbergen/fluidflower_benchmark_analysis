@@ -8,7 +8,6 @@ import daria
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-
 from fluidflower import BenchmarkRig
 
 # ! ---- Data from c1, already processed
