@@ -205,6 +205,43 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
                 cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
 
+        # Fingering analysis in Box A
+        fingering_analysis_box_A = kwargs.pop("fingering_analysis_box_A", False)
+        if fingering_analysis_box_A:
+
+            # Define box A in metric coordinates
+            boxA = np.array([[1.1, 0.6], [2.8, 0.0]])
+
+            # Add expert knowledge: Fingers in box A are defines as contour of
+            # the CO2 which does not lie in the ESF layer. Apply Venn diagram
+            # concept to determine the final contour length (in meters).
+
+            # Generate segmentation, mark CO2 (with values 1) and ESF (with values 2)
+            aux_fingering_array = daria.Image(
+                np.zeros(co2.img.shape[:2], dtype=int), metadata=co2.metadata
+            )
+            aux_fingering_array.img[co2.img] = 1
+            aux_fingering_array.img[np.logical_and(co2.img, self.esf)] += 1
+
+            # The finger length is given as contour of the CO2 outside the ESF, excl.
+            # the interface between the ESF and lower sand layer. Apply Venn diagram concept.
+            length_co2_and_esf = daria.contour_length(
+                aux_fingering_array, roi=boxA, values_of_interest=[1, 2]
+            )
+            length_co2 = daria.contour_length(
+                aux_fingering_array, roi=boxA, values_of_interest=[1]
+            )
+            length_esf = daria.contour_length(
+                aux_fingering_array, roi=boxA, values_of_interest=[2]
+            )
+            length_co2_esf_interface = 0.5 * (
+                length_co2 + length_esf - length_co2_and_esf
+            )
+            length_finger = length_co2 - length_co2_esf_interface
+
+            # TODO keep track of the finger length somehow (e.g. store to file).
+            print("Length finger box a", length_finger)
+
         # Write segmentation to file
         write_segmentation_to_file = kwargs.pop("write_segmentation_to_file", False)
         write_coarse_segmentation_to_file = kwargs.pop(
@@ -255,6 +292,8 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                     is plotted with contours of the two CO2 phases; default False.
                 write_contours_to_file (bool): flag controlling whether the plot from
                     plot_contours is written to file; default False.
+                fingering_analysis_box_A (bool): flag controlling whether the length
+                    of the finger is performed in Box A; default is False.
                 write_segmentation_to_file (bool): flag controlling whether the
                     CO2 segmentation is written to file, where water, dissolved CO2
                     and CO2(g) get decoded 0, 1, 2, respectively; default False.
