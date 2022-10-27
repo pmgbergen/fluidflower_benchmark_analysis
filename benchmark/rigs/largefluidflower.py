@@ -29,6 +29,9 @@ class LargeFluidFlower(daria.AnalysisBase):
         """
         daria.AnalysisBase.__init__(self, baseline, config, update_setup)
 
+        # Define boxes A, B, C, relevant for the benchmark analysis
+        self._define_boxes()
+
         # Segment the baseline image; identidy water and esf layer.
         self._segment_geometry(update_setup=update_setup)
 
@@ -36,6 +39,30 @@ class LargeFluidFlower(daria.AnalysisBase):
         self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
+
+    def _define_boxes(self) -> None:
+        """
+        The benchmark analysis has identfified three specific boxes: box A, box B and box C.
+        This method fixes the definition of these boxes in terms of rois and masks.
+        """
+        # Box A, B, C in metric coorddinates (left top, and right lower point)
+        self.box_A = np.array([[1.1, 0.6], [2.8, 0.0]])
+        self.box_B = np.array([[0.0, 1.3], [1.1, 0.7]])
+        self.box_C = np.array([[1.1, 0.4], [2.6, 0.1]])
+
+        # Box A, B, C in terms of pixels, adapted to the size of the base image
+        self.box_A_roi = self.base.coordinatesystem.coordinateToPixel(self.box_A)
+        self.box_B_roi = self.base.coordinatesystem.coordinateToPixel(self.box_B)
+        self.box_C_roi = self.base.coordinatesystem.coordinateToPixel(self.box_C)
+
+        # Boolean masks for boxes A, B, C, adapted to the size of the base image
+        self.mask_box_A = np.zeros(self.base.img.shape[:2], dtype=bool)
+        self.mask_box_B = np.zeros(self.base.img.shape[:2], dtype=bool)
+        self.mask_box_C = np.zeros(self.base.img.shape[:2], dtype=bool)
+
+        self.mask_box_A[daria.bounding_box(self.box_A_roi)] = True
+        self.mask_box_B[daria.bounding_box(self.box_B_roi)] = True
+        self.mask_box_C[daria.bounding_box(self.box_C_roi)] = True
 
     def _segment_geometry(self, update_setup: bool = False) -> None:
         """
@@ -48,7 +75,10 @@ class LargeFluidFlower(daria.AnalysisBase):
         """
 
         # Fetch or generate and store labels
-        if Path(self.config["segmentation"]["labels_path"]).exists() and not update_setup:
+        if (
+            Path(self.config["segmentation"]["labels_path"]).exists()
+            and not update_setup
+        ):
             labels = np.load(self.config["segmentation"]["labels_path"])
         else:
             labels = daria.segment(self.base.img, **self.config["segmentation"])
