@@ -20,7 +20,7 @@ config = Path("./config.json")
 analysis = MediumCO2Analysis(
     baseline=baseline,  # paths to baseline images
     config=config,  # path to config file
-    update_setup=True,  # flag controlling whether aux. data needs update
+    update_setup=False,  # flag controlling whether aux. data needs update
 )
 
 # Perform standardized CO2 batch analysis on all images from BC02.
