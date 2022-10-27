@@ -26,6 +26,6 @@ analysis = BenchmarkCO2Analysis(
 # Perform standardized CO2 batch analysis on all images from C1.
 analysis.batch_analysis(
     images=images,  # paths to images to be considered
-    verbosity=True,  # print contour lines for CO2 onto image
-    write_to_file=False,  # write images and segmentation to file
+    plot_contours=True,  # print contour lines for CO2 onto image
+    # ...for more options, check the keyword arguments of BenchmarkCO2Analysis.batch_analysis.
 )
