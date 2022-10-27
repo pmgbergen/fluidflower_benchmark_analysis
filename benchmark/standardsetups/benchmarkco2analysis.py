@@ -268,7 +268,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             tic = time.time()
 
             # Determine binary mask detecting any(!) CO2, and CO2(g), and apply post-analysis.
-            self.single_image_analysis(img)
+            self.single_image_analysis(img, **kwargs)
 
             # Information to the user
             print(f"Elapsed time for {img.name}: {time.time()- tic}.")
