@@ -69,7 +69,7 @@ class Bilbo(daria.AnalysisBase):
         import matplotlib.pyplot as plt
         plt.figure()
         plt.imshow(self.base.img)
-        plt.imshow(labels, alphs=0.3)
+        plt.imshow(labels, alpha=0.3)
         plt.show()
 
     def _determine_effective_volumes(self) -> None:
