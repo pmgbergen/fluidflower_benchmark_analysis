@@ -27,5 +27,6 @@ co2_analysis = BenchmarkCO2Analysis(
 co2_analysis.batch_analysis(
     images=images,  # paths to images to be considered
     plot_contours=True,  # print contour lines for CO2 onto image
+    fingering_analysis_box_A=True,  # determine and print the length of the fingers in box A
     # ...for more options, check the keyword arguments of BenchmarkCO2Analysis.batch_analysis.
 )
