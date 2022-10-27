@@ -6,6 +6,8 @@
         "parameters": {"porosity": 0.44}
     },
 
+    "injection_start": "211224 090000",
+
     "drift": {
         "roi": [[1050, 2630], [1340, 2920]]
     },
