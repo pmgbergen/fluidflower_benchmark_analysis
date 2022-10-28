@@ -10,43 +10,19 @@
 
     "drift": {
         "roi": [
-            [
-                153,
-                16
-            ],
-            [
-                788,
-                16
-            ],
-            [
-                788,
-                734
-            ],
-            [
-                153,
-                734
-            ]
+            [153, 16],
+            [788, 16],
+            [788, 734],
+            [153, 734]
         ]
     },
 
     "color": {
         "roi": [
-            [
-                377,
-                502
-            ],
-            [
-                561,
-                510
-            ],
-            [
-                564,
-                249
-            ],
-            [
-                380,
-                240
-            ]
+            [377, 502],
+            [561, 510],
+            [564, 249],
+            [380, 240]
         ]
     },
 
@@ -57,35 +33,20 @@
             "vertical_bulge": 0,
             "vertical_center_offset": 0
         },
+
         "crop": {
-            "pts_src": [
-                [
-                    28,
-                    30
-                ],
-                [
-                    41,
-                    4383
-                ],
-                [
-                    7917,
-                    4371
-                ],
-                [
-                    7917,
-                    19
-                ]
-            ],
+            "pts_src": [[28, 30], [41, 4383], [7917, 4371], [7917, 19]],
             "width": 2.8,
-            "height": 1.5,
-            "in meters": true
+            "height": 1.5
         },
+
         "bulge": {
             "horizontal_bulge": -0.0,
             "horizontal_center_offset": 0,
             "vertical_bulge": -4.06061733411027e-09,
             "vertical_center_offset": -8
         },
+
         "stretch": {
             "horizontal_stretch": -1.7060115267192474e-09,
             "horizontal_center_offset": -286,
@@ -98,11 +59,20 @@
         "labels_path": "tmp/labels.npy",
         "median disk radius": 20,
         "rescaling factor": 0.1,
-        "marker_points": [[1030, 3580], [370, 3575], [3231, 564], [2760, 4020], [1800, 5240], [3500, 4600]],
+        "marker_points": [
+            [1030, 3580],
+            [370, 3575],
+            [3231, 564],
+            [2760, 4020],
+            [1800, 5240],
+            [3500, 4600]
+        ],
+
         "region_size": 30,
         "dilation size": 10,
         "boundary size": 90,
         "verbosity": false
+
     },
 
     "co2": {
@@ -149,4 +119,5 @@
     },
 
     "calibration": {"scaling": 1.0}
+
 }
