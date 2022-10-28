@@ -1,6 +1,8 @@
 {
     "description": "FluidFlower Benchmark setup for run C2 - for previsouly corrected images - rest identical to c1.",
 
+    "results_path": "results",
+
     "physical_asset": {
         "dimensions": {"width": 2.8, "height": 1.5},
         "parameters": {"porosity": 0.44}
@@ -25,7 +27,7 @@
     },
 
     "segmentation": {
-        "labels_path": "tmp/labels.npy",
+        "labels_path": "cache/labels.npy",
         "median disk radius": 20,
         "rescaling factor": 0.1,
         "marker_points": [[1030, 3580], [370, 3575], [3231, 564], [2760, 4020], [1800, 5240], [3500, 4600]],
@@ -36,7 +38,7 @@
     },
 
     "co2": {
-        "cleaning_filter": "tmp/co2_mask_cleaning_filter.npy",
+        "cleaning_filter": "cache/co2_mask_cleaning_filter.npy",
 
         "threshold min hue": 1,
         "threshold max hue": 70,
@@ -58,7 +60,7 @@
     },
 
     "co2(g)": {
-        "cleaning_filter": "tmp/mobile_co2_mask_cleaning_filter.npy",
+        "cleaning_filter": "cache/mobile_co2_mask_cleaning_filter.npy",
 
         "presmoothing": true,
         "presmoothing resize": 0.5,
