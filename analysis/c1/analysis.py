@@ -31,7 +31,7 @@ co2_analysis = BenchmarkCO2Analysis(
     baseline=baseline,  # paths to baseline images
     config=config,  # path to config file
     update_setup=False,  # flag controlling whether aux. data needs update
-    verbosity=True,  # print intermediate results to screen
+    verbosity=False,  # print intermediate results to screen
 )
 
 # Perform standardized CO2 batch analysis on all images from C1.

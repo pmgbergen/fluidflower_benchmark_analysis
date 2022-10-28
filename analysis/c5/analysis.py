@@ -1,33 +1,44 @@
 """
 Analysis of FluidFlower Benchmark Run C5.
 """
+import json
 from pathlib import Path
 
 from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 
-# Define the location for images of C5 (all images in the folder)
-images_folder = Path("/home/jakub/images/ift/benchmark/c5")
-images = list(sorted(images_folder.glob("*.JPG")))
+# Read user-defined paths to images, number of baseline images, and config file
+with open(Path("user_data.json"), "r") as openfile:
+    user_data = json.load(openfile)
+
+# Short cuts.
+# Path to images
+images_folder = Path(user_data["images folder"])
+# Type of images ("*.JPG", or "*.TIF")
+file_ending = user_data["file ending"]
+# Number of images characterized as baseline images
+num_baseline_images = user_data["number baseline images"]
+# Path to analysis specific config file
+config = Path(user_data["config"])
+
+# Define the location for images of C5 (all images in the folder except the baseline images)
+images = list(sorted(images_folder.glob(file_ending)))[num_baseline_images:]
 
 # Define the location of all baseline images
-baseline_folder = images_folder / Path("baseline")
-baseline = list(sorted(baseline_folder.glob("*.JPG")))
-
-# Define the location of the config file for C5
-config = Path("./config.json")
+baseline = list(sorted(images_folder.glob(file_ending)))[:num_baseline_images]
 
 # Define FluidFlower based on a full set of basline images
-analysis = BenchmarkCO2Analysis(
+co2_analysis = BenchmarkCO2Analysis(
     baseline=baseline,  # paths to baseline images
     config=config,  # path to config file
     update_setup=False,  # flag controlling whether aux. data needs update
+    verbosity=False,  # print intermediate results to screen
 )
 
 # Perform standardized CO2 batch analysis on all images from C5.
-analysis.batch_analysis(
+co2_analysis.batch_analysis(
     images=images,  # paths to images to be considered
-    plot_contours=False,  # print contour lines for CO2 onto image
-    write_contours_to_file = True,
-    fingering_analysis_box_C = True,
+    plot_contours=True,  # print contour lines for CO2 onto image
+    fingering_analysis_box_C=False,  # determine and print the length of the fingers in box C
+    write_contours_to_file=True,
     # ...for more options, check the keyword arguments of BenchmarkCO2Analysis.batch_analysis.
 )
