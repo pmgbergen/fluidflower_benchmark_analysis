@@ -2,6 +2,7 @@
 Module collecting simple and general utilities.
 """
 
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -43,3 +44,42 @@ def read_time_from_path(path: Union[Path, str]) -> datetime:
 
     # Convert to datetime
     return datetime.strptime(date + " " + time, "%y%m%d %H%M%S")
+
+
+def read_paths_from_user_data(
+    path: Union[Path, str]
+) -> tuple[list[Path], list[Path], Path]:
+    """
+    Method to read paths to images, baseline images and conig from
+    standardized input config file.
+
+    Args:
+        path (str or Path): path to user-specific json file.
+
+    Returns:
+        list of Path: paths to images
+        list of Path: paths to baseline images
+        Path: path to config file
+    """
+    # Convert to Path
+    if isinstance(path, str):
+        path = Path(path)
+
+    # Fetch json file
+    with open(path, "r") as openfile:
+        user_data = json.load(openfile)
+
+    # Define the location for images of C1
+    images_folder = Path(user_data["images folder"])
+    file_ending = user_data["file ending"]
+    all_images = list(sorted(images_folder.glob(file_ending)))
+
+    # Extract basline images and actual images of the injection
+    num_baseline_images = user_data["number baseline images"]
+    baseline = all_images[:num_baseline_images]
+    images = all_images[num_baseline_images:]
+
+    # Path to analysis specific config file
+    config = Path(user_data["config"])
+
+    return images, baseline, config

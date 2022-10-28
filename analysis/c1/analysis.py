@@ -1,30 +1,13 @@
 """
 Analysis of FluidFlower Benchmark Run C1.
 """
-import json
 from pathlib import Path
 
 from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
+from benchmark.utils.misc import read_paths_from_user_data
 
 # Read user-defined paths to images, number of baseline images, and config file
-with open(Path("user_data.json"), "r") as openfile:
-    user_data = json.load(openfile)
-
-# Short cuts.
-# Path to images
-images_folder = Path(user_data["images folder"])
-# Type of images ("*.JPG", or "*.TIF")
-file_ending = user_data["file ending"]
-# Number of images characterized as baseline images
-num_baseline_images = user_data["number baseline images"]
-# Path to analysis specific config file
-config = Path(user_data["config"])
-
-# Define the location for images of C1 (all images in the folder except the baseline images)
-images = list(sorted(images_folder.glob(file_ending)))[num_baseline_images:]
-
-# Define the location of all baseline images
-baseline = list(sorted(images_folder.glob(file_ending)))[:num_baseline_images]
+images, baseline, config = read_paths_from_user_data("user_data.json")
 
 # Define FluidFlower based on a full set of basline images
 co2_analysis = BenchmarkCO2Analysis(
