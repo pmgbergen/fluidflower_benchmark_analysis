@@ -9,35 +9,88 @@
     "injection_start": "211124 083100",
 
     "drift": {
-        "roi": [[1050, 2630], [1340, 2920]]
+        "roi": [
+            [
+                153,
+                16
+            ],
+            [
+                788,
+                16
+            ],
+            [
+                788,
+                734
+            ],
+            [
+                153,
+                734
+            ]
+        ]
     },
 
     "color": {
-        "roi": [[377, 503], [566, 512], [563, 250], [380, 241]]
+        "roi": [
+            [
+                377,
+                502
+            ],
+            [
+                561,
+                510
+            ],
+            [
+                564,
+                249
+            ],
+            [
+                380,
+                240
+            ]
+        ]
     },
 
     "geometry": {
-        "init": {"horizontal_bulge": 1e-09, "vertical_bulge": 0.0},
-
-        "crop": {
-            "pts_src": [[31, 40], [51, 4422], [7924, 4402], [7916, 24]],
-            "width": 2.8,
-            "height": 1.5
+        "init": {
+            "horizontal_bulge": 5e-10,
+            "horizontal_center_offset": 0,
+            "vertical_bulge": 0,
+            "vertical_center_offset": 0
         },
-
+        "crop": {
+            "pts_src": [
+                [
+                    28,
+                    30
+                ],
+                [
+                    41,
+                    4383
+                ],
+                [
+                    7917,
+                    4371
+                ],
+                [
+                    7917,
+                    19
+                ]
+            ],
+            "width": 2.8,
+            "height": 1.5,
+            "in meters": true
+        },
         "bulge": {
             "horizontal_bulge": -0.0,
-            "vertical_bulge": -4.112174181927821e-09,
             "horizontal_center_offset": 0,
-            "vertical_center_offset": -33
+            "vertical_bulge": -4.06061733411027e-09,
+            "vertical_center_offset": -8
         },
-
         "stretch": {
-            "horizontal_stretch": -3.95466460890734e-09,
-            "horizontal_center_offset": 0,
-            "vertical_stretch": -0.0,
-            "vertical_center_offset": 0
-        }
+            "horizontal_stretch": -1.7060115267192474e-09,
+            "horizontal_center_offset": -286,
+            "vertical_stretch": 3.2177888435429053e-09,
+            "vertical_center_offset": 702
     },
 
     "segmentation": {
