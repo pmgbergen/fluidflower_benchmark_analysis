@@ -36,7 +36,8 @@ class LargeFluidFlower(daria.AnalysisBase):
         self._segment_geometry(update_setup=update_setup)
 
         # Determine effective volumes, required for calibration, determining total mass etc.
-        self._determine_effective_volumes()
+        # TODO double check details
+        # self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
 
@@ -95,6 +96,9 @@ class LargeFluidFlower(daria.AnalysisBase):
                 edges_method="scharr",
                 **self.config["segmentation"]
             )
+            # Store to file (create required directories if needed)
+            labels_path = Path(self.config["segmentation"]["labels_path"])
+            labels_path.parents[0].mkdir(parents=True, exist_ok=True)
             np.save(self.config["segmentation"]["labels_path"], labels)
 
         # Hardcoded - works for C1-5: Identify water layer with id 0
@@ -314,6 +318,7 @@ class LargeFluidFlower(daria.AnalysisBase):
             # Compute effective volume per porous voxel
             self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
+            # TODO read path from config
             np.save("tmp/volumes.npy", self.effective_volumes)
 
         else:

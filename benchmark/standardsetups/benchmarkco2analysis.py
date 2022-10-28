@@ -11,7 +11,6 @@ import daria
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-
 from benchmark.rigs.largefluidflower import LargeFluidFlower
 from benchmark.utils.misc import read_time_from_path
 
@@ -111,6 +110,10 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         # Store verbosity
         self.verbosity = verbosity
+
+        # Create folder for results if not existent
+        self.path_to_results: Path = Path(self.config["results_path"])
+        self.path_to_results.parents[0].mkdir(parents=True, exist_ok=True)
 
     # ! ---- Setup tools
     def load_and_process_image(self, path: Union[str, Path]) -> None:
@@ -312,7 +315,10 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             # Write corrected image with contours to file
             if write_contours_to_file:
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
+                cv2.imwrite(
+                    str(self.path_to_results / Path(f"{img_id}_with_contours.jpg")),
+                    original_img,
+                )
 
         # Write segmentation to file
         write_segmentation_to_file = kwargs.pop("write_segmentation_to_file", False)
@@ -332,7 +338,10 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
             # Store fine scale segmentation
             if write_segmentation_to_file:
-                np.save(f"segmentation/{img_id}_segmentation.npy", segmentation)
+                np.save(
+                    self.path_to_results / Path(f"{img_id}_segmentation.npy"),
+                    segmentation,
+                )
 
             # Store coarse scale segmentation
             if write_coarse_segmentation_to_file:
@@ -347,7 +356,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                 coarse_segmentation[co2_coarse] += 1
                 coarse_segmentation[co2_gas_coarse] += 1
                 np.save(
-                    f"segmentation/{img_id}_coarse_segmentation.npy",
+                    self.path_to_results / Path(f"{img_id}_coarse_segmentation.npy"),
                     coarse_segmentation,
                 )
 
