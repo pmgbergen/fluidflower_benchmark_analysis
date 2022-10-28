@@ -59,6 +59,7 @@
 
     "segmentation": {
         "labels_path": "cache/labels.npy",
+        "monochromatic_color": "value",
         "median disk radius": 20,
         "rescaling factor": 0.1,
         "marker_points": [
@@ -67,7 +68,12 @@
             [3231, 564],
             [2760, 4020],
             [1800, 5240],
-            [3500, 4600]
+            [3500, 4600],
+            [1345, 5760],
+            [1520, 3470],
+            [1390, 1935],
+            [2115, 3500],
+            [2100, 1350]
         ],
         "region_size": 30,
         "dilation size": 10,

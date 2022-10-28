@@ -101,13 +101,36 @@ class LargeFluidFlower(daria.AnalysisBase):
             labels_path.parents[0].mkdir(parents=True, exist_ok=True)
             np.save(self.config["segmentation"]["labels_path"], labels)
 
+        def _labels_to_mask(ids: list) -> np.ndarray:
+            ids = ids if isinstance(ids, list) else [ids]
+            mask = np.zeros(labels.shape[:2], dtype=bool)
+            for i in ids:
+                mask[labels == i] = True
+            return mask
+
         # Hardcoded - works for C1-5: Identify water layer with id 0
-        self.water = labels == 0
+        self.water = _labels_to_mask(0)
 
         # Hardcoded - works for C1-5: Identify ESF layer with ids 1, 3, 4
-        self.esf = np.zeros(labels.shape[:2], dtype=bool)
-        for i in [1, 3, 4]:
-            self.esf = np.logical_or(self.esf, labels == i)
+        self.esf_sand = _labels_to_mask([1, 8, 9])
+
+        # Hardcoded - works for C1-5: Identify C layer with ids
+        self.c_sand = _labels_to_mask([2, 3, 4])
+
+        # Create new labeled image
+        self.labels = np.zeros(labels.shape[:2], dtype=np.uint8)
+        self.labels_legend = {
+            "water": 0,
+            "esf_sand": 1,
+            "c_sand": 2,
+            "rest": 3,
+        }
+        # Initiate all elements with the default parameter
+        self.labels[:, :] = self.labels_legend["rest"]
+        # Overwrite all specific segments
+        self.labels[self.water] = self.labels_legend["water"]
+        self.labels[self.esf_sand] = self.labels_legend["esf_sand"]
+        self.labels[self.c_sand] = self.labels_legend["c_sand"]
 
     def _determine_effective_volumes(self) -> None:
         """
