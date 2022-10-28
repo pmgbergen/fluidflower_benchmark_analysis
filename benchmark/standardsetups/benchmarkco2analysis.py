@@ -16,7 +16,142 @@ from benchmark.utils.misc import read_time_from_path
 
 
 # Define specific concentration analysis class to detect mobile CO2
-class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
+class CO2MaskAnalysis(daria.LayeredBinaryConcentrationAnalysis):
+    """
+    Binary concentration analysis based on a multichromatic HSV comparison
+    and further analysis on the third component, i.e., V, identifying signal
+    strength.
+    """
+
+    def __init__(self, base, color, labels, labels_legend, **kwargs) -> None:
+        super().__init__(base, color, labels, **kwargs)
+
+        # Fetch parameters for HUE based thresholding
+        self.hue_low_threshold = {}
+        self.hue_high_threshold = {}
+        self.hue_low_threshold["esf_sand"] = kwargs.pop("threshold min hue esf", 0.0)
+        self.hue_high_threshold["esf_sand"] = kwargs.pop("threshold max hue esf", 360)
+
+        self.hue_low_threshold["c_sand"] = kwargs.pop("threshold min hue c", 0.0)
+        self.hue_high_threshold["c_sand"] = kwargs.pop("threshold max hue c", 360)
+
+        self.hue_low_threshold["rest"] = kwargs.pop("threshold min hue rest", 0.0)
+        self.hue_high_threshold["rest"] = kwargs.pop("threshold max hue rest", 360)
+
+        # Heterogeneous thresholding
+        self.threshold_value = np.zeros(self.base.img.shape[:2], dtype=float)
+        # Water - discard
+        water = labels == labels_legend["water"]
+        self.threshold_value[water] = 1.0
+        # ESF-specific thresholding
+        esf_sand = labels == labels_legend["esf_sand"]
+        self.threshold_value[esf_sand] = kwargs.pop("threshold value esf")
+        # C-specific thresholding
+        c_sand = labels == labels_legend["c_sand"]
+        self.threshold_value[c_sand] = kwargs.pop("threshold value c")
+        # The rest
+        rest = labels == labels_legend["rest"]
+        self.threshold_value[rest] = kwargs.pop("threshold value rest")
+
+        # Store input
+        self.labels = labels
+        self.labels_legend = labels_legend
+
+    def _extract_scalar_information(self, img: daria.Image) -> None:
+        """Transform to HSV.
+
+        Args:
+            img (daria.Image): Input image which shall be modified.
+        """
+        img.img = cv2.cvtColor(img.img.astype(np.float32), cv2.COLOR_RGB2HSV)
+
+    def _extract_scalar_information_after(self, img: np.ndarray) -> np.ndarray:
+        """Return 3rd component of HSV (value), identifying signal strength.
+
+        Args:
+            img (np.ndarray): trichromatic image in HSV color space.
+
+        Returns:
+            np.ndarray: monochromatic image
+        """
+
+        # Clip values in hue - from calibration.
+        h_img = img[:, :, 0]
+        v_img = img[:, :, 2]
+
+        if self.verbosity:
+            plt.figure("H component")
+            plt.imshow(h_img)
+            plt.show()
+
+        # Investigate OTSU on each layer - aside of water
+        esf_sand = self.labels == self.labels_legend["esf_sand"]
+        c_sand = self.labels == self.labels_legend["c_sand"]
+        rest = self.labels == self.labels_legend["rest"]
+
+        # esf_values = np.ravel(h_img)[np.ravel(esf_sand)]
+        # c_values = np.ravel(h_img)[np.ravel(c_sand)]
+        # rest_values = np.ravel(h_img)[np.ravel(rest)]
+
+        ## Find automatic threshold value using OTSU
+        # esf_thresh = skimage.filters.threshold_otsu(esf_values)
+        # c_thresh = skimage.filters.threshold_otsu(c_values)
+        # rest_thresh = skimage.filters.threshold_otsu(rest_values)
+
+        # print("OTSU threshold h esf value", esf_thresh)
+        # print("OTSU threshold h c value", c_thresh)
+        # print("OTSU threshold h rest value", rest_thresh)
+
+        # esf_values = np.ravel(v_img)[np.ravel(esf_sand)]
+        # c_values = np.ravel(v_img)[np.ravel(c_sand)]
+        # rest_values = np.ravel(v_img)[np.ravel(rest)]
+
+        ## Find automatic threshold value using OTSU
+        # esf_thresh = skimage.filters.threshold_otsu(esf_values)
+        # c_thresh = skimage.filters.threshold_otsu(c_values)
+        # rest_thresh = skimage.filters.threshold_otsu(rest_values)
+
+        # print("OTSU threshold v esf value", esf_thresh)
+        # print("OTSU threshold v c value", c_thresh)
+        # print("OTSU threshold v rest value", rest_thresh)
+
+        # Go through all layers and restrict to the considered values
+
+        # Water - discard
+        # TODO
+
+        # ESF sand
+        threshold_mask_esf_sand = skimage.filters.apply_hysteresis_threshold(
+            h_img,
+            self.hue_low_threshold["esf_sand"],
+            self.hue_high_threshold["esf_sand"],
+        )
+        img[np.logical_and(esf_sand, ~threshold_mask_esf_sand)] = 0
+
+        # C sand
+        threshold_mask_c_sand = skimage.filters.apply_hysteresis_threshold(
+            h_img, self.hue_low_threshold["c_sand"], self.hue_high_threshold["c_sand"]
+        )
+        img[np.logical_and(c_sand, ~threshold_mask_c_sand)] = 0
+
+        # Rest
+        threshold_mask_rest = skimage.filters.apply_hysteresis_threshold(
+            h_img, self.hue_low_threshold["rest"], self.hue_high_threshold["rest"]
+        )
+        img[np.logical_and(rest, ~threshold_mask_rest)] = 0
+
+        plt.figure("thresholded h image")
+        plt.imshow(img[:, :, 0])
+        plt.figure("thresholded v image")
+        plt.imshow(img[:, :, 2])
+        plt.show()
+
+        # Consider Value (3rd component from HSV) to detect signal strength.
+        return img[:, :, 2]
+
+
+# Define specific concentration analysis class to detect mobile CO2
+class CO2MaskAnalysis_old(daria.BinaryConcentrationAnalysis):
     """
     Binary concentration analysis based on a multichromatic HSV comparison
     and further analysis on the third component, i.e., V, identifying signal
@@ -137,7 +272,11 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
         co2_analysis = CO2MaskAnalysis(
-            self.base, color="", esf=self.esf, **self.config["co2"]
+            self.base,
+            color="",
+            labels=self.labels,
+            labels_legend=self.labels_legend,
+            **self.config["co2"],
         )
 
         return co2_analysis
@@ -183,7 +322,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         # Add expert knowledge. Turn of any signal outside the presence of co2.
         # And turn off any signal in the ESF layer.
         co2_gas.img[~co2.img] = 0
-        co2_gas.img[self.esf] = 0
+        co2_gas.img[self.esf_sand] = 0
 
         return co2_gas
 
@@ -272,7 +411,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             contours_co2, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
-            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
+            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 1)
 
             # Overlay the original image with contours for CO2(g)
             contours_co2_gas, _ = cv2.findContours(
@@ -280,7 +419,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE,
             )
-            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
+            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 1)
 
             # Overlay the original image with contours of Box A
             contours_box_A, _ = cv2.findContours(
