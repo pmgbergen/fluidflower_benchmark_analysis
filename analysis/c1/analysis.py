@@ -6,12 +6,12 @@ from pathlib import Path
 from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 
 # Define the location for images of C1 (all images in the folder)
-images_folder = Path("/home/jakub/images/ift/benchmark/c1")
-images = list(sorted(images_folder.glob("*.JPG")))
+images_folder = Path("H:/sets/tiff_corrected/c1")
+images = list(sorted(images_folder.glob("*.TIF")))[10:]
 
 # Define the location of all baseline images
 baseline_folder = images_folder / Path("baseline")
-baseline = list(sorted(baseline_folder.glob("*.JPG")))
+baseline = list(sorted(images_folder.glob("*.TIF")))[:10]
 
 # Define the location of the config file for C1
 config = Path("./config.json")
