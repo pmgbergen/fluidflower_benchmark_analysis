@@ -24,17 +24,15 @@
         }
     },
 
-
     "segmentation": {
         "labels_path": "tmp/labels.npy",
         "median disk radius": 20,
         "rescaling factor": 0.1,
-        "markers disk radius": 10,
-        "threshold": 14,
-        "gradient disk radius": 2,
+        "marker_points": [[1030, 3580], [370, 3575], [3231, 564], [2760, 4020], [1800, 5240], [3500, 4600]],
+        "region_size": 30,
         "dilation size": 10,
-        "boundary size": 80,
-        "verbosity": true
+        "boundary size": 90,
+        "verbosity": false
     },
 
     "co2": {

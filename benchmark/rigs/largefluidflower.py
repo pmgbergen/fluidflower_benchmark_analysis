@@ -67,11 +67,19 @@ class LargeFluidFlower(daria.AnalysisBase):
     def _segment_geometry(self, update_setup: bool = False) -> None:
         """
         Use watershed segmentation and some cleaning to segment
-        the geometry. Note that not all sand layers are detected
-        by this approach.
+        the geometry. The routine further identifies the water and
+        ESF layers. This is hardcoded and works well with the config
+        files used for the CO2 analysis.
+
+        TODO: Need to think about a more general approach or move the
+        segmentation into the analysis, since it will be analysis-dependent
+        which detail of the segmentation will be needed (tracer analysis
+        requires more detail for instance).
 
         Args:
-            update_setup (bool): flag whether
+            update_setup (bool): flag controlling whether the labeled image
+                identifying different layers is necessarily updated even
+                if it is cached.
         """
 
         # Fetch or generate and store labels
@@ -81,17 +89,20 @@ class LargeFluidFlower(daria.AnalysisBase):
         ):
             labels = np.load(self.config["segmentation"]["labels_path"])
         else:
-            labels = daria.segment(self.base.img, **self.config["segmentation"])
+            labels = daria.segment(
+                self.base.img,
+                markers_method="supervised",
+                edges_method="scharr",
+                **self.config["segmentation"]
+            )
             np.save(self.config["segmentation"]["labels_path"], labels)
 
-        # Hardcoded: Identify water layer
-        self.water = np.zeros(labels.shape[:2], dtype=bool)
-        for i in [0, 1]:
-            self.water = np.logical_or(self.water, labels == i)
+        # Hardcoded - works for C1-5: Identify water layer with id 0
+        self.water = labels == 0
 
-        # Hardcoded: Identify ESF layer with ids 1, 4, 6
+        # Hardcoded - works for C1-5: Identify ESF layer with ids 1, 3, 4
         self.esf = np.zeros(labels.shape[:2], dtype=bool)
-        for i in [2, 5, 7]:
+        for i in [1, 3, 4]:
             self.esf = np.logical_or(self.esf, labels == i)
 
     def _determine_effective_volumes(self) -> None:
