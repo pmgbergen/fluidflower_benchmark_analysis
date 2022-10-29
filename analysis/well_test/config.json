@@ -2,51 +2,85 @@
     "description": "config file for FluidFlower Benchmark well/tracer test",
 
     "physical_asset": {
-        "dimensions": {"width": 2.745, "height": 1.5},
+        "dimensions": {"width": 2.8, "height": 1.5},
         "parameters": {"porosity": 0.44}
     },
 
     "drift": {
-        "roi": [[1050, 2630], [1340, 2920]]
+        "roi": [
+            [153, 16],
+            [788, 16],
+            [788, 734],
+            [153, 734]
+        ]
     },
 
     "color": {
-        "roi": [[375, 493], [558, 501], [560, 240], [378, 230]]
+        "roi": [
+            [377, 502],
+            [561, 510],
+            [564, 249],
+            [380, 240]
+        ]
     },
 
     "geometry": {
-        "init": {"horizontal_bulge": 1e-09, "vertical_bulge": 0.0},
+        "init": {
+            "horizontal_bulge": 5e-10,
+            "horizontal_center_offset": 0,
+            "vertical_bulge": 0,
+            "vertical_center_offset": 0
+        },
+
         "crop": {
-            "pts_src": [[30, 21], [47, 4409], [7915, 4393], [7913, 10]],
-            "width": 2.745,
+            "pts_src": [[28, 30], [41, 4383], [7917, 4371], [7917, 19]],
+            "width": 2.8,
             "height": 1.5
         },
+
         "bulge": {
             "horizontal_bulge": -0.0,
-            "vertical_bulge": -4.07606560621726e-09,
             "horizontal_center_offset": 0,
+            "vertical_bulge": -4.06061733411027e-09,
             "vertical_center_offset": -8
         },
+
         "stretch": {
-            "horizontal_stretch": -3.95466460890734e-09,
-            "horizontal_center_offset": 0,
-            "vertical_stretch": -0.0,
-            "vertical_center_offset": 0
+            "horizontal_stretch": -1.7060115267192474e-09,
+            "horizontal_center_offset": -286,
+            "vertical_stretch": 3.2177888435429053e-09,
+            "vertical_center_offset": 702
         }
     },
 
     "segmentation": {
-        "labels": "tmp/labels.npy",
+        "labels_path": "cache/labels.npy",
+        "monochromatic_color": "value",
         "median disk radius": 20,
         "rescaling factor": 0.1,
-        "markers disk radius": 10,
-        "threshold": 20,
-        "gradient disk radius": 2,
+        "marker_points": [
+            [1030, 3580],
+            [370, 3575],
+            [3231, 564],
+            [2760, 4020],
+            [1800, 5240],
+            [3500, 4600],
+            [1345, 5760],
+            [1520, 3470],
+            [1390, 1935],
+            [2115, 3500],
+            [2100, 1350],
+            [1730, 4070]
+        ],
+        "region_size": 30,
         "dilation size": 10,
-        "boundary size": 80
+        "boundary size": 90,
+        "verbosity": false
+
     },
 
-    "concentration": {
-        "cleaning_filter": "tmp/cleaning_filter.npy"
+    "tracer": {
+        "cleaning_filter": "cache/cleaning_filter.npy",
+        "median_disk_radius": 20
     }
 }
