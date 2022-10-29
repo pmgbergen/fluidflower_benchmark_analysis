@@ -1,59 +1,42 @@
 """
-Analysis of FluidFlower Benchmark Run C1.
+Analysis of well test for the FluidFlower Benchmark.
 """
-import time
 from pathlib import Path
 
-import cv2
-import matplotlib.pyplot as plt
-import numpy as np
-import skimage
-
-from fluidflower import BenchmarkRig
+from benchmark.standardsetups.benchmarktraceranalysis import \
+    BenchmarkTracerAnalysis
 
 folder = Path("/home/jakub/images/ift/benchmark/well_test")
 pt1 = Path("211002 well tests")
 pt2 = Path("211002 well tests_overnight")
 pt3 = Path("211003 well tests continued_1")
-baseline = Path("baseline")
-processed = Path("processed")
+images_folder = folder / pt3
+file_ending = "*.JPG"
+config = "./config.json"
 
-
-# Define FluidFlower with first 10 baseline images
-baseline_images = list(sorted((folder / baseline).glob("*.JPG")))[:20]
-ff = BenchmarkRig(baseline_images, config_source="./config.json", update_setup=True)
-
-## Completely flushed rig for calibration
-# img_flushed = folder / Path("220202_well_test") / Path("DSC04224.JPG")
-# ff.load_and_process_image(img_flushed)
-# plt.figure()
-# plt.imshow(ff.img.img)
-# plt.show()
-# full_tracer = ff.determine_concentration()
-# plt.figure()
-# plt.imshow(full_tracer.img)
-# plt.show()
-
+images = list(sorted((folder / pt3).glob(file_ending)))
+baseline = list(sorted((folder / Path("baseline")).glob(file_ending)))[:20]
 
 # Extract concentration.
 images = [
-    #    list(sorted((folder / pt3).glob("*.JPG")))[10],
-    #    list(sorted((folder / pt3).glob("*.JPG")))[20],
-    #    list(sorted((folder / pt3).glob("*.JPG")))[30],
-    list(sorted((folder / pt3).glob("*.JPG")))[0],
+    images[0],
+    images[10],
+    images[20],
+    images[30],
 ]
 
-print(images)
-for img in images:
+# Completely flushed rig for calibration
+# img_flushed = folder / Path("220202_well_test") / Path("DSC04224.JPG")
 
-    tic = time.time()
+tracer_analysis = BenchmarkTracerAnalysis(
+    baseline=baseline,  # paths to baseline images
+    config=config,  # path to config file
+    update_setup=False,  # flag controlling whether aux. data needs update
+    verbosity=False,  # print intermediate results to screen
+)
 
-    ff.load_and_process_image(img)
-
-    concentration = ff.determine_concentration()
-
-    print(f"Elapsed time: {time.time() - tic}.")
-
-    plt.figure()
-    plt.imshow(concentration.img)
-    plt.show()
+# Perform batch analysis for the entire images folder
+tracer_analysis.batch_analysis(
+    images=images,
+    plot_concentration=True,
+)
