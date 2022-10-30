@@ -1,26 +1,25 @@
 """
 Analysis of FluidFlower Benchmark Run BC02.
 """
-from pathlib import Path
-
 from benchmark.standardsetups.mediumco2analysis import MediumCO2Analysis
+from benchmark.utils.misc import read_paths_from_user_data
 
-# Define the location for images of BC02 (all images in the folder)
-images_folder = Path("/home/jakub/images/ift/medium/BC02")
-images = list(sorted(images_folder.glob("*.JPG")))
+# Read user-defined paths to images, number of baseline images, and config file
+images, baseline, config = read_paths_from_user_data("user_data.json")
 
-# Define the location of all baseline images
-baseline_folder = images_folder / Path("baseline")
-baseline = list(sorted(baseline_folder.glob("*.JPG")))
-
-# Define the location of the config file for BC02
-config = Path("./config.json")
+images = [
+    images[10],
+    images[20],
+    images[30],
+    images[40],
+]
 
 # Define FluidFlower based on a full set of basline images
 analysis = MediumCO2Analysis(
     baseline=baseline,  # paths to baseline images
     config=config,  # path to config file
     update_setup=False,  # flag controlling whether aux. data needs update
+    verbosity=False,  # print intermediate results to screen
 )
 
 # Perform standardized CO2 batch analysis on all images from BC02.
