@@ -1,6 +1,8 @@
 {
     "description": "FluidFlower Benchmark config file for bc02",
 
+    "results_path": "results",
+
     "physical_asset": {
         "dimensions": {
             "width": 0.92,
@@ -12,12 +14,22 @@
         "parameters": {"porosity": 0.44}
     },
     
+    "injection_start": "220523 150331",
+
     "drift": {
-        "roi": [[600, 6750], [50, 7575]]
+        "roi": [
+            [600, 6750],
+            [50, 7575]
+        ]
     },
 
     "color": {
-        "roi": [[6804, 94], [6810, 570], [7525, 572], [7516, 96]]
+        "roi": [
+            [6804, 94],
+            [6810, 570],
+            [7525, 572],
+            [7516, 96]
+        ]
     },
 
     "geometry": {
@@ -37,20 +49,31 @@
     },
 
     "segmentation": {
-        "labels_path": "tmp/labels.npy",
+        "labels_path": "cache/labels.npy",
         "median disk radius": 20,
         "rescaling factor": 0.05,
-        "marker_points": [[520,2830], [837,110], [938,2755], [1666,4653], [2030,1471], [2257,5268], [3188,5297], [3923,4878], [55, 2916], [2621, 1412], [3153, 2523], [3413, 2682], [753, 6957]],
+        "marker_points": [
+            [520,2830],
+            [837,110],
+            [938,2755],
+            [1666,4653],
+            [2030,1471],
+            [2257,5268],
+            [3188,5297],
+            [3923,4878],
+            [55, 2916],
+            [2621, 1412],
+            [3153, 2523],
+            [3413, 2682],
+            [753, 6957]
+        ],
         "region_size": 30,
         "dilation size": 10,
         "boundary size": 45
     },
 
     "co2": {
-        "cleaning_filter": "tmp/co2_cleaning_filter.npy",
-
-        "threshold min hue": 10,
-        "threshold max hue": 70,
+        "cleaning_filter": "cache/co2_cleaning_filter.npy",
 
         "presmoothing": true,
         "presmoothing resize": 0.5,
@@ -58,18 +81,13 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "threshold value esf": 0.04,
-        "threshold value non-esf": 0.04,
+        "threshold value": 20,
 
-        "postsmoothing": true,
-        "postsmoothing resize": 0.5,
-        "postsmoothing weight": 5,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100
+        "verbosity": false
     },
 
     "co2(g)": {
-        "cleaning_filter": "tmp/co2_gas_cleaning_filter.npy",
+        "cleaning_filter": "cache/co2_gas_cleaning_filter.npy",
 
         "presmoothing": true,
         "presmoothing resize": 0.5,
