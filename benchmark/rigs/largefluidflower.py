@@ -48,7 +48,7 @@ class LargeFluidFlower(daria.AnalysisBase):
         """
         # Box A, B, C in metric coorddinates (left top, and right lower point)
         self.box_A = np.array([[1.1, 0.6], [2.8, 0.0]])
-        self.box_B = np.array([[0.0, 1.3], [1.1, 0.7]])
+        self.box_B = np.array([[0.0, 1.2], [1.1, 0.6]])
         self.box_C = np.array([[1.1, 0.4], [2.6, 0.1]])
 
         # Box A, B, C in terms of pixels, adapted to the size of the base image
@@ -99,7 +99,7 @@ class LargeFluidFlower(daria.AnalysisBase):
             # Store to file (create required directories if needed)
             labels_path = Path(self.config["segmentation"]["labels_path"])
             labels_path.parents[0].mkdir(parents=True, exist_ok=True)
-            np.save(self.config["segmentation"]["labels_path"], labels)
+            np.save(labels_path, labels)
 
         def _labels_to_mask(ids: list) -> np.ndarray:
             ids = ids if isinstance(ids, list) else [ids]
