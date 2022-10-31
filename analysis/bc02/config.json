@@ -32,7 +32,7 @@
         ]
     },
 
-    "geometry": {
+    "curvature": {
         "init": {"horizontal_bulge": 1e-09, "vertical_bulge": 1e-09},
 
         "crop": {

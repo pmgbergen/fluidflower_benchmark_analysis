@@ -24,7 +24,7 @@
         ]
     },
 
-    "geometry": {
+    "curvature": {
         "init": {
             "horizontal_bulge": 5e-10,
             "horizontal_center_offset": 0,
@@ -69,8 +69,7 @@
             [1520, 3470],
             [1390, 1935],
             [2115, 3500],
-            [2100, 1350],
-            [1730, 4070]
+            [2100, 1350]
         ],
         "region_size": 30,
         "dilation size": 10,
