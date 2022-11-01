@@ -83,7 +83,41 @@
     },
 
     "co2": {
-        "cleaning_filter": "cache/co2_mask_cleaning_filter.npy",
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_value.npy",
+
+        "threshold min hue": 7,
+        "threshold max hue": 60,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value": 0.04,
+
+        "verbosity": false
+    },
+
+    "co2_hue": {
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_hue_10.npy",
+
+        "threshold min hue": 7,
+        "threshold max hue": 60,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value": 0.9,
+
+        "verbosity": true
+    },
+
+    "co2_layered": {
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_layered.npy",
 
         "threshold min hue esf": 8,
         "threshold max hue esf": 50,
@@ -110,7 +144,7 @@
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 100,
 
-        "verbosity": true
+        "verbosity": false
     },
 
     "co2(g)": {
