@@ -8,7 +8,7 @@ from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 # Define location of images and config file
 images_folder ="/home/jakub/images/ift/benchmark/c1"
 file_ending = "*.JPG"
-config = "./config.json"
+config = "./co2_config.json"
 
 images = list(sorted(Path(images_folder).glob(file_ending)))
 baseline = list(sorted(Path(Path(images_folder) / Path("baseline")).glob(file_ending)))[:10]
