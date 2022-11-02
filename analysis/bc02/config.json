@@ -1,8 +1,6 @@
 {
     "description": "FluidFlower Benchmark config file for bc02",
 
-    "results_path": "results",
-
     "physical_asset": {
         "dimensions": {
             "width": 0.92,
@@ -24,6 +22,7 @@
     },
 
     "color": {
+        "active": false,
         "roi": [
             [6804, 94],
             [6810, 570],
@@ -73,7 +72,7 @@
     },
 
     "co2": {
-        "cleaning_filter": "cache/co2_cleaning_filter.npy",
+        "cleaning_filter": "cache/co2_cleaning_filter_red.npy",
 
         "presmoothing": true,
         "presmoothing resize": 0.5,
@@ -81,13 +80,111 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "threshold value": 20,
+        "threshold value": 0.15,
 
-        "verbosity": false
+        "verbosity": true
+    },
+
+    "co2(g)_yellow/sat": {
+        "cleaning_filter": "cache/co2_gas_cleaning_filter_yellow.npy",
+
+        "threshold hue min": 40,
+        "threshold hue max": 80,
+
+        "presmoothing": false,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.1,
+
+        "postsmoothing": false,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": false,
+        "threshold posterior gradient modulus": 0.002,
+
+        "verbosity": true
+    },
+
+    "co2(g)_hsv": {
+        "cleaning_filter": "cache/co2_gas_cleaning_filter_hsv.npy",
+
+        "threshold hue min": 40,
+        "threshold hue max": 80,
+
+        "presmoothing": false,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.2,
+
+        "postsmoothing": false,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": false,
+        "threshold posterior gradient modulus": 0.002,
+
+        "verbosity": true
+    },
+
+    "co2(g)_hed": {
+        "cleaning_filter": "cache/co2_gas_cleaning_filter_hed.npy",
+
+        "presmoothing": false,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.0,
+
+        "postsmoothing": false,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": false,
+        "threshold posterior gradient modulus": 0.002,
+
+        "verbosity": true
+    },
+
+    "co2(g)_blue": {
+        "cleaning_filter": "cache/co2_gas_cleaning_filter_blue.npy",
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.01,
+
+        "postsmoothing": true,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "threshold posterior gradient modulus": 0.002,
+
+        "verbosity": true
     },
 
     "co2(g)": {
-        "cleaning_filter": "cache/co2_gas_cleaning_filter.npy",
+        "cleaning_filter": "cache/co2_gas_cleaning_filter_blue_new.npy",
 
         "presmoothing": true,
         "presmoothing resize": 0.5,
@@ -104,7 +201,9 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "threshold posterior gradient modulus": 0.002
+        "threshold posterior gradient modulus": 0.002,
+
+        "verbosity": true
     },
 
     "calibration": {"scaling": 1.0}
