@@ -386,6 +386,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             np.ndarray: co2(g) mask
             dict: dictinary with all stored results from the post-analysis.
         """
+
         # Load the current image
         self.load_and_process_image(img)
 
@@ -434,8 +435,8 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
             # Keep track of result and store internally
             if "fingering_analysis_box_C" not in self.results:
-                self.results["fingering_analysis_box_C"] = {}
-            self.results["fingering_analysis_box_C"][relative_time] = length_finger
+                self.results["fingering_analysis_box_C"] = []
+            self.results["fingering_analysis_box_C"].append([relative_time, length_finger])
 
             if self.verbosity:
                 print(
@@ -592,12 +593,21 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         return self.results
 
-    def write_results_to_file(self, folder: Path) -> None:
+    def write_results_to_file(self) -> None:
         """
         Write results in separate files.
 
         Args:
             folder (Path): folder where the results are stored.
         """
-        for keys in self.results.keys():
-            pass
+
+        # Write results of fingering analysis to file
+        if "fingering_analysis_box_C" in self.results.keys():
+            # Convert list to a numpy array
+            finger_length_c = np.array(self.results["fingering_analysis_box_C"])
+
+            # Store to file as npy file
+            np.save(self.path_to_results / Path("finger_length_c.npy"), finger_length_c)
+
+            # Store to file as cvs file
+            np.savetxt(self.path_to_results / Path("finger_lenght_c.csv"), finger_length_c, delimiter = ",")

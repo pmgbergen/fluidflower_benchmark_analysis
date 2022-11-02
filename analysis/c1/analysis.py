@@ -21,8 +21,11 @@ co2_analysis = BenchmarkCO2Analysis(
 # Perform standardized CO2 batch analysis on all images from C1.
 co2_analysis.batch_analysis(
     images=images,  # paths to images to be considered
-    plot_contours=True,  # print contour lines for CO2 onto image
-    fingering_analysis_box_C=False,  # determine and print the length of the fingers in box C
-    write_contours_to_file=True,
+    plot_contours=False,  # print contour lines for CO2 onto image
+    fingering_analysis_box_C=True,  # determine and print the length of the fingers in box C
+    write_contours_to_file=False,
     # ...for more options, check the keyword arguments of BenchmarkCO2Analysis.batch_analysis.
 )
+
+# Write final results to file
+co2_analysis.write_results_to_file()
