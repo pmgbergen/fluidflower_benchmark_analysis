@@ -244,6 +244,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         self,
         baseline: Union[str, Path, list[str], list[Path]],
         config: Union[str, Path],
+        results: Union[str, Path],
         update_setup: bool = False,
         verbosity: bool = False,
     ) -> None:
@@ -256,6 +257,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             baseline (str, Path or list of such): baseline images, used to
                 set up analysis tools and cleaning tools
             config (str or Path): path to config dict
+            results (str or Path): path to results directory
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
             verbosity  (bool): flag controlling whether results of the
@@ -275,8 +277,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         self.results: dict = {}
 
         # Create folder for results if not existent
-        self.path_to_results: Path = Path(self.config["results_path"])
-        self.path_to_results.parents[0].mkdir(parents=True, exist_ok=True)
+        self.path_to_results: Path = Path(results)
 
         # Store verbosity
         self.verbosity = verbosity
@@ -395,6 +396,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
         co2_gas = self.determine_co2_gas_mask(co2)
 
         # ! ---- Post-analysis
+
 
         # Define some general data first:
         # Crop folder and ending from path - required for writing to file.

@@ -1,8 +1,6 @@
 {
     "description": "FluidFlower Benchmark setup for run C2 - for previsouly corrected images - rest identical to c1.",
 
-    "results_path": "results",
-
     "physical_asset": {
         "dimensions": {"width": 2.8, "height": 1.5},
         "parameters": {"porosity": 0.44}

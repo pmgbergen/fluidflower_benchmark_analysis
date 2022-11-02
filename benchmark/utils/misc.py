@@ -48,7 +48,7 @@ def read_time_from_path(path: Union[Path, str]) -> datetime:
 
 def read_paths_from_user_data(
     path: Union[Path, str]
-) -> tuple[list[Path], list[Path], Path]:
+) -> tuple[list[Path], list[Path], Path, Path]:
     """
     Method to read paths to images, baseline images and conig from
     standardized input config file.
@@ -60,6 +60,7 @@ def read_paths_from_user_data(
         list of Path: paths to images
         list of Path: paths to baseline images
         Path: path to config file
+        Path: path to results directory
     """
     # Convert to Path
     if isinstance(path, str):
@@ -82,4 +83,8 @@ def read_paths_from_user_data(
     # Path to analysis specific config file
     config = Path(user_data["config"])
 
-    return images, baseline, config
+    # Path to results directory, create if not existent yet
+    results = Path(user_data["results"])
+    results.mkdir(parents=True, exist_ok=True)
+
+    return images, baseline, config, results

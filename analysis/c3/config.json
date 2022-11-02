@@ -1,8 +1,6 @@
 {
     "description": "FluidFlower Benchmark setup for run C3 - almost identical to that of C2.",
 
-    "results_path": "results",
-
     "physical_asset": {
         "dimensions": {"width": 2.8, "height": 1.5},
         "parameters": {"porosity": 0.44}
