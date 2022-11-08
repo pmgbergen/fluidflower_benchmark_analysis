@@ -36,8 +36,7 @@ class LargeFluidFlower(daria.AnalysisBase):
         self._segment_geometry(update_setup=update_setup)
 
         # Determine effective volumes, required for calibration, determining total mass etc.
-        # TODO double check details
-        # self._determine_effective_volumes()
+        self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
 
@@ -101,6 +100,14 @@ class LargeFluidFlower(daria.AnalysisBase):
             labels_path.parents[0].mkdir(parents=True, exist_ok=True)
             np.save(labels_path, labels)
 
+        # Store the labels as attribute
+        self.labels = labels
+
+        #import matplotlib.pyplot as plt
+        #plt.figure()
+        #plt.imshow(labels)
+        #plt.show()
+
         def _labels_to_mask(ids: list) -> np.ndarray:
             ids = ids if isinstance(ids, list) else [ids]
             mask = np.zeros(labels.shape[:2], dtype=bool)
@@ -112,25 +119,32 @@ class LargeFluidFlower(daria.AnalysisBase):
         self.water = _labels_to_mask(0)
 
         # Hardcoded - works for C1-5: Identify ESF layer with ids 1, 3, 4
-        self.esf_sand = _labels_to_mask([1, 8, 9])
+        self.esf_sand = _labels_to_mask([1, 10, 11])
 
         # Hardcoded - works for C1-5: Identify C layer with ids
         self.c_sand = _labels_to_mask([2, 3, 4])
 
-        # Create new labeled image
-        self.labels = np.zeros(labels.shape[:2], dtype=np.uint8)
-        self.labels_legend = {
-            "water": 0,
-            "esf_sand": 1,
-            "c_sand": 2,
-            "rest": 3,
-        }
-        # Initiate all elements with the default parameter
-        self.labels[:, :] = self.labels_legend["rest"]
-        # Overwrite all specific segments
-        self.labels[self.water] = self.labels_legend["water"]
-        self.labels[self.esf_sand] = self.labels_legend["esf_sand"]
-        self.labels[self.c_sand] = self.labels_legend["c_sand"]
+        self.component_groups = [[1,10,11], [2,3,4]]
+
+        self.label_reduced = np.ones_like(self.labels)
+        self.label_reduced[self.water] = 0
+        self.label_reduced[self.esf_sand] = 1
+        self.label_reduced[self.c_sand] = 2
+
+        ## Create new labeled image
+        #self.labels = np.zeros(labels.shape[:2], dtype=np.uint8)
+        #self.labels_legend = {
+        #    "water": 0,
+        #    "esf_sand": 1,
+        #    "c_sand": 2,
+        #    "rest": 3,
+        #}
+        ## Initiate all elements with the default parameter
+        #self.labels[:, :] = self.labels_legend["rest"]
+        ## Overwrite all specific segments
+        #self.labels[self.water] = self.labels_legend["water"]
+        #self.labels[self.esf_sand] = self.labels_legend["esf_sand"]
+        #self.labels[self.c_sand] = self.labels_legend["c_sand"]
 
     def _determine_effective_volumes(self) -> None:
         """
@@ -138,11 +152,13 @@ class LargeFluidFlower(daria.AnalysisBase):
         Use constant porosity for now; this should be changed, when a proper
         segmentation is provided.
         """
-        # TODO use self.img here? Then we can use this on boxes as well! It takes approx.
-        # The setup takes approx. 30 seconds. So the cost is bareable when not switiching
-        # between different boxes too often.
 
-        if not Path("tmp/volumes.npy").exists():
+        # Fetch volumes from file if existent, otherwise generate.
+        path = Path(self.config["physical_asset"]["volumes_path"])
+        if path.exists():
+            self.effective_volumes = np.load(path)
+
+        else:
             # Determine number of voxels in each dimension - assume 2d image
             Ny, Nx = self.base.img.shape[:2]
             Nz = 1
@@ -150,7 +166,7 @@ class LargeFluidFlower(daria.AnalysisBase):
             y = np.arange(Ny)
             X_pixel, Y_pixel = np.meshgrid(x, y)
             pixel_vector = np.transpose(
-                np.vstack((np.ravel(X_pixel), np.ravel(Y_pixel)))
+                np.vstack((np.ravel(Y_pixel), np.ravel(X_pixel)))
             )
             coords_vector = self.base.coordinatesystem.pixelToCoordinate(pixel_vector)
 
@@ -341,8 +357,5 @@ class LargeFluidFlower(daria.AnalysisBase):
             # Compute effective volume per porous voxel
             self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
-            # TODO read path from config
-            np.save("tmp/volumes.npy", self.effective_volumes)
-
-        else:
-            self.effective_volumes = np.load("tmp/volumes.npy")
+            # Store in cache
+            np.save(path, self.effective_volumes)
