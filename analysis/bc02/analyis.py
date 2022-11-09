@@ -8,10 +8,11 @@ from benchmark.utils.misc import read_paths_from_user_data
 images, baseline, config, results = read_paths_from_user_data("user_data.json")
 
 images = [
-#   images[10],
+    images[10],
     images[20],
-#    images[30],
+    images[30],
     images[60],
+    images[100],
 ]
 
 # Define FluidFlower based on a full set of basline images
