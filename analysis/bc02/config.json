@@ -22,7 +22,11 @@
     },
 
     "color": {
-        "active": false,
+        "reference": "custom",
+        "custom_colorchecker_path": "./color_checker_BC02.npy",
+        "custom_colorchecker_update": false,
+        "custom_colorchecker_reference_image": "/home/jakub/images/ift/medium/BC02/220523_time145832_DSC01323.JPG",
+
         "roi": [
             [6804, 94],
             [6810, 570],
@@ -74,13 +78,40 @@
     "co2": {
         "cleaning_filter": "cache/co2_cleaning_filter_red.npy",
 
+        "color": "red",
+
         "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
         "presmoothing resize": 0.5,
-        "presmoothing weight": 5,
+        "presmoothing weight": 0.05,
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
         "threshold value": 0.15,
+
+        "verbosity": true
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "cache/co2_gas_cleaning_filter_blue_new.npy",
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize": 0.25,
+        "presmoothing weight": 0.05,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.06,
+
+        "postsmoothing": true,
+        "postsmoothing resize": 0.25,
+        "postsmoothing weight": 0.05,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "threshold posterior gradient modulus": 0.0005,
 
         "verbosity": true
     },
@@ -170,29 +201,6 @@
         "presmoothing max_num_iter": 100,
 
         "threshold value": 0.01,
-
-        "postsmoothing": true,
-        "postsmoothing resize": 0.5,
-        "postsmoothing weight": 5,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
-
-        "posterior": true,
-        "threshold posterior gradient modulus": 0.002,
-
-        "verbosity": true
-    },
-
-    "co2(g)": {
-        "cleaning_filter": "cache/co2_gas_cleaning_filter_blue_new.npy",
-
-        "presmoothing": true,
-        "presmoothing resize": 0.5,
-        "presmoothing weight": 5,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "threshold value": 0.05,
 
         "postsmoothing": true,
         "postsmoothing resize": 0.5,
