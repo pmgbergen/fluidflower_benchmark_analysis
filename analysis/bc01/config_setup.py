@@ -23,6 +23,7 @@ img = skimage.exposure.adjust_gamma(img, gamma=0.7)
 # All relevant config parameters will be stored in a dictionary collecting several configs.
 # Initialize the config dict.
 config: dict() = {}
+config["drift"] = {}
 config["color"] = {}
 config["curvature"] = {
     "use_cache": True,
@@ -32,7 +33,17 @@ plt.figure("Original image")
 plt.imshow(img)
 plt.show()
 
-# !----- 1. Step: Color checker
+
+# !----- 1. Step: ROI of Color checker for drift correction
+# Define two corner points of a rectangle which contains the color checker.
+# And be generous; this does not need (and should not) be too accurate.
+# Use (row,col), i.e., (y,x) format.
+config["drift"]["roi"] = [
+    [600, 6750],
+    [50, 7575],
+]
+
+# !----- 2. Step: Color checker
 # Find the coordinates for the four marks on the color checker. Starting from the
 # brown tile and proceeding counter clock wise. Use (x,y) format.
 config["color"]["roi"] = [
@@ -42,7 +53,7 @@ config["color"]["roi"] = [
     [7506, 102],
 ]
 
-# !----- 2. Step: Curvature correction
+# !----- 3. Step: Curvature correction
 
 # Initialize curvature correction
 curvature_correction = darsia.CurvatureCorrection(img)
