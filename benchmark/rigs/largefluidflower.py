@@ -5,12 +5,12 @@ Includes segmentation and depth map.
 from pathlib import Path
 from typing import Union
 
-import daria
+import darsia
 import numpy as np
 from scipy.interpolate import RBFInterpolator
 
 
-class LargeFluidFlower(daria.AnalysisBase):
+class LargeFluidFlower(darsia.AnalysisBase):
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
@@ -27,7 +27,7 @@ class LargeFluidFlower(daria.AnalysisBase):
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
-        daria.AnalysisBase.__init__(self, baseline, config, update_setup)
+        darsia.AnalysisBase.__init__(self, baseline, config, update_setup)
 
         # Define boxes A, B, C, relevant for the benchmark analysis
         self._define_boxes()
@@ -61,9 +61,9 @@ class LargeFluidFlower(daria.AnalysisBase):
         self.mask_box_B = np.zeros(self.base.img.shape[:2], dtype=bool)
         self.mask_box_C = np.zeros(self.base.img.shape[:2], dtype=bool)
 
-        self.mask_box_A[daria.bounding_box(self.box_A_roi)] = True
-        self.mask_box_B[daria.bounding_box(self.box_B_roi)] = True
-        self.mask_box_C[daria.bounding_box(self.box_C_roi)] = True
+        self.mask_box_A[darsia.bounding_box(self.box_A_roi)] = True
+        self.mask_box_B[darsia.bounding_box(self.box_B_roi)] = True
+        self.mask_box_C[darsia.bounding_box(self.box_C_roi)] = True
 
     def _segment_geometry(self, update_setup: bool = False) -> None:
         """
@@ -90,7 +90,7 @@ class LargeFluidFlower(daria.AnalysisBase):
         ):
             labels = np.load(self.config["segmentation"]["labels_path"])
         else:
-            labels = daria.segment(
+            labels = darsia.segment(
                 self.base.img,
                 markers_method="supervised",
                 edges_method="scharr",
