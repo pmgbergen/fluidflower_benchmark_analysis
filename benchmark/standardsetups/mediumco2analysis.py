@@ -6,14 +6,14 @@ from pathlib import Path
 from typing import Union
 
 import cv2
-import daria
+import darsia
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.bilbo import Bilbo
 
 
-class MediumCO2Analysis(Bilbo, daria.CO2Analysis):
+class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
     """
     Class for managing the FluidFlower benchmark analysis.
     Identifiers for CO2 dissolved in water and CO2(g) are
@@ -39,28 +39,28 @@ class MediumCO2Analysis(Bilbo, daria.CO2Analysis):
                 routines is emptied.
         """
         Bilbo.__init__(self, baseline, config, update_setup)
-        daria.CO2Analysis.__init__(self, baseline, config, update_setup)
+        darsia.CO2Analysis.__init__(self, baseline, config, update_setup)
 
     # ! ---- Analysis tools for detecting the different CO2 phases
 
-    def define_co2_analysis(self) -> daria.BinaryConcentrationAnalysis:
+    def define_co2_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
         # co2_analysis = CO2MaskAnalysis(
         #    self.base, color="", esf=self.esf, **self.config["co2"]
         # )
-        co2_analysis = daria.BinaryConcentrationAnalysis(
+        co2_analysis = darsia.BinaryConcentrationAnalysis(
             self.base, color="hue", **self.config["co2"]
         )
 
         return co2_analysis
 
-    def define_co2_gas_analysis(self) -> daria.BinaryConcentrationAnalysis:
+    def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
         Identify CO2(g) using a thresholding scheme on the blue color channel.
         """
-        co2_gas_analysis = daria.BinaryConcentrationAnalysis(
+        co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
             self.base, color="blue", **self.config["co2(g)"]
         )
 
@@ -68,11 +68,11 @@ class MediumCO2Analysis(Bilbo, daria.CO2Analysis):
 
     # ! ----- Analysis tools
 
-    def determine_co2_mask(self) -> daria.Image:
+    def determine_co2_mask(self) -> darsia.Image:
         """Determine CO2.
 
         Returns:
-            daria.Image: boolean image detecting CO2.
+            darsia.Image: boolean image detecting CO2.
         """
         # Extract co2 from analysis
         co2 = super().determine_co2()
@@ -82,14 +82,14 @@ class MediumCO2Analysis(Bilbo, daria.CO2Analysis):
 
         return co2
 
-    def determine_co2_gas_mask(self, co2: daria.Image) -> daria.Image:
+    def determine_co2_gas_mask(self, co2: darsia.Image) -> darsia.Image:
         """Determine CO2.
 
         Args:
-            co2 (daria.Image): boolean image detecting all co2.
+            co2 (darsia.Image): boolean image detecting all co2.
 
         Returns:
-            daria.Image: boolean image detecting CO2(g).
+            darsia.Image: boolean image detecting CO2(g).
         """
         # Extract co2 from analysis
         co2_gas = super().determine_co2_gas()

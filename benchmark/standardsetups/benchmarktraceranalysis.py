@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Union
 
 import cv2
-import daria
+import darsia
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
@@ -16,10 +16,10 @@ from benchmark.rigs.largefluidflower import LargeFluidFlower
 # from benchmark.utils.misc import read_time_from_path
 
 
-class TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
+class TailoredConcentrationAnalysis(darsia.ConcentrationAnalysis):
     def __init__(
         self,
-        base: Union[daria.Image, list[daria.Image]],
+        base: Union[darsia.Image, list[darsia.Image]],
         color: Union[str, callable] = "gray",
         **kwargs,
     ) -> None:
@@ -42,7 +42,7 @@ class TailoredConcentrationAnalysis(daria.ConcentrationAnalysis):
         return super().postprocess_signal(signal)
 
 
-class BenchmarkTracerAnalysis(LargeFluidFlower, daria.TracerAnalysis):
+class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
     """
     Class for managing the well test of the FluidFlower benchmark.
     """
@@ -70,7 +70,7 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, daria.TracerAnalysis):
                 are printed to screen; default is False.
         """
         LargeFluidFlower.__init__(self, baseline, config, update_setup)
-        daria.TracerAnalysis.__init__(self, baseline, config, update_setup)
+        darsia.TracerAnalysis.__init__(self, baseline, config, update_setup)
 
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
@@ -94,7 +94,7 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, daria.TracerAnalysis):
 
     # ! ---- Analysis tools for detecting the tracer concentration
 
-    def define_tracer_analysis(self) -> daria.ConcentrationAnalysis:
+    def define_tracer_analysis(self) -> darsia.ConcentrationAnalysis:
         """
         Identify tracer concentration using a reduction to the garyscale space
         """
@@ -106,12 +106,12 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, daria.TracerAnalysis):
 
         return tracer_analysis
 
-    def determine_tracer(self) -> daria.Image:
+    def determine_tracer(self) -> darsia.Image:
         """Extract tracer from currently loaded image, based on a reference image.
         Add expert knowledge, that there is no tracer in the water.
 
         Returns:
-            daria.Image: image array of spatial concentration map
+            darsia.Image: image array of spatial concentration map
         """
         # Extract concentration from the analysis
         tracer_concentration = super().determine_tracer()

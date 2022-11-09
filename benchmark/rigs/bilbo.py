@@ -5,12 +5,12 @@ Includes segmentation and depth map.
 from pathlib import Path
 from typing import Union
 
-import daria
+import darsia
 import numpy as np
 from scipy.interpolate import RBFInterpolator
 
 
-class Bilbo(daria.AnalysisBase):
+class Bilbo(darsia.AnalysisBase):
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
@@ -27,14 +27,14 @@ class Bilbo(daria.AnalysisBase):
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
-        daria.AnalysisBase.__init__(self, baseline, config, update_setup)
+        darsia.AnalysisBase.__init__(self, baseline, config, update_setup)
 
         # Segment the baseline image; identidy water and esf layer.
         self._segment_geometry(update_setup=update_setup)
 
         # Determine effective volumes, required for calibration, determining total mass etc.
         # TODO has to be included?
-        #self._determine_effective_volumes()
+        # self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
 
@@ -50,10 +50,19 @@ class Bilbo(daria.AnalysisBase):
         """
 
         # Fetch or generate and store labels
-        if Path(self.config["segmentation"]["labels_path"]).exists() and not update_setup:
+        if (
+            Path(self.config["segmentation"]["labels_path"]).exists()
+            and not update_setup
+        ):
             labels = np.load(self.config["segmentation"]["labels_path"])
         else:
-            labels = daria.segment(self.base.img, markers_method = "supervised", edges_method = "scharr", verbosity = False, **self.config["segmentation"])
+            labels = darsia.segment(
+                self.base.img,
+                markers_method="supervised",
+                edges_method="scharr",
+                verbosity=False,
+                **self.config["segmentation"]
+            )
             np.save(self.config["segmentation"]["labels_path"], labels)
 
         # Hardcoded: Identify water layer / Color checker (valid for BC02)
@@ -67,6 +76,7 @@ class Bilbo(daria.AnalysisBase):
             self.esf = np.logical_or(self.esf, labels == i)
 
         import matplotlib.pyplot as plt
+
         plt.figure()
         plt.imshow(self.base.img)
         plt.imshow(labels, alpha=0.3)
