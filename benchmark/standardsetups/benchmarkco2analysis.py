@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Union
 
 import cv2
-import daria
+import darsia
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
@@ -17,7 +17,7 @@ from benchmark.utils.misc import read_time_from_path
 # TODO major cleanup required!
 
 ## Define specific concentration analysis class to detect mobile CO2
-#class CO2MaskAnalysis_layered(daria.LayeredBinaryConcentrationAnalysis):
+# class CO2MaskAnalysis_layered(darsia.LayeredBinaryConcentrationAnalysis):
 #    """
 #    Binary concentration analysis based on a multichromatic HSV comparison
 #    and further analysis on the third component, i.e., V, identifying signal
@@ -58,11 +58,11 @@ from benchmark.utils.misc import read_time_from_path
 #        self.labels = labels
 #        self.labels_legend = labels_legend
 #
-#    def _extract_scalar_information(self, img: daria.Image) -> None:
+#    def _extract_scalar_information(self, img: darsia.Image) -> None:
 #        """Transform to HSV.
 #
 #        Args:
-#            img (daria.Image): Input image which shall be modified.
+#            img (darsia.Image): Input image which shall be modified.
 #        """
 #        img.img = cv2.cvtColor(img.img.astype(np.float32), cv2.COLOR_RGB2HSV)
 #
@@ -152,7 +152,7 @@ from benchmark.utils.misc import read_time_from_path
 
 
 ## Define specific concentration analysis class to detect mobile CO2
-#class CO2MaskAnalysis_old(daria.BinaryConcentrationAnalysis):
+# class CO2MaskAnalysis_old(darsia.BinaryConcentrationAnalysis):
 #    """
 #    Binary concentration analysis based on a multichromatic HSV comparison
 #    and further analysis on the third component, i.e., V, identifying signal
@@ -171,11 +171,11 @@ from benchmark.utils.misc import read_time_from_path
 #        self.hue_low_threshold = kwargs.pop("threshold min hue", 0.0)
 #        self.hue_high_threshold = kwargs.pop("threshold max hue", 360)
 #
-#    def _extract_scalar_information(self, img: daria.Image) -> None:
+#    def _extract_scalar_information(self, img: darsia.Image) -> None:
 #        """Transform to HSV.
 #
 #        Args:
-#            img (daria.Image): Input image which shall be modified.
+#            img (darsia.Image): Input image which shall be modified.
 #        """
 #        img.img = cv2.cvtColor(img.img.astype(np.float32), cv2.COLOR_RGB2HSV)
 #
@@ -203,7 +203,7 @@ from benchmark.utils.misc import read_time_from_path
 #        return img[:, :, 2]
 #
 #
-#class CO2MaskAnalysis(daria.BinaryConcentrationAnalysis):
+# class CO2MaskAnalysis(darsia.BinaryConcentrationAnalysis):
 #    """
 #    Binary concentration analysis based on a multichromatic HSV comparison
 #    and further analysis on the third component, i.e., V, identifying signal
@@ -233,7 +233,8 @@ from benchmark.utils.misc import read_time_from_path
 #
 #        return skimage.img_as_float(mask)
 
-class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
+
+class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
     """
     Class for managing the FluidFlower benchmark analysis.
     Identifiers for CO2 dissolved in water and CO2(g) are
@@ -264,7 +265,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
                 post-analysis are printed to screen; default is False.
         """
         LargeFluidFlower.__init__(self, baseline, config, update_setup)
-        daria.CO2Analysis.__init__(self, baseline, config, update_setup)
+        darsia.CO2Analysis.__init__(self, baseline, config, update_setup)
 
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
@@ -291,7 +292,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             path (str or Path): path to image
         """
         # Read image via parent class
-        daria.CO2Analysis.load_and_process_image(self, path)
+        darsia.CO2Analysis.load_and_process_image(self, path)
 
         # Ammend image with time, reading from title assuming title
         # of format */yyMMdd_timeHHmmss*.
@@ -299,26 +300,26 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
     # ! ---- Analysis tools for detecting the different CO2 phases
 
-    def define_co2_analysis(self) -> daria.BinaryConcentrationAnalysis:
+    def define_co2_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
 
         # TODO major cleanup required!
 
-        #co2_analysis = CO2MaskAnalysis(
+        # co2_analysis = CO2MaskAnalysis(
         #    self.base,
         #    color="",
         #    labels=self.labels,
         #    labels_legend=self.labels_legend,
         #    **self.config["co2"],
-        #)
-        #co2_analysis = CO2MaskAnalysis(
+        # )
+        # co2_analysis = CO2MaskAnalysis(
         #    self.base,
         #    color="hue",
         #    **self.config["co2"],
-        #)
-        co2_analysis = daria.BinaryConcentrationAnalysis(
+        # )
+        co2_analysis = darsia.BinaryConcentrationAnalysis(
             self.base,
             color="value",
             **self.config["co2"],
@@ -326,11 +327,11 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         return co2_analysis
 
-    def define_co2_gas_analysis(self) -> daria.BinaryConcentrationAnalysis:
+    def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
         Identify CO2(g) using a thresholding scheme on the blue color channel.
         """
-        co2_gas_analysis = daria.BinaryConcentrationAnalysis(
+        co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
             self.base, color="blue", **self.config["co2(g)"]
         )
 
@@ -338,11 +339,11 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
     # ! ----- Analysis tools
 
-    def determine_co2_mask(self) -> daria.Image:
+    def determine_co2_mask(self) -> darsia.Image:
         """Determine CO2.
 
         Returns:
-            daria.Image: boolean image detecting CO2.
+            darsia.Image: boolean image detecting CO2.
         """
         # Extract co2 from analysis
         co2 = super().determine_co2()
@@ -352,14 +353,14 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         return co2
 
-    def determine_co2_gas_mask(self, co2: daria.Image) -> daria.Image:
+    def determine_co2_gas_mask(self, co2: darsia.Image) -> darsia.Image:
         """Determine CO2.
 
         Args:
-            co2 (daria.Image): boolean image detecting all co2.
+            co2 (darsia.Image): boolean image detecting all co2.
 
         Returns:
-            daria.Image: boolean image detecting CO2(g).
+            darsia.Image: boolean image detecting CO2(g).
         """
         # Extract co2 from analysis
         co2_gas = super().determine_co2_gas()
@@ -398,7 +399,6 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
 
         # ! ---- Post-analysis
 
-
         # Define some general data first:
         # Crop folder and ending from path - required for writing to file.
         img_id = Path(img.name).with_suffix("")
@@ -419,11 +419,11 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             # Apply Venn diagram concept to exclude the boundary of box C. For this consider
             # the CO2, the water, and the entire box, and take the correct difference.
 
-            contour_length_co2 = daria.contour_length(co2, roi=self.box_C)
-            contour_length_water = daria.contour_length(
+            contour_length_co2 = darsia.contour_length(co2, roi=self.box_C)
+            contour_length_water = darsia.contour_length(
                 co2, roi=self.box_C, values_of_interest=[False]
             )
-            boundary_box_C = daria.perimeter(self.box_C)
+            boundary_box_C = darsia.perimeter(self.box_C)
 
             # Venn diagram concept to determine the internal contour of the CO2.
             # Cut values at 0, slightly negative values can occur e.g., when
@@ -436,7 +436,9 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             # Keep track of result and store internally
             if "fingering_analysis_box_C" not in self.results:
                 self.results["fingering_analysis_box_C"] = []
-            self.results["fingering_analysis_box_C"].append([relative_time, length_finger])
+            self.results["fingering_analysis_box_C"].append(
+                [relative_time, length_finger]
+            )
 
             if self.verbosity:
                 print(
@@ -610,4 +612,8 @@ class BenchmarkCO2Analysis(LargeFluidFlower, daria.CO2Analysis):
             np.save(self.path_to_results / Path("finger_length_c.npy"), finger_length_c)
 
             # Store to file as cvs file
-            np.savetxt(self.path_to_results / Path("finger_lenght_c.csv"), finger_length_c, delimiter = ",")
+            np.savetxt(
+                self.path_to_results / Path("finger_lenght_c.csv"),
+                finger_length_c,
+                delimiter=",",
+            )
