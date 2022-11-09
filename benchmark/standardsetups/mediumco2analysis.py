@@ -2,6 +2,7 @@
 Module containing the standardized CO2 analysis applicable for the medium rig.
 """
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Union
 
@@ -24,7 +25,9 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         self,
         baseline: Union[str, Path, list[str], list[Path]],
         config: Union[str, Path],
+        results: Union[str, Path],
         update_setup: bool = False,
+        verbosity: bool = False,
     ) -> None:
         """
         Constructor for the analysis of the medium rig.
@@ -35,11 +38,30 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
             base (str, Path or list of such): baseline images, used to
                 set up analysis tools and cleaning tools
             config (str or Path): path to config dict
+            results (str or Path): path to results folder
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
+            verbosity  (bool): flag controlling whether results of the
+                post-analysis are printed to screen; default is False.
         """
         Bilbo.__init__(self, baseline, config, update_setup)
         darsia.CO2Analysis.__init__(self, baseline, config, update_setup)
+
+        # The above constructors provide access to the config via self.config.
+        # Determine the injection start from the config file. Expect format
+        # complying with "%y%m%d %H%M%D", e.g., "211127 083412"
+        self.injection_start: datetime = datetime.strptime(
+            self.config["injection_start"], "%y%m%d %H%M%S"
+        )
+
+        # Initialize results dictionary for post-analysis
+        self.results: dict = {}
+
+        # Create folder for results if not existent
+        self.path_to_results = results
+
+        # Store verbosity
+        self.verbosity = verbosity
 
     # ! ---- Analysis tools for detecting the different CO2 phases
 
@@ -47,21 +69,19 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
-        # co2_analysis = CO2MaskAnalysis(
-        #    self.base, color="", esf=self.esf, **self.config["co2"]
-        # )
         co2_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, color="hue", **self.config["co2"]
+            self.base, **self.config["co2"]
         )
 
         return co2_analysis
 
     def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
-        Identify CO2(g) using a thresholding scheme on the blue color channel.
+        Identify CO2(g) using a thresholding scheme on the blue color channel,
+        controlled from external config file.
         """
         co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, color="blue", **self.config["co2(g)"]
+            self.base, **self.config["co2(g)"]
         )
 
         return co2_gas_analysis
@@ -78,7 +98,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         co2 = super().determine_co2()
 
         # Add expert knowledge. Turn of any signal in the water zone
-        co2.img[self.water] = 0
+        co2.img[self.extended_water] = 0
 
         return co2
 
@@ -97,74 +117,113 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         # Add expert knowledge. Turn of any signal outside the presence of co2.
         # And turn off any signal in the ESF layer.
         co2_gas.img[~co2.img] = 0
-        co2_gas.img[self.esf] = 0
+        co2_gas.img[self.esf_sand] = 0
+        co2_gas.img[self.c_sand] = 0
 
         return co2_gas
 
-    def batch_analysis(
-        self, images: list[Path], verbosity: bool = True, write_to_file: bool = False
-    ) -> None:
+    def single_image_analysis(
+        self, img: Path, **kwargs
+    ) -> tuple[np.ndarray, np.ndarray, dict]:
         """
-        Standard batch analysis for BC*.
+        Standard workflow to analyze CO2 phases.
 
         Args:
-            images (list of Path): paths to batch of images.
-            verbosity (bool): flag controlling whether intermediate results
-                are plotted.
-            write_to_file (bool): flag controlling whether the final results
-                are written to file.
+            image (Path): path to single image.
+            kwargs: optional keyword arguments, see batch_analysis.
+
+        Returns:
+            np.ndarray: co2 mask
+            np.ndarray: co2(g) mask
+            dict: dictinary with all stored results from the post-analysis.
         """
+        # Load the current image
+        img_cv2 = cv2.cvtColor(cv2.imread(str(img)), cv2.COLOR_BGR2RGB)
 
-        for num, img in enumerate(images):
+        self.load_and_process_image(img)
 
-            # Information to the user
-            print(f"working on {num}: {img.name}")
+        # Determine binary mask detecting any(!) CO2
+        co2 = self.determine_co2_mask()
 
-            tic = time.time()
+        # Determine binary mask detecting mobile CO2.
+        co2_gas = self.determine_co2_gas_mask(co2)
 
-            # Load the current image
-            self.load_and_process_image(img)
+        # ! ---- Post-analysis
 
-            # Determine binary mask detecting any(!) CO2
-            co2 = self.determine_co2_mask()
+        # Define some general data first:
+        # Crop folder and ending from path - required for writing to file.
+        img_id = Path(img.name).with_suffix("")
 
-            # Determine binary mask detecting mobile CO2.
-            co2_gas = self.determine_co2_gas_mask(co2)
+        # Determine the time increment (in terms of hours),
+        # referring to injection start, in hours.
+        SECONDS_TO_HOURS = 1.0 / 3600
+        relative_time = (
+            self.img.timestamp - self.injection_start
+        ).total_seconds() * SECONDS_TO_HOURS
 
-            # Create image with contours on top
+        # Plot and store image with contours
+        plot_contours = kwargs.pop("plot_contours", False)
+        write_contours_to_file = kwargs.pop("write_contours_to_file", False)
+
+        if plot_contours or write_contours_to_file:
+
+            # Start with the original image
+            original_img = np.copy(self.img.img)
+            original_img = skimage.img_as_ubyte(original_img)
+
+            # Overlay the original image with contours for CO2
             contours_co2, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
+            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
+
+            # Overlay the original image with contours for CO2(g)
             contours_co2_gas, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2_gas.img),
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE,
             )
-            original_img = np.copy(self.img.img)
-            original_img = skimage.img_as_ubyte(original_img)
-            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
             cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
 
-            # Plot corrected image with contours
-            if verbosity:
-                plt.figure()
+            # Plot
+            if plot_contours:
+                plt.figure("Image with contours of CO2 segmentation")
                 plt.imshow(original_img)
                 plt.show()
 
-            # Write to file
-            if write_to_file:
-                # Write corrected image with contours to file
-                img_id = Path(img.name).with_suffix("")
+            # Write corrected image with contours to file
+            if write_contours_to_file:
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(f"segmentation/{img_id}_with_contours.jpg", original_img)
+                cv2.imwrite(
+                    str(self.path_to_results / Path(f"{img_id}_with_contours.jpg")),
+                    original_img,
+                )
 
-                # Store fine scale segmentation
-                segmentation = np.zeros(self.img.img.shape[:2], dtype=int)
-                segmentation[co2.img] += 1
-                segmentation[co2_gas.img] += 1
-                np.save(f"segmentation/{img_id}_segmentation.npy", segmentation)
+        # Write segmentation to file
+        write_segmentation_to_file = kwargs.pop("write_segmentation_to_file", False)
+        write_coarse_segmentation_to_file = kwargs.pop(
+            "write_coarse_segmentation_to_file", False
+        )
 
-                # Store coarse scale segmentation
+        if write_segmentation_to_file or write_coarse_segmentation_to_file:
+
+            # Generate segmentation with codes:
+            # 0 - water
+            # 1 - dissolved CO2
+            # 2 - gaseous CO2
+            segmentation = np.zeros(self.img.img.shape[:2], dtype=int)
+            segmentation[co2.img] += 1
+            segmentation[co2_gas.img] += 1
+
+            # Store fine scale segmentation
+            if write_segmentation_to_file:
+                np.save(
+                    self.path_to_results / Path(f"{img_id}_segmentation.npy"),
+                    segmentation,
+                )
+
+            # Store coarse scale segmentation
+            if write_coarse_segmentation_to_file:
                 coarse_shape = (150, 280)
                 coarse_segmentation = np.zeros(coarse_shape, dtype=int)
                 co2_coarse = skimage.img_as_bool(
@@ -176,8 +235,43 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
                 coarse_segmentation[co2_coarse] += 1
                 coarse_segmentation[co2_gas_coarse] += 1
                 np.save(
-                    f"segmentation/{img_id}_coarse_segmentation.npy",
+                    self.path_to_results / Path(f"{img_id}_coarse_segmentation.npy"),
                     coarse_segmentation,
                 )
 
-            print(f"Elapsed time for {img.name}: {time.time()- tic}.")
+        return co2, co2_gas, self.results
+
+    def batch_analysis(self, images: list[Path], **kwargs) -> dict:
+        """
+        Standard batch analysis for C1, ..., C5.
+
+        Args:
+            images (list of Path): paths to batch of images.
+            kwargs: optional keyword arguments:
+                plot_contours (bool): flag controlling whether the original image
+                    is plotted with contours of the two CO2 phases; default False.
+                write_contours_to_file (bool): flag controlling whether the plot from
+                    plot_contours is written to file; default False.
+                write_segmentation_to_file (bool): flag controlling whether the
+                    CO2 segmentation is written to file, where water, dissolved CO2
+                    and CO2(g) get decoded 0, 1, 2, respectively; default False.
+                write_coarse_segmentation_to_file (bool): flag controlling whether
+                    a coarse (280 x 150) representation of the CO2 segmentation from
+                    write_segmentation_to_file is written to file; default False.
+
+        Returns:
+            dict: dictinary with all stored results from the post-analysis.
+        """
+
+        for num, img in enumerate(images):
+
+            tic = time.time()
+
+            # Determine binary mask detecting any(!) CO2, and CO2(g), and apply post-analysis.
+            self.single_image_analysis(img, **kwargs)
+
+            # Information to the user
+            if self.verbosity:
+                print(f"Elapsed time for {img.name}: {time.time()- tic}.")
+
+        return self.results
