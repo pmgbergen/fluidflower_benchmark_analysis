@@ -30,7 +30,7 @@ class Bilbo(darsia.AnalysisBase):
         darsia.AnalysisBase.__init__(self, baseline, config, update_setup)
 
         # Segment the baseline image; identidy water and esf layer.
-        self._segment_geometry(update_setup=update_setup)
+        #self._segment_geometry(update_setup=update_setup)
 
         # Determine effective volumes, required for calibration, determining total mass etc.
         # TODO has to be included?
@@ -60,27 +60,36 @@ class Bilbo(darsia.AnalysisBase):
                 self.base.img,
                 markers_method="supervised",
                 edges_method="scharr",
-                verbosity=False,
                 **self.config["segmentation"]
             )
-            np.save(self.config["segmentation"]["labels_path"], labels)
+            labels_path = Path(self.config["segmentation"]["labels_path"])
+            labels_path.parents[0].mkdir(parents=True, exist_ok=True)
+            np.save(labels_path, labels)
+
+        def _labels_to_mask(ids: list) -> np.ndarray:
+            ids = ids if isinstance(ids, list) else [ids]
+            mask = np.zeros(labels.shape[:2], dtype=bool)
+            for i in ids:
+                mask[labels==i] = True
+            return mask
 
         # Hardcoded: Identify water layer / Color checker (valid for BC02)
-        self.water = np.zeros(labels.shape[:2], dtype=bool)
-        for i in [0, 2]:
-            self.water = np.logical_or(self.water, labels == i)
+        self.water = _labels_to_mask([0, 2])
 
-        # Hardcoded: Identify ESF layer with ids 2, 11 (valid for BC02)
-        self.esf = np.zeros(labels.shape[:2], dtype=bool)
-        for i in [2, 11]:
-            self.esf = np.logical_or(self.esf, labels == i)
+        # Hardcoded: Define extended water zone, essentially upper zone
+        # of the medium including some of the ESF sand, as strong
+        # light fluctuations interfere with the top of the ESF layer.
+        self.extended_water = np.zeros_like(self.water)
+        self.extended_water[:450,:] = True
 
-        import matplotlib.pyplot as plt
+        # Hardcoded: Identify ESF layer (valid for BC02)
+        self.esf_sand = _labels_to_mask([1, 10])
 
-        plt.figure()
-        plt.imshow(self.base.img)
-        plt.imshow(labels, alpha=0.3)
-        plt.show()
+        # Hardcoded: Identify C sand layer (valid for BC02)
+        self.c_sand = _labels_to_mask(4)
+
+        self.labels = labels
+
 
     def _determine_effective_volumes(self) -> None:
         """

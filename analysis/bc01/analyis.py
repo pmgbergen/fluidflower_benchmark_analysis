@@ -1,19 +1,11 @@
 """
-Analysis of FluidFlower Benchmark Run BC02.
+Analysis of FluidFlower Benchmark Run BC01.
 """
 from benchmark.standardsetups.mediumco2analysis import MediumCO2Analysis
 from benchmark.utils.misc import read_paths_from_user_data
 
 # Read user-defined paths to images, number of baseline images, and config file
 images, baseline, config, results = read_paths_from_user_data("user_data.json")
-
-images = [
-    images[10],
-    images[20],
-    images[30],
-    images[60],
-    images[100],
-]
 
 # Define FluidFlower based on a full set of basline images
 analysis = MediumCO2Analysis(

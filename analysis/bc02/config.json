@@ -22,7 +22,11 @@
     },
 
     "color": {
-        "active": false,
+        "reference": "custom",
+        "custom_colorchecker_path": "./color_checker_BC02.npy",
+        "custom_colorchecker_update": false,
+        "custom_colorchecker_reference_image": "/home/jakub/images/ift/medium/BC02/220523_time145832_DSC01323.JPG",
+
         "roi": [
             [6804, 94],
             [6810, 570],
@@ -44,7 +48,10 @@
             "vertical_bulge": -7.920726738295304e-10,
             "horizontal_center_offset": 0,
             "vertical_center_offset": 228
-        }
+        },
+
+        "use_cache": true
+
     },
 
     "segmentation": {
@@ -67,22 +74,84 @@
             [753, 6957]
         ],
         "region_size": 30,
-        "dilation size": 10,
+        "dilation size": 0,
         "boundary size": 45
     },
 
     "co2": {
-        "cleaning_filter": "cache/co2_cleaning_filter_red.npy",
+        "cleaning_filter": "cache/cleaning_filter_red.npy",
+
+        "color": "red",
 
         "presmoothing": true,
+        "presmoothing method": "bregman isotropic",
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 0.05,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value": 0.12,
+
+        "postsmoothing": false,
+        "presmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 2,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "verbosity": false
+    },
+
+    "co2 on grain level": {
+        "cleaning_filter": "cache/cleaning_filter_red.npy",
+
+        "color": "red",
+
+        "presmoothing": true,
+        "presmoothing method": "chambolle",
         "presmoothing resize": 0.5,
         "presmoothing weight": 5,
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "threshold value": 0.15,
+        "threshold value": 0.12,
 
-        "verbosity": true
+        "postsmoothing": false,
+        "presmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 2,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "verbosity": false
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "cache/cleaning_filter_blue.npy",
+
+        "color": "blue",
+
+        "presmoothing": true,
+        "presmoothing method": "anisotropic bregman",
+        "presmoothing resize x": 0.2,
+        "presmoothing resize y": 0.8,
+        "presmoothing weight": 0.01,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.032,
+
+        "postsmoothing": true,
+        "presmoothing method": "anisotropic bregman",
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 0.01,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "threshold posterior gradient modulus": 0.0015,
+
+        "verbosity": false
     },
 
     "co2(g)_yellow/sat": {
@@ -170,29 +239,6 @@
         "presmoothing max_num_iter": 100,
 
         "threshold value": 0.01,
-
-        "postsmoothing": true,
-        "postsmoothing resize": 0.5,
-        "postsmoothing weight": 5,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
-
-        "posterior": true,
-        "threshold posterior gradient modulus": 0.002,
-
-        "verbosity": true
-    },
-
-    "co2(g)": {
-        "cleaning_filter": "cache/co2_gas_cleaning_filter_blue_new.npy",
-
-        "presmoothing": true,
-        "presmoothing resize": 0.5,
-        "presmoothing weight": 5,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "threshold value": 0.05,
 
         "postsmoothing": true,
         "postsmoothing resize": 0.5,
