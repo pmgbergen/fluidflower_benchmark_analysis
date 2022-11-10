@@ -30,11 +30,10 @@ class Bilbo(darsia.AnalysisBase):
         darsia.AnalysisBase.__init__(self, baseline, config, update_setup)
 
         # Segment the baseline image; identidy water and esf layer.
-        #self._segment_geometry(update_setup=update_setup)
+        self._segment_geometry(update_setup=update_setup)
 
         # Determine effective volumes, required for calibration, determining total mass etc.
-        # TODO has to be included?
-        # self._determine_effective_volumes()
+        #self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
 
