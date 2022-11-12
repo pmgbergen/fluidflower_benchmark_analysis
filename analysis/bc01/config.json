@@ -35,9 +35,30 @@
     },
 
     "segmentation": {
-        "comment": "reuse the same labels as computed for bc02",
 
-        "labels_path": "cache/labels_bc02.npy"
+        "labels_path": "cache/labels.npy",
+        "median disk radius": 50,
+        "rescaling factor progressive works": 1.0,
+        "rescaling factor": 0.5,
+        "marker_points": [
+            [520,2830],
+            [837,110],
+            [938,2755],
+            [1666,4653],
+            [2030,1471],
+            [2257,5268],
+            [3188,5297],
+            [3923,4878],
+            [55, 2916],
+            [2621, 1412],
+            [3153, 2523],
+            [3413, 2682],
+            [753, 6957]
+        ],
+        "region_size": 30,
+        "dilation size": 0,
+        "boundary size": 60,
+        "verbosity": true
     },
 
     "co2": {
