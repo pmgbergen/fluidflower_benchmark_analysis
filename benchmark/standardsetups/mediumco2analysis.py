@@ -69,8 +69,8 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
-        co2_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, **self.config["co2"]
+        co2_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+            self.base, self.labels, **self.config["co2"]
         )
 
         return co2_analysis
@@ -80,8 +80,8 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         Identify CO2(g) using a thresholding scheme on the blue color channel,
         controlled from external config file.
         """
-        co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, **self.config["co2(g)"]
+        co2_gas_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+            self.base, self.labels, **self.config["co2(g)"]
         )
 
         return co2_gas_analysis
