@@ -97,7 +97,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         # Extract co2 from analysis
         co2 = super().determine_co2()
 
-        # Add expert knowledge. Turn of any signal in the water zone
+        # Add expert knowledge. Turn of any signal in the water zone.
         co2.img[self.extended_water] = 0
 
         return co2
@@ -111,14 +111,12 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         Returns:
             darsia.Image: boolean image detecting CO2(g).
         """
-        # Extract co2 from analysis
+        # Extract co2 from analysis - restrict the analysis to areas with CO2.
+        self.co2_gas_analysis.update_mask(co2.img)
         co2_gas = super().determine_co2_gas()
 
         # Add expert knowledge. Turn of any signal outside the presence of co2.
-        # And turn off any signal in the ESF layer.
         co2_gas.img[~co2.img] = 0
-        co2_gas.img[self.esf_sand] = 0
-        co2_gas.img[self.c_sand] = 0
 
         return co2_gas
 
