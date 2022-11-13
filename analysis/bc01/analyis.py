@@ -13,11 +13,12 @@ analysis = MediumCO2Analysis(
     config=config,  # path to config file
     results = results, # path to results directory
     update_setup=False,  # flag controlling whether aux. data needs update
-    verbosity=False,  # print intermediate results to screen
+    verbosity=True,  # print intermediate results to screen
 )
 
 # Perform standardized CO2 batch analysis on all images from BC02.
 analysis.batch_analysis(
     images=images,  # paths to images to be considered
-    plot_contours=True,  # print contour lines for CO2 onto image
+    plot_contours=False,  # print contour lines for CO2 onto image
+    write_contours_to_file = True # print to file the same plot as prompted for plot_contours
 )
