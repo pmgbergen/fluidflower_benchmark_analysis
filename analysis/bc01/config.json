@@ -61,9 +61,9 @@
     },
 
     "co2": {
-        "cleaning_filter": "cache/cleaning_filter_value.npy",
+        "cleaning_filter": "cache/cleaning_filter_red.npy",
 
-        "color": "value",
+        "color": "red",
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
@@ -72,11 +72,18 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "threshold auto": true,
-        "threshold value min": 0.01,
-        "todo threshold value max": 0.01,
+        "threshold dynamic": true,
+        "threshold method": "local/global min",
+        "threshold value": 0.1,
+        "threshold value min": 0.03,
+        "threshold value max": 0.17,
 
-        "threshold value": 0.12,
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.25,
+        "postsmoothing weight": 0.01,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 200,
 
         "verbosity": false
     },
@@ -87,21 +94,26 @@
         "color": "blue",
 
         "presmoothing": true,
-        "presmoothing method": "anisotropic bregman",
+        "presmoothing method": "isotropic bregman",
         "presmoothing resize x": 0.1,
         "presmoothing resize y": 0.8,
-        "presmoothing weight": 0.05,
+        "presmoothing weight": 0.01,
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 100,
 
-        "threshold auto": true,
+        "threshold dynamic": true,
+        "threshold method": "otsu",
+        "threshold value": 0.04,
         "threshold value min": 0.03,
+        "threshold value max": 0.12,
 
-        "threshold value off": 0.08,
+        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
+        "min area size": 1000,
+        "max hole size": 1000,
 
         "postsmoothing": true,
-        "presmoothing method": "anisotropic bregman",
-        "postsmoothing resize": 0.25,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize x": 0.25,
         "postsmoothing weight": 0.01,
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 100,
