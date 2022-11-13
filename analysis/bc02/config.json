@@ -1,5 +1,5 @@
 {
-    "description": "FluidFlower Benchmark config file for bc02",
+    "description": "FluidFlower Benchmark config file for BC02",
 
     "physical_asset": {
         "dimensions": {
@@ -93,7 +93,7 @@
         "threshold value": 0.12,
 
         "postsmoothing": false,
-        "presmoothing method": "isotropic bregman",
+        "postsmoothing method": "isotropic bregman",
         "postsmoothing resize": 0.5,
         "postsmoothing weight": 2,
         "postsmoothing eps": 1e-4,
@@ -117,7 +117,7 @@
         "threshold value": 0.12,
 
         "postsmoothing": false,
-        "presmoothing method": "isotropic bregman",
+        "postsmoothing method": "isotropic bregman",
         "postsmoothing resize": 0.5,
         "postsmoothing weight": 2,
         "postsmoothing eps": 1e-4,
@@ -142,7 +142,7 @@
         "threshold value": 0.032,
 
         "postsmoothing": true,
-        "presmoothing method": "anisotropic bregman",
+        "postsmoothing method": "anisotropic bregman",
         "postsmoothing resize": 0.5,
         "postsmoothing weight": 0.01,
         "postsmoothing eps": 1e-4,
