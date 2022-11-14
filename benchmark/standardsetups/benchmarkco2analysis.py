@@ -304,35 +304,19 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
-
-        # TODO major cleanup required!
-
-        # co2_analysis = CO2MaskAnalysis(
-        #    self.base,
-        #    color="",
-        #    labels=self.labels,
-        #    labels_legend=self.labels_legend,
-        #    **self.config["co2"],
-        # )
-        # co2_analysis = CO2MaskAnalysis(
-        #    self.base,
-        #    color="hue",
-        #    **self.config["co2"],
-        # )
-        co2_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base,
-            color="value",
-            **self.config["co2"],
+        co2_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+            self.base, self.labels, **self.config["co2"]
         )
 
         return co2_analysis
 
     def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
-        Identify CO2(g) using a thresholding scheme on the blue color channel.
+        Identify CO2(g) using a thresholding scheme on the blue color channel,
+        controlled from external config file.
         """
-        co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, color="blue", **self.config["co2(g)"]
+        co2_gas_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+            self.base, self.labels, **self.config["co2(g)"]
         )
 
         return co2_gas_analysis
@@ -369,6 +353,11 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         # And turn off any signal in the ESF layer.
         co2_gas.img[~co2.img] = 0
         co2_gas.img[self.esf_sand] = 0
+
+        # Remove small objects which are created through adding expert knowledge.
+        # TODO include this in here? as adding epxert knowledge is very specific
+        # for this analysis, and not the general concentrationanalysis.
+        co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
 
         return co2_gas
 
@@ -460,7 +449,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             contours_co2, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
-            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 1)
+            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
 
             # Overlay the original image with contours for CO2(g)
             contours_co2_gas, _ = cv2.findContours(
@@ -468,7 +457,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE,
             )
-            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 1)
+            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
 
             # Overlay the original image with contours of Box A
             contours_box_A, _ = cv2.findContours(
