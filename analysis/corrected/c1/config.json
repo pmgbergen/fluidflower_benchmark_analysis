@@ -52,7 +52,7 @@
         "region_size": 30,
         "dilation size": 0,
         "boundary size": 90,
-        "verbosity": true
+        "verbosity": false
     },
 
     "compaction": {
@@ -176,49 +176,6 @@
         "posterior threshold": 0.003,
 
         "verbosity": false
-    },
-
-    "co2 old": {
-        "cleaning_filter": "cache/co2_mask_cleaning_filter.npy",
-
-        "threshold min hue": 1,
-        "threshold max hue": 70,
-
-        "presmoothing": true,
-        "presmoothing resize": 0.5,
-        "presmoothing weight": 5,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 200,
-
-        "threshold value esf": 0.04,
-        "threshold value non-esf": 0.04,
-
-        "postsmoothing": false,
-        "postsmoothing resize": 0.5,
-        "postsmoothing weight": 5,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100
-    },
-
-    "co2(g) old": {
-        "cleaning_filter": "cache/mobile_co2_mask_cleaning_filter.npy",
-
-        "presmoothing": true,
-        "presmoothing resize": 0.5,
-        "presmoothing weight": 5,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "threshold value": 0.05,
-
-        "postsmoothing": true,
-        "postsmoothing resize": 0.5,
-        "postsmoothing weight": 5,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
-
-        "posterior": true,
-        "threshold posterior gradient modulus": 0.002
     },
 
     "calibration": {"scaling": 1.0}
