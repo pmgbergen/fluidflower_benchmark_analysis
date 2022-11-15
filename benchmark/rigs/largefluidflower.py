@@ -111,13 +111,13 @@ class LargeFluidFlower(darsia.AnalysisBase):
         # Cache labels
         self.labels = labels
 
-        # Hardcoded - works for C1-5: Identify water layer with id 0
+        # Identify water layer
         self.water = _labels_to_mask(self.config["segmentation"]["water"])
 
-        # Hardcoded - works for C1-5: Identify ESF layer with ids 1, 3, 4
+        # Identify ESF layer
         self.esf_sand = _labels_to_mask(self.config["segmentation"]["esf"])
 
-        # Hardcoded - works for C1-5: Identify C layer with ids
+        # Identify C layer
         self.c_sand = _labels_to_mask(self.config["segmentation"]["c"])
 
         # Create new labeled image
