@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
-from benchmark.utils.misc import read_time_from_path
+from benchmark.utils.misc import read_time_from_path, array_to_csv
 
 # TODO major cleanup required!
 
@@ -523,9 +523,10 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
             # Write corrected image with contours to file
             if write_contours_to_file:
+                (self.path_to_results / Path("contour_plots")).mkdir(parents=True, exist_ok=True)
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
                 cv2.imwrite(
-                    str(self.path_to_results / Path(f"{img_id}_with_contours.jpg")),
+                    str(self.path_to_results / Path("contour_plots") / Path(f"{img_id}_with_contours.jpg")),
                     original_img,
                 )
 
@@ -547,8 +548,11 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
             # Store fine scale segmentation
             if write_segmentation_to_file:
+                (self.path_to_results / Path("npy_segmentation")).mkdir(parents=True, exist_ok=True)
                 np.save(
-                    self.path_to_results / Path(f"{img_id}_segmentation.npy"),
+                    self.path_to_results
+                    / Path("npy_segmentation")
+                    / Path(f"{img_id}_segmentation.npy"),
                     segmentation,
                 )
 
@@ -564,9 +568,24 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
                 )
                 coarse_segmentation[co2_coarse] += 1
                 coarse_segmentation[co2_gas_coarse] += 1
+
+                # Store segmentation as npy array
+                (self.path_to_results / Path("coarse_npy_segmentation")).mkdir(parents=True, exist_ok=True)
                 np.save(
-                    self.path_to_results / Path(f"{img_id}_coarse_segmentation.npy"),
+                    self.path_to_results
+                    / Path("coarse_npy_segmentation")
+                    / Path(f"{img_id}_coarse_segmentation.npy"),
                     coarse_segmentation,
+                )
+
+                # Store segmentation as csv file
+                (self.path_to_results / Path("coarse_csv_segmentation")).mkdir(parents=True, exist_ok=True)
+                array_to_csv(
+                    self.path_to_results
+                    / Path("coarse_csv_segmentation")
+                    / Path(f"{img_id}_coarse_segmentation.csv"),
+                    coarse_segmentation,
+                    img.name,
                 )
 
         return co2, co2_gas, self.results
