@@ -17,17 +17,16 @@ co2_analysis = BenchmarkCO2Analysis(
     config=config,  # path to config file
     results = results, # path to results directory
     update_setup=False,  # flag controlling whether aux. data needs update
-    verbosity=False,  # print intermediate results to screen
+    verbosity=True,  # print intermediate results to screen
 )
-
-images = images[-3:]
 
 # Perform standardized CO2 batch analysis on all images from C1.
 co2_analysis.batch_analysis(
     images=images,  # paths to images to be considered
-    plot_contours=True,  # print contour lines for CO2 onto image
-    fingering_analysis_box_C=False,  # determine and print the length of the fingers in box C
+    plot_contours=False,  # print contour lines for CO2 onto image
     write_contours_to_file=True,
+    write_segmentation_to_file = True,
+    write_coarse_segmentation_to_file = True,
     # ...for more options, check the keyword arguments of BenchmarkCO2Analysis.batch_analysis.
 )
 
