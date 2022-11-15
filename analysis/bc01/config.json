@@ -35,10 +35,12 @@
     },
 
     "segmentation": {
-
         "labels_path": "cache/labels.npy",
+        "water": [0, 2],
+        "esf": [1, 10],
+        "c": [4, 6, 7],
+
         "median disk radius": 50,
-        "rescaling factor progressive works": 1.0,
         "rescaling factor": 0.5,
         "marker_points": [
             [520,2830],
@@ -118,18 +120,19 @@
         "threshold value max": 0.12,
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 1000,
+        "min area size": 100,
         "max hole size": 1000,
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize x": 0.25,
+        "postsmoothing resize x": 0.2,
         "postsmoothing weight": 0.01,
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "threshold posterior gradient modulus": 0.003,
+        "posterior criterion": "gradient modulus",
+        "posterior threshold": 0.003,
 
         "verbosity": false
     },
