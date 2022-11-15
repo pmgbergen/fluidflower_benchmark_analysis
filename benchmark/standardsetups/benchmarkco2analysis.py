@@ -274,6 +274,18 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             self.config["injection_start"], "%y%m%d %H%M%S"
         )
 
+        # Add possibility to apply compaction correction for each image
+        if "compaction" in self.config.keys():
+            self.apply_compaction_analysis = self.config["compaction"].get(
+                "apply", False
+            )
+            if self.apply_compaction_analysis:
+                self.compaction_analysis = darsia.CompactionAnalysis(
+                    self.base, **self.config["compaction"]
+                )
+        else:
+            self.apply_compaction_analysis = False
+
         # Initialize results dictionary for post-analysis
         self.results: dict = {}
 
@@ -362,13 +374,13 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         return co2_gas
 
     def single_image_analysis(
-        self, img: Path, **kwargs
+        self, img: Union[Path, darsia.Image], **kwargs
     ) -> tuple[np.ndarray, np.ndarray, dict]:
         """
         Standard workflow to analyze CO2 phases.
 
         Args:
-            image (Path): path to single image.
+            image (Path or Image): path to single image.
             kwargs: optional keyword arguments, see batch_analysis.
 
         Returns:
@@ -378,7 +390,17 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         """
 
         # Load the current image
-        self.load_and_process_image(img)
+        if isinstance(img, darsia.Image):
+            self.img = img.copy()
+        else:
+            self.load_and_process_image(img)
+
+        # Perform compaction analysis
+        if self.apply_compaction_analysis:
+            # Apply compaction analysis, providing the deformed image matching the baseline image,
+            # as well as the required translations on each patch, characterizing the total
+            # deformation. Also plot the deformation as vector field.
+            self.img = self.compaction_analysis(self.img)
 
         # Determine binary mask detecting any(!) CO2
         co2 = self.determine_co2_mask()
