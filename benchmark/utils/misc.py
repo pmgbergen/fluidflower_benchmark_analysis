@@ -1,11 +1,13 @@
 """
-Module collecting simple and general utilities.
+Module collecting I/O utilities.
 """
 
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Union
+
+import numpy as np
 
 
 def read_time_from_path(path: Union[Path, str]) -> datetime:
@@ -88,3 +90,35 @@ def read_paths_from_user_data(
     results.mkdir(parents=True, exist_ok=True)
 
     return images, baseline, config, results
+
+
+def array_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
+    """Store numpy as csv file.
+
+    Args:
+        path (Path): path for dst
+        array (np.ndarray): array to be stored
+        inFileName (Path): origin image
+
+    """
+    # Build csv file with standard text on top.
+    header = f"Generated from {str(inFileName)}."
+
+    header += (
+        "\nEach entry identifies the phase distribution in a 1 cm by 1 cm cell, where"
+    )
+
+    header += "\n0 = pure water, 1 = water with dissolved CO2, 2 = gaseous CO2."
+
+    header += "\n2d array representing the laser grid of the benchmark description,"
+
+    header += (
+        "\nordered row-wise from top to bottom, and column-wise from left to right."
+    )
+
+    header += "\nThe first entry corresponds to the cell centered at coordinates (0.035 m, 1.525 m)"
+
+    header += "\nw.r.t. the spatial maps outlined in Section 3.1 of the description."
+
+    # Store array with preceding header
+    np.savetxt(path, arr, fmt="%d", delimiter=",", header=header)
