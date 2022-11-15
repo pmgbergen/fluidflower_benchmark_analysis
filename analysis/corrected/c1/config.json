@@ -6,14 +6,15 @@
         "parameters": {"porosity": 0.44}
     },
 
-    "injection_start": "211204 100100",
+    "injection_start": "211124 083100",
 
     "drift": {
         "roi": [[1050, 2630], [1340, 2920]]
     },
 
     "color": {
-        "roi": [[331, 466], [505, 467], [506, 203], [333, 202]]
+        "active": true,
+        "roi": [[338, 455], [516, 455], [518, 190], [341, 190]]
     },
 
     "curvature": {
@@ -54,10 +55,22 @@
         "verbosity": true
     },
 
-    "co2": {
-        "cleaning_filter": "cache/cleaning_filter_red.npy",
+    "compaction": {
+        "apply": false,
+        "N_patches": [20, 10],
+        "rel_overlap": 0.1,
+        "max_features": 200,
+        "tol": 0.05
+    },
 
-        "color": "red",
+    "co2": {
+        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
+
+        "segmented": true,
+
+        "color": "hsv",
+        "hue lower bound": 10,
+        "hue upper bound": 70,
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
@@ -70,8 +83,45 @@
         "threshold method original try something new": "local/global min",
         "threshold method": "first local min",
         "threshold value": 0.1,
-        "threshold value min": 0.05,
-        "threshold value max": 0.5,
+        "comments": "increasing red color in 3, 6, 7 -> choose higher min value; low value in esf, moderate in remaning",
+        "threshold value min": [0.04, 0.01, 0.04, 0.05, 0.04, 0.04, 0.05, 0.05, 0.01, 0.01, 0.04],
+        "threshold value max": 0.2,
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.25,
+        "postsmoothing weight": 0.1,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 200,
+
+        "posterior": true,
+        "posterior criterion": "value",
+        "posterior threshold": 0.1,
+
+        "verbosity": false
+    },
+
+    "co2 red": {
+        "cleaning_filter": "cache/cleaning_filter_red.npy",
+
+        "segmented": true,
+
+        "color": "red",
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 0.1,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold dynamic": true,
+        "threshold method": "first local min",
+        "threshold value": 0.1,
+        "threshold value min": 0.04,
+        "threshold value max": 0.2,
+        "threshold value min heterogeneous": [0.05,  0.05,   0.071,  0.085,  0.062,  0.111, 0.097,  0.117,  0.099,  0.062,  0.092],
+        "threshold value max heterogeneous": [0.05,  0.05,   0.071,  0.085,  0.062,  0.111, 0.097,  0.117,  0.099,  0.062,  0.092],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -80,11 +130,17 @@
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 200,
 
-        "verbosity": true
+        "posterior": true,
+        "posterior criterion": "value",
+        "posterior threshold": 0.1,
+
+        "verbosity": false
     },
 
     "co2(g)": {
         "cleaning_filter": "cache/cleaning_filter_blue.npy",
+
+        "segmented": true,
 
         "color": "blue",
 
@@ -106,7 +162,7 @@
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
         "min area size": 1000,
-        "max hole size": 1000,
+        "max hole size": 10000,
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -116,9 +172,10 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "threshold posterior gradient modulus": 0.003,
+        "posterior criterion": "gradient modulus",
+        "posterior threshold": 0.003,
 
-        "verbosity": true
+        "verbosity": false
     },
 
     "co2 old": {
