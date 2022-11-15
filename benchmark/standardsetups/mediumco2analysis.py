@@ -13,6 +13,7 @@ import numpy as np
 import skimage
 from benchmark.rigs.bilbo import Bilbo
 
+from benchmark.utils.misc import read_time_from_path
 
 class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
     """
@@ -70,6 +71,20 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
 
         # Store verbosity
         self.verbosity = verbosity
+
+    def load_and_process_image(self, path: Union[str, Path]) -> None:
+        """
+        Load image as before and read time from the title in addition.
+
+        Args:
+            path (str or Path): path to image
+        """
+        # Read image via parent class
+        darsia.CO2Analysis.load_and_process_image(self, path)
+
+        # Ammend image with time, reading from title assuming title
+        # of format */yyMMdd_timeHHmmss*.
+        self.img.timestamp = read_time_from_path(path)
 
     # ! ---- Analysis tools for detecting the different CO2 phases
 
