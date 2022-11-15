@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.bilbo import Bilbo
-
 from benchmark.utils.misc import read_time_from_path
+
 
 class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
     """
@@ -57,9 +57,13 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
 
         # Add possibility to apply compaction correction for each image
         if "compaction" in self.config.keys():
-            self.apply_compaction_analysis = self.config["compaction"].get("apply", False)
+            self.apply_compaction_analysis = self.config["compaction"].get(
+                "apply", False
+            )
             if self.apply_compaction_analysis:
-                self.compaction_analysis = darsia.CompactionAnalysis(self.base, **self.config["compaction"])
+                self.compaction_analysis = darsia.CompactionAnalysis(
+                    self.base, **self.config["compaction"]
+                )
         else:
             self.apply_compaction_analysis = False
 
@@ -101,7 +105,6 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
                 self.base, **self.config["co2"]
             )
 
-
         return co2_analysis
 
     def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
@@ -117,7 +120,6 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
             co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
                 self.base, **self.config["co2(g)"]
             )
-
 
         return co2_gas_analysis
 
@@ -147,11 +149,16 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
             darsia.Image: boolean image detecting CO2(g).
         """
         # Extract co2 from analysis - restrict the analysis to areas with CO2.
-        self.co2_gas_analysis.update_mask(co2.img)
+        # self.co2_gas_analysis.update_mask(co2.img)
         co2_gas = super().determine_co2_gas()
 
         # Add expert knowledge. Turn of any signal outside the presence of co2.
         co2_gas.img[~co2.img] = 0
+        co2_gas.img[self.esf_sand] = 0
+        co2_gas.img[self.c_sand] = 0
+
+        # Clean mask once more - needed after expert knowledge leftovers.
+        co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
 
         return co2_gas
 
