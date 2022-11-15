@@ -60,6 +60,14 @@
         "verbosity": false
     },
 
+    "compaction": {
+        "apply": true,
+        "N_patches": [20, 10],
+        "rel_overlap": 0.1,
+        "max_features": 200,
+        "tol": 0.05
+    },
+
     "co2": {
         "cleaning_filter": "cache/cleaning_filter_red.npy",
 
@@ -127,8 +135,6 @@
     },
 
     "calibration": {"scaling": 1.0},
-
-    "include compaction": true,
 
     "co2_old": {
         "cleaning_filter": "cache/cleaning_filter_red.npy",
@@ -201,7 +207,7 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "threshold posterior gradient modulus": 0.0015,
+        "threshold posterior gradient modulus": 0.003,
 
         "verbosity": false
     },
