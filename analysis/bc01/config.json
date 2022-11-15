@@ -57,12 +57,13 @@
         "region_size": 30,
         "dilation size": 0,
         "boundary size": 60,
-        "verbosity": true
+        "verbosity": false
     },
 
     "co2": {
         "cleaning_filter": "cache/cleaning_filter_red.npy",
 
+        "segmented": true,
         "color": "red",
 
         "presmoothing": true,
@@ -73,14 +74,15 @@
         "presmoothing max_num_iter": 200,
 
         "threshold dynamic": true,
-        "threshold method": "local/global min",
-        "threshold value": 0.1,
-        "threshold value min": 0.03,
-        "threshold value max": 0.17,
+        "threshold methodi old": "local/global min",
+        "threshold method": "first local min",
+        "threshold value": 0.2,
+        "threshold value min": 0.06,
+        "threshold value max": 0.2,
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize": 0.25,
+        "postsmoothing resize": 0.5,
         "postsmoothing weight": 0.01,
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 200,
@@ -91,6 +93,7 @@
     "co2(g)": {
         "cleaning_filter": "cache/cleaning_filter_blue.npy",
 
+        "segmented": true,
         "color": "blue",
 
         "presmoothing": true,
@@ -102,9 +105,9 @@
         "presmoothing max_num_iter": 100,
 
         "threshold dynamic": true,
-        "threshold method": "otsu",
-        "threshold value": 0.04,
-        "threshold value min": 0.03,
+        "threshold method": "first local min",
+        "threshold value": 0.12,
+        "threshold value min": 0.05,
         "threshold value max": 0.12,
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
@@ -124,5 +127,7 @@
         "verbosity": false
     },
 
-    "calibration": {"scaling": 1.0}
+    "calibration": {"scaling": 1.0},
+
+    "include compaction": true
 }
