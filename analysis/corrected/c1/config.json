@@ -69,7 +69,7 @@
         "segmented": true,
 
         "color": "hsv",
-        "hue lower bound": 10,
+        "hue lower bound": 0,
         "hue upper bound": 70,
 
         "presmoothing": true,
@@ -146,7 +146,7 @@
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
-        "presmoothing resize x": 0.1,
+        "presmoothing resize x": 0.25,
 
         "TODO": "increase weight",
 
@@ -172,8 +172,8 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "posterior criterion": "gradient modulus",
-        "posterior threshold": 0.003,
+        "posterior criterion": "value",
+        "posterior threshold": 0.1,
 
         "verbosity": false
     },
