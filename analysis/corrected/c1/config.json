@@ -84,7 +84,7 @@
         "threshold method": "first local min",
         "threshold value": 0.1,
         "comments": "increasing red color in 3, 6, 7 -> choose higher min value; low value in esf, moderate in remaning",
-        "threshold value min": [0.04, 0.01, 0.04, 0.05, 0.04, 0.04, 0.05, 0.05, 0.01, 0.01, 0.04],
+        "threshold value min": [0.04, 0.025, 0.04, 0.05, 0.04, 0.04, 0.05, 0.05, 0.02, 0.02, 0.04],
         "threshold value max": 0.2,
 
         "postsmoothing": true,
