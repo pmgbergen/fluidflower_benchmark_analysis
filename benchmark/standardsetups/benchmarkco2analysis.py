@@ -368,6 +368,8 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         Returns:
             darsia.Image: boolean image detecting CO2(g).
         """
+        # Add expert knowledge - do not expect any CO2(g) outside
+        # of the CO2, and neither in ESF. Include this in the analysis.
         expert_knowledge = np.logical_and(co2.img, np.logical_not(self.esf_sand))
         self.co2_gas_analysis.update_mask(expert_knowledge)
 
@@ -377,12 +379,8 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         # Add expert knowledge. Turn of any signal outside the presence of co2.
         # And turn off any signal in the ESF layer.
         co2_gas.img[~expert_knowledge] = 0
-        #co2_gas.img[~co2.img] = 0
-        #co2_gas.img[self.esf_sand] = 0
 
-        # Remove small objects which are created through adding expert knowledge.
-        # TODO include this in here? as adding epxert knowledge is very specific
-        # for this analysis, and not the general concentrationanalysis.
+        # Clean the results once more after adding expert knowledge.
         co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
 
         return co2_gas

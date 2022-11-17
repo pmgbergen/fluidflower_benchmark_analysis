@@ -148,16 +148,19 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         Returns:
             darsia.Image: boolean image detecting CO2(g).
         """
+        # Add expert knowledge - do not expect any CO2(g) outside
+        # of the CO2, and neither in ESF nor C. Include this in
+        # the analysis.
+        expert_knowledge = np.logical_and(co2.img, np.logical_not(np.logical_or(self.esf_sand, self.c_sand)))
+        self.co2_gas_analysis.update_mask(expert_knowledge)
+
         # Extract co2 from analysis - restrict the analysis to areas with CO2.
-        # self.co2_gas_analysis.update_mask(co2.img)
         co2_gas = super().determine_co2_gas()
 
         # Add expert knowledge. Turn of any signal outside the presence of co2.
-        co2_gas.img[~co2.img] = 0
-        co2_gas.img[self.esf_sand] = 0
-        co2_gas.img[self.c_sand] = 0
+        co2_gas.img[~expert_knowledge] = 0
 
-        # Clean mask once more - needed after expert knowledge leftovers.
+        # Clean the results once more after adding expert knowledge.
         co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
 
         return co2_gas
@@ -241,9 +244,12 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
 
             # Write corrected image with contours to file
             if write_contours_to_file:
+                (self.path_to_results / Path("contour_plots")).mkdir(
+                    parents=True, exist_ok=True
+                )
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
                 cv2.imwrite(
-                    str(self.path_to_results / Path(f"{img_id}_with_contours.jpg")),
+                    str(self.path_to_results / Path("contour_plots") / Path(f"{img_id}_with_contours.jpg")),
                     original_img,
                 )
 
@@ -265,8 +271,11 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
 
             # Store fine scale segmentation
             if write_segmentation_to_file:
+                (self.path_to_results / Path("npy_segmentation")).mkdir(
+                    parents=True, exist_ok=True
+                )
                 np.save(
-                    self.path_to_results / Path(f"{img_id}_segmentation.npy"),
+                    self.path_to_results / Path("npy_segmentation") / Path(f"{img_id}_segmentation.npy"),
                     segmentation,
                 )
 
