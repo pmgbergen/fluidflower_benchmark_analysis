@@ -20,7 +20,7 @@
         "reference": "custom",
         "custom_colorchecker_path": "./color_checker_BC02.npy",
         "custom_colorchecker_update": true,
-        "custom_colorchecker_reference_image": "/home/jakub/images/ift/medium/BC02/220523_time145832_DSC01323.JPG",
+        "custom_colorchecker_reference_image": "/media/jakub/Elements/Jakub/benchmark/BC02/220523_time145832_DSC01323.JPG",
 
         "roi": [[6803, 93], [6809, 570], [7523, 572], [7514, 95]]
     },
