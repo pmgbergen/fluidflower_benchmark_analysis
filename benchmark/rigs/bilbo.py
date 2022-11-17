@@ -7,7 +7,6 @@ from typing import Union
 
 import darsia
 import numpy as np
-from scipy.interpolate import RBFInterpolator
 
 
 class Bilbo(darsia.AnalysisBase):
@@ -30,10 +29,9 @@ class Bilbo(darsia.AnalysisBase):
         darsia.AnalysisBase.__init__(self, baseline, config, update_setup)
 
         # Segment the baseline image; identidy water and esf layer.
-        #self._segment_geometry(update_setup=update_setup)
+        self._segment_geometry(update_setup=update_setup)
 
         # Determine effective volumes, required for calibration, determining total mass etc.
-        # TODO has to be included?
         # self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
@@ -70,26 +68,25 @@ class Bilbo(darsia.AnalysisBase):
             ids = ids if isinstance(ids, list) else [ids]
             mask = np.zeros(labels.shape[:2], dtype=bool)
             for i in ids:
-                mask[labels==i] = True
+                mask[labels == i] = True
             return mask
 
-        # Hardcoded: Identify water layer / Color checker (valid for BC02)
-        self.water = _labels_to_mask([0, 2])
+        # Identify water layer
+        self.water = _labels_to_mask(self.config["segmentation"]["water"])
+
+        # Identify ESF layer
+        self.esf_sand = _labels_to_mask(self.config["segmentation"]["esf"])
+
+        # Identify C layer
+        self.c_sand = _labels_to_mask(self.config["segmentation"]["c"])
 
         # Hardcoded: Define extended water zone, essentially upper zone
         # of the medium including some of the ESF sand, as strong
         # light fluctuations interfere with the top of the ESF layer.
         self.extended_water = np.zeros_like(self.water)
-        self.extended_water[:450,:] = True
-
-        # Hardcoded: Identify ESF layer (valid for BC02)
-        self.esf_sand = _labels_to_mask([1, 10])
-
-        # Hardcoded: Identify C sand layer (valid for BC02)
-        self.c_sand = _labels_to_mask(4)
+        self.extended_water[:450, :] = True
 
         self.labels = labels
-
 
     def _determine_effective_volumes(self) -> None:
         """

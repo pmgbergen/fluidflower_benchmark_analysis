@@ -52,11 +52,16 @@
             "horizontal_center_offset": -286,
             "vertical_stretch": 3.2177888435429053e-09,
             "vertical_center_offset": 702
-        }
+        },
+
+        "use_cache": true
     },
 
     "segmentation": {
         "labels_path": "cache/labels.npy",
+        "water": [0],
+        "esf": [1, 8, 9],
+        "c": [2, 3, 4],
         "monochromatic_color": "value",
         "median disk radius": 20,
         "rescaling factor": 0.1,
@@ -81,8 +86,31 @@
     },
 
     "co2": {
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_hsv.npy",
+
+        "segmented": false,
+
+        "color": "hsv",
+        "threshold min hue": 7,
+        "threshold max hue": 60,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value": 0.04,
+
+        "verbosity": true
+    },
+
+    "co2 old value": {
         "cleaning_filter": "cache/co2_mask_cleaning_filter_value.npy",
 
+        "segmented": false,
+
+        "color": "hsv",
         "threshold min hue": 7,
         "threshold max hue": 60,
 
@@ -111,7 +139,7 @@
 
         "threshold value": 0.9,
 
-        "verbosity": true
+        "verbosity": false
     },
 
     "co2_layered": {
@@ -147,6 +175,10 @@
 
     "co2(g)": {
         "cleaning_filter": "cache/mobile_co2_mask_cleaning_filter.npy",
+
+        "segmented": false,
+
+        "color": "blue",
 
         "presmoothing": true,
         "presmoothing resize": 0.5,

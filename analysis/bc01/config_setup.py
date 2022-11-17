@@ -121,7 +121,7 @@ plt.show()
 # }
 #
 ## Apply final curvature correction
-# img = curvature_correction.simple_curvature_correction(img, **config["bulge"])
+# img = curvature_correction.simple_curvature_correction(img, **config["curvature"]["bulge"])
 
 # !----- Summary of the config - copy and move to another file.
 print(config)

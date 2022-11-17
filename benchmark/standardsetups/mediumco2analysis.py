@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.bilbo import Bilbo
+from benchmark.utils.misc import read_time_from_path
 
 
 class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
@@ -54,6 +55,18 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
             self.config["injection_start"], "%y%m%d %H%M%S"
         )
 
+        # Add possibility to apply compaction correction for each image
+        if "compaction" in self.config.keys():
+            self.apply_compaction_analysis = self.config["compaction"].get(
+                "apply", False
+            )
+            if self.apply_compaction_analysis:
+                self.compaction_analysis = darsia.CompactionAnalysis(
+                    self.base, **self.config["compaction"]
+                )
+        else:
+            self.apply_compaction_analysis = False
+
         # Initialize results dictionary for post-analysis
         self.results: dict = {}
 
@@ -63,15 +76,34 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         # Store verbosity
         self.verbosity = verbosity
 
+    def load_and_process_image(self, path: Union[str, Path]) -> None:
+        """
+        Load image as before and read time from the title in addition.
+
+        Args:
+            path (str or Path): path to image
+        """
+        # Read image via parent class
+        darsia.CO2Analysis.load_and_process_image(self, path)
+
+        # Ammend image with time, reading from title assuming title
+        # of format */yyMMdd_timeHHmmss*.
+        self.img.timestamp = read_time_from_path(path)
+
     # ! ---- Analysis tools for detecting the different CO2 phases
 
     def define_co2_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
-        co2_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, **self.config["co2"]
-        )
+        if self.config["co2"].get("segmented", False):
+            co2_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+                self.base, self.labels, **self.config["co2"]
+            )
+        else:
+            co2_analysis = darsia.BinaryConcentrationAnalysis(
+                self.base, **self.config["co2"]
+            )
 
         return co2_analysis
 
@@ -80,9 +112,14 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         Identify CO2(g) using a thresholding scheme on the blue color channel,
         controlled from external config file.
         """
-        co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, **self.config["co2(g)"]
-        )
+        if self.config["co2(g)"].get("segmented", False):
+            co2_gas_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+                self.base, self.labels, **self.config["co2(g)"]
+            )
+        else:
+            co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
+                self.base, **self.config["co2(g)"]
+            )
 
         return co2_gas_analysis
 
@@ -97,7 +134,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         # Extract co2 from analysis
         co2 = super().determine_co2()
 
-        # Add expert knowledge. Turn of any signal in the water zone
+        # Add expert knowledge. Turn of any signal in the water zone.
         co2.img[self.extended_water] = 0
 
         return co2
@@ -111,25 +148,31 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         Returns:
             darsia.Image: boolean image detecting CO2(g).
         """
-        # Extract co2 from analysis
+        # Add expert knowledge - do not expect any CO2(g) outside
+        # of the CO2, and neither in ESF nor C. Include this in
+        # the analysis.
+        expert_knowledge = np.logical_and(co2.img, np.logical_not(np.logical_or(self.esf_sand, self.c_sand)))
+        self.co2_gas_analysis.update_mask(expert_knowledge)
+
+        # Extract co2 from analysis - restrict the analysis to areas with CO2.
         co2_gas = super().determine_co2_gas()
 
         # Add expert knowledge. Turn of any signal outside the presence of co2.
-        # And turn off any signal in the ESF layer.
-        co2_gas.img[~co2.img] = 0
-        co2_gas.img[self.esf_sand] = 0
-        co2_gas.img[self.c_sand] = 0
+        co2_gas.img[~expert_knowledge] = 0
+
+        # Clean the results once more after adding expert knowledge.
+        co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
 
         return co2_gas
 
     def single_image_analysis(
-        self, img: Path, **kwargs
+        self, img: Union[Path, darsia.Image], **kwargs
     ) -> tuple[np.ndarray, np.ndarray, dict]:
         """
         Standard workflow to analyze CO2 phases.
 
         Args:
-            image (Path): path to single image.
+            image (Path or Image): path to single image.
             kwargs: optional keyword arguments, see batch_analysis.
 
         Returns:
@@ -138,9 +181,17 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
             dict: dictinary with all stored results from the post-analysis.
         """
         # Load the current image
-        img_cv2 = cv2.cvtColor(cv2.imread(str(img)), cv2.COLOR_BGR2RGB)
+        if isinstance(img, darsia.Image):
+            self.img = img.copy()
+        else:
+            self.load_and_process_image(img)
 
-        self.load_and_process_image(img)
+        # Perform compaction analysis
+        if self.apply_compaction_analysis:
+            # Apply compaction analysis, providing the deformed image matching the baseline image,
+            # as well as the required translations on each patch, characterizing the total
+            # deformation. Also plot the deformation as vector field.
+            self.img = self.compaction_analysis(self.img)
 
         # Determine binary mask detecting any(!) CO2
         co2 = self.determine_co2_mask()
@@ -193,9 +244,12 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
 
             # Write corrected image with contours to file
             if write_contours_to_file:
+                (self.path_to_results / Path("contour_plots")).mkdir(
+                    parents=True, exist_ok=True
+                )
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
                 cv2.imwrite(
-                    str(self.path_to_results / Path(f"{img_id}_with_contours.jpg")),
+                    str(self.path_to_results / Path("contour_plots") / Path(f"{img_id}_with_contours.jpg")),
                     original_img,
                 )
 
@@ -217,8 +271,11 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
 
             # Store fine scale segmentation
             if write_segmentation_to_file:
+                (self.path_to_results / Path("npy_segmentation")).mkdir(
+                    parents=True, exist_ok=True
+                )
                 np.save(
-                    self.path_to_results / Path(f"{img_id}_segmentation.npy"),
+                    self.path_to_results / Path("npy_segmentation") / Path(f"{img_id}_segmentation.npy"),
                     segmentation,
                 )
 

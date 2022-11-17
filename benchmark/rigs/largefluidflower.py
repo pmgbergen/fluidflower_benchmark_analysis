@@ -108,17 +108,20 @@ class LargeFluidFlower(darsia.AnalysisBase):
                 mask[labels == i] = True
             return mask
 
-        # Hardcoded - works for C1-5: Identify water layer with id 0
-        self.water = _labels_to_mask(0)
+        # Cache labels
+        self.labels = labels
 
-        # Hardcoded - works for C1-5: Identify ESF layer with ids 1, 3, 4
-        self.esf_sand = _labels_to_mask([1, 8, 9])
+        # Identify water layer
+        self.water = _labels_to_mask(self.config["segmentation"]["water"])
 
-        # Hardcoded - works for C1-5: Identify C layer with ids
-        self.c_sand = _labels_to_mask([2, 3, 4])
+        # Identify ESF layer
+        self.esf_sand = _labels_to_mask(self.config["segmentation"]["esf"])
+
+        # Identify C layer
+        self.c_sand = _labels_to_mask(self.config["segmentation"]["c"])
 
         # Create new labeled image
-        self.labels = np.zeros(labels.shape[:2], dtype=np.uint8)
+        self.labels_grouped = np.zeros(labels.shape[:2], dtype=np.uint8)
         self.labels_legend = {
             "water": 0,
             "esf_sand": 1,
@@ -126,11 +129,11 @@ class LargeFluidFlower(darsia.AnalysisBase):
             "rest": 3,
         }
         # Initiate all elements with the default parameter
-        self.labels[:, :] = self.labels_legend["rest"]
+        self.labels_grouped[:, :] = self.labels_legend["rest"]
         # Overwrite all specific segments
-        self.labels[self.water] = self.labels_legend["water"]
-        self.labels[self.esf_sand] = self.labels_legend["esf_sand"]
-        self.labels[self.c_sand] = self.labels_legend["c_sand"]
+        self.labels_grouped[self.water] = self.labels_legend["water"]
+        self.labels_grouped[self.esf_sand] = self.labels_legend["esf_sand"]
+        self.labels_grouped[self.c_sand] = self.labels_legend["c_sand"]
 
     def _determine_effective_volumes(self) -> None:
         """

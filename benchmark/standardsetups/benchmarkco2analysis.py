@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
-from benchmark.utils.misc import read_time_from_path
+from benchmark.utils.misc import read_time_from_path, array_to_csv
 
 # TODO major cleanup required!
 
@@ -274,6 +274,18 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             self.config["injection_start"], "%y%m%d %H%M%S"
         )
 
+        # Add possibility to apply compaction correction for each image
+        if "compaction" in self.config.keys():
+            self.apply_compaction_analysis = self.config["compaction"].get(
+                "apply", False
+            )
+            if self.apply_compaction_analysis:
+                self.compaction_analysis = darsia.CompactionAnalysis(
+                    self.base, **self.config["compaction"]
+                )
+        else:
+            self.apply_compaction_analysis = False
+
         # Initialize results dictionary for post-analysis
         self.results: dict = {}
 
@@ -304,36 +316,30 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
         """
-
-        # TODO major cleanup required!
-
-        # co2_analysis = CO2MaskAnalysis(
-        #    self.base,
-        #    color="",
-        #    labels=self.labels,
-        #    labels_legend=self.labels_legend,
-        #    **self.config["co2"],
-        # )
-        # co2_analysis = CO2MaskAnalysis(
-        #    self.base,
-        #    color="hue",
-        #    **self.config["co2"],
-        # )
-        co2_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base,
-            color="value",
-            **self.config["co2"],
-        )
+        if self.config["co2"].get("segmented", False):
+            co2_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+                self.base, self.labels, **self.config["co2"]
+            )
+        else:
+            co2_analysis = darsia.BinaryConcentrationAnalysis(
+                self.base, **self.config["co2"]
+            )
 
         return co2_analysis
 
     def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
-        Identify CO2(g) using a thresholding scheme on the blue color channel.
+        Identify CO2(g) using a thresholding scheme on the blue color channel,
+        controlled from external config file.
         """
-        co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
-            self.base, color="blue", **self.config["co2(g)"]
-        )
+        if self.config["co2(g)"].get("segmented", False):
+            co2_gas_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
+                self.base, self.labels, **self.config["co2(g)"]
+            )
+        else:
+            co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
+                self.base, **self.config["co2(g)"]
+            )
 
         return co2_gas_analysis
 
@@ -362,24 +368,31 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         Returns:
             darsia.Image: boolean image detecting CO2(g).
         """
+        # Add expert knowledge - do not expect any CO2(g) outside
+        # of the CO2, and neither in ESF. Include this in the analysis.
+        expert_knowledge = np.logical_and(co2.img, np.logical_not(self.esf_sand))
+        self.co2_gas_analysis.update_mask(expert_knowledge)
+
         # Extract co2 from analysis
         co2_gas = super().determine_co2_gas()
 
         # Add expert knowledge. Turn of any signal outside the presence of co2.
         # And turn off any signal in the ESF layer.
-        co2_gas.img[~co2.img] = 0
-        co2_gas.img[self.esf_sand] = 0
+        co2_gas.img[~expert_knowledge] = 0
+
+        # Clean the results once more after adding expert knowledge.
+        co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
 
         return co2_gas
 
     def single_image_analysis(
-        self, img: Path, **kwargs
+        self, img: Union[Path, darsia.Image], **kwargs
     ) -> tuple[np.ndarray, np.ndarray, dict]:
         """
         Standard workflow to analyze CO2 phases.
 
         Args:
-            image (Path): path to single image.
+            image (Path or Image): path to single image.
             kwargs: optional keyword arguments, see batch_analysis.
 
         Returns:
@@ -389,7 +402,17 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         """
 
         # Load the current image
-        self.load_and_process_image(img)
+        if isinstance(img, darsia.Image):
+            self.img = img.copy()
+        else:
+            self.load_and_process_image(img)
+
+        # Perform compaction analysis
+        if self.apply_compaction_analysis:
+            # Apply compaction analysis, providing the deformed image matching the baseline image,
+            # as well as the required translations on each patch, characterizing the total
+            # deformation. Also plot the deformation as vector field.
+            self.img = self.compaction_analysis(self.img)
 
         # Determine binary mask detecting any(!) CO2
         co2 = self.determine_co2_mask()
@@ -460,7 +483,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             contours_co2, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
-            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 1)
+            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
 
             # Overlay the original image with contours for CO2(g)
             contours_co2_gas, _ = cv2.findContours(
@@ -468,7 +491,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE,
             )
-            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 1)
+            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
 
             # Overlay the original image with contours of Box A
             contours_box_A, _ = cv2.findContours(
@@ -502,9 +525,16 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
             # Write corrected image with contours to file
             if write_contours_to_file:
+                (self.path_to_results / Path("contour_plots")).mkdir(
+                    parents=True, exist_ok=True
+                )
                 original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
                 cv2.imwrite(
-                    str(self.path_to_results / Path(f"{img_id}_with_contours.jpg")),
+                    str(
+                        self.path_to_results
+                        / Path("contour_plots")
+                        / Path(f"{img_id}_with_contours.jpg")
+                    ),
                     original_img,
                 )
 
@@ -526,26 +556,65 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
             # Store fine scale segmentation
             if write_segmentation_to_file:
+                (self.path_to_results / Path("npy_segmentation")).mkdir(
+                    parents=True, exist_ok=True
+                )
                 np.save(
-                    self.path_to_results / Path(f"{img_id}_segmentation.npy"),
+                    self.path_to_results
+                    / Path("npy_segmentation")
+                    / Path(f"{img_id}_segmentation.npy"),
                     segmentation,
                 )
 
             # Store coarse scale segmentation
             if write_coarse_segmentation_to_file:
                 coarse_shape = (150, 280)
-                coarse_segmentation = np.zeros(coarse_shape, dtype=int)
+                coarse_shape_reversed = tuple(reversed(coarse_shape))
+
                 co2_coarse = skimage.img_as_bool(
-                    skimage.transform.resize(co2.img, coarse_shape)
+                    cv2.resize(
+                        skimage.img_as_ubyte(
+                            co2.img,
+                        ),
+                        coarse_shape_reversed,
+                        interpolation=cv2.INTER_AREA
+                    )
                 )
                 co2_gas_coarse = skimage.img_as_bool(
-                    skimage.transform.resize(co2_gas.img, coarse_shape)
+                    cv2.resize(
+                        skimage.img_as_ubyte(
+                            co2_gas.img,
+                        ),
+                        coarse_shape_reversed,
+                        interpolation=cv2.INTER_AREA,
+                    )
                 )
+
+                coarse_segmentation = np.zeros(coarse_shape, dtype=int)
                 coarse_segmentation[co2_coarse] += 1
                 coarse_segmentation[co2_gas_coarse] += 1
+
+                # Store segmentation as npy array
+                (self.path_to_results / Path("coarse_npy_segmentation")).mkdir(
+                    parents=True, exist_ok=True
+                )
                 np.save(
-                    self.path_to_results / Path(f"{img_id}_coarse_segmentation.npy"),
+                    self.path_to_results
+                    / Path("coarse_npy_segmentation")
+                    / Path(f"{img_id}_coarse_segmentation.npy"),
                     coarse_segmentation,
+                )
+
+                # Store segmentation as csv file
+                (self.path_to_results / Path("coarse_csv_segmentation")).mkdir(
+                    parents=True, exist_ok=True
+                )
+                array_to_csv(
+                    self.path_to_results
+                    / Path("coarse_csv_segmentation")
+                    / Path(f"{img_id}_coarse_segmentation.csv"),
+                    coarse_segmentation,
+                    img.name,
                 )
 
         return co2, co2_gas, self.results
