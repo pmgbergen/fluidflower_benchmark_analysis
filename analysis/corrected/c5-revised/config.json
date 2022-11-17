@@ -133,7 +133,7 @@
 
         "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.1,
+        "posterior threshold": 0.09,
 
         "verbosity": false
     },
