@@ -26,6 +26,10 @@
 
     "segmentation": {
         "labels_path": "cache/labels.npy",
+        "sands wrong!": true,
+        "water": [0],
+        "esf": [1],
+        "c": [2],
         "median disk radius": 20,
         "rescaling factor": 0.1,
         "marker_points": [[1030, 3580], [370, 3575], [3231, 564], [2760, 4020], [1800, 5240], [3500, 4600]],

@@ -19,6 +19,12 @@ co2_analysis = BenchmarkCO2Analysis(
     verbosity = False,   # print intermediate results to screen
 )
 
+da_img = co2_analysis.base
+new_img = da_img.add_grid(dx = 0.1, dy= 0.1)
+import matplotlib.pyplot as plt
+plt.imshow(new_img.img)
+plt.show()
+
 # Perform standardized CO2 batch analysis on all images from C2.
 co2_analysis.batch_analysis(
     images=images,  # paths to images to be considered
