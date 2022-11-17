@@ -22,12 +22,14 @@ co2_analysis = BenchmarkCO2Analysis(
 
 images = [
     images[20],
-    images[50],
-    Path("211214_time132000_DSC01907.TIF"), # CO2(g) too large
-    Path("211215_time082000_DSC04514.TIF"), # upper plume too large?
-    Path("211215_time162000_DSC04610.TIF"), # yellow blob?
-    Path("211215_time212000_DSC04670.TIF"), # green holes?
-    Path("211219_time112000_DSC05702.TIF"), # yellow blob?
+    images[40],
+    images[60],
+    images[80],
+    Path("/media/jakub/Elements/Jakub/benchmark/data/c3/211214_time132000_DSC01907.TIF"), # CO2(g) too large
+    Path("/media/jakub/Elements/Jakub/benchmark/data/c3/211215_time082000_DSC04514.TIF"), # upper plume too large?
+    Path("/media/jakub/Elements/Jakub/benchmark/data/c3/211215_time162000_DSC04610.TIF"), # yellow blob?
+    Path("/media/jakub/Elements/Jakub/benchmark/data/c3/211215_time212000_DSC04670.TIF"), # green holes?
+    Path("/media/jakub/Elements/Jakub/benchmark/data/c3/211219_time112000_DSC05702.TIF"), # yellow blob?
 ]
 
 # Perform standardized CO2 batch analysis on all images.
