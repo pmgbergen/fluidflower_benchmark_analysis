@@ -16,9 +16,13 @@ analysis = MediumCO2Analysis(
     verbosity=True,  # print intermediate results to screen
 )
 
+# Consider only every second image
+images = images[::2]
+
 # Perform standardized CO2 batch analysis on all images from BC02.
 analysis.batch_analysis(
     images=images,  # paths to images to be considered
     plot_contours=False,  # print contour lines for CO2 onto image
-    write_contours_to_file = True # print to file the same plot as prompted for plot_contours
+    write_contours_to_file = True, # print to file the same plot as prompted for plot_contours
+    write_segmentation_to_file = True,
 )
