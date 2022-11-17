@@ -51,8 +51,8 @@ def _labeled_mask_to_contour_mask(labeled_mask: np.ndarray, band_size) -> np.nda
 verbosity = False
 
 labels = np.load("labels.npy")
-signal = np.load("concentration_30.npy")
-median_path = Path("median_30.npy")
+signal = np.load("concentration_0.npy")
+median_path = Path("median_0.npy")
 
 plt.figure()
 plt.imshow(labels)
@@ -72,7 +72,7 @@ print("Finding contours")
 if False:
 
     # User parameter
-    band_size = 50
+    band_size = 10
 
     contour_mask = {}
     for label in label_set:
@@ -251,5 +251,9 @@ plt.figure("median from rescaled signal")
 plt.imshow(median_from_rescaled_signal)
 plt.figure("tvd from rescaled signal")
 plt.imshow(tvd_from_rescaled_signal)
+
+coarse = cv2.resize(median_from_rescaled_signal, (280, 150))
+plt.figure()
+plt.imshow(coarse)
 
 plt.show()
