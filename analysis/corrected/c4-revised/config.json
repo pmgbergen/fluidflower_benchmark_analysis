@@ -54,14 +54,6 @@
         "verbosity": false
     },
 
-    "compaction": {
-        "apply": false,
-        "N_patches": [20, 10],
-        "rel_overlap": 0.1,
-        "max_features": 200,
-        "tol": 0.05
-    },
-
     "co2": {
         "cleaning_filter": "cache/cleaning_filter_hsv.npy",
 
@@ -82,7 +74,7 @@
         "threshold method original try something new": "local/global min",
         "threshold method": "first local min",
         "threshold value": 0.1,
-        "threshold value min": [0.04, 0.025, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.02, 0.02, 0.04],
+        "threshold value min": [0.04, 0.025, 0.04, 0.04, 0.04, 0.04, 0.04, 0.08, 0.02, 0.02, 0.04],
         "threshold value max": 0.1,
 
         "postsmoothing": true,
@@ -105,7 +97,7 @@
 
         "segmented": true,
 
-        "color": "blue",
+        "color": "blue-after",
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
@@ -133,8 +125,9 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "posterior criterion": "value",
-        "posterior threshold": 0.1,
+        "posterior color": "yellow",
+        "posterior criterion": "value/value extra color",
+        "posterior threshold": [0.09, 0.6],
 
         "verbosity": false
     },
