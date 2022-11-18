@@ -104,7 +104,7 @@
 
         "segmented": true,
 
-        "color": "blue",
+        "color": "blue-after",
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
@@ -132,8 +132,9 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "posterior criterion": "value",
-        "posterior threshold": 0.09,
+        "posterior color": "yellow",
+        "posterior criterion": "value/value extra color",
+        "posterior threshold": [0.09, 0.6],
 
         "verbosity": false
     },
