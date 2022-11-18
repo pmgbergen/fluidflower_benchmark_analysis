@@ -1,0 +1,19 @@
+MAIN IDEA:
+
+The procedure is structured in 3 steps:
+
+  1. Preprocessing.
+  2. Segmentation.
+  3. Post-analysis.
+
+Each step has its own run script.
+
+  preprocessing.py
+  segmentation.py
+  postanalysis.py
+
+To obtain the final sparse data results, all three scripts have
+to be run subsequently. To ease the process, the overall managing
+script performing the full analysis is stored as:
+
+  full_analysis.py
