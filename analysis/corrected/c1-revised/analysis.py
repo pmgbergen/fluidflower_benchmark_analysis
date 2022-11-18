@@ -20,8 +20,6 @@ co2_analysis = BenchmarkCO2Analysis(
     verbosity=True,  # print intermediate results to screen
 )
 
-images = images[27:]
-
 # Perform standardized CO2 batch analysis on all images from C1.
 co2_analysis.batch_analysis(
     images=images,  # paths to images to be considered
