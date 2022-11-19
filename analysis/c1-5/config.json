@@ -125,7 +125,7 @@
         "posterior": true,
         "posterior color": "yellow",
         "posterior criterion": "value/value extra color",
-        "posterior threshold": [0.08, 0.15],
+        "posterior threshold": [0.09, 0.12],
 
         "verbosity": false
     },
