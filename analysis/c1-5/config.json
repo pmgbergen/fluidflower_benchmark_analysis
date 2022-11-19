@@ -31,6 +31,7 @@
         "esf": [1,8,9],
         "c": [2,3,4],
 
+        "comment": "for creating the segmentation used here, use the following keywords.",
         "monochromatic_color": "value",
         "median disk radius": 50,
         "rescaling factor": 0.25,
@@ -124,7 +125,7 @@
         "posterior": true,
         "posterior color": "yellow",
         "posterior criterion": "value/value extra color",
-        "posterior threshold": [0.09, 0.6],
+        "posterior threshold": [0.08, 0.15],
 
         "verbosity": false
     },
