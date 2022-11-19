@@ -55,13 +55,11 @@
     },
 
     "co2": {
-        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
+        "cleaning_filter": "cache/cleaning_filter_cmyK.npy",
 
         "segmented": true,
 
-        "color": "hsv",
-        "hue lower bound": 0,
-        "hue upper bound": 70,
+        "color": "cmyk-k",
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
@@ -72,14 +70,14 @@
 
         "threshold dynamic": true,
         "threshold method": "first local min",
-        "threshold value": 0.1,
-        "threshold value min": [0.04, 0.025, 0.04, 0.04, 0.04, 0.04, 0.04, 0.08, 0.02, 0.02, 0.04],
-        "threshold value max": 0.1,
+        "threshold value": 0.4,
+        "threshold value min": 0.01,
+        "threshold value max": 0.2,
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize": 0.25,
-        "postsmoothing weight": 0.1,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 0.05,
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 200,
 
@@ -130,5 +128,44 @@
         "verbosity": false
     },
 
-    "calibration": {"scaling": 1.0}
+    "calibration": {"scaling": 1.0},
+
+    "comment": "from here on old, and soon to be removed",
+
+    "co2 hsv": {
+        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
+
+        "segmented": true,
+
+        "color": "hsv",
+        "hue lower bound": 0,
+        "hue upper bound": 70,
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 0.1,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold dynamic": true,
+        "threshold method": "first local min",
+        "threshold value": 0.1,
+        "threshold value min": [0.04, 0.025, 0.04, 0.04, 0.04, 0.04, 0.04, 0.08, 0.02, 0.02, 0.04],
+        "threshold value max": 0.1,
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.25,
+        "postsmoothing weight": 0.1,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 200,
+
+        "posterior": true,
+        "posterior criterion": "value",
+        "posterior threshold": 0.1,
+
+        "verbosity": false
+    }
+
 }
