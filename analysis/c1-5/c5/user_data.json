@@ -1,0 +1,7 @@
+{
+    "images folder": "/media/jakub/Elements/Jakub/benchmark/data/c5",
+    "file ending": "*.TIF",
+    "number baseline images": 10,
+    "config": "../config.json",
+    "results": "/media/jakub/Elements/Jakub/benchmark/results/final/c5"
+}
