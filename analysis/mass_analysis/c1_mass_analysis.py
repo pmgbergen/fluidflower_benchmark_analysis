@@ -3,10 +3,10 @@ import os
 import darsia as da
 import matplotlib.pyplot as plt
 import numpy as np
-from binary_mass_analysis import BinaryMassAnalysis
+from benchmark.standardsetups.binary_mass_analysis import BinaryMassAnalysis
+from benchmark.utils.time_from_image_name import ImageTime
 from create_pressure_array import pressure_array
 from scipy import interpolate
-from time_from_image_name import ImageTime
 from total_injected_mass_large_FF import total_mass
 
 # Read atmospheric pressure data (found at https://veret.gfi.uib.no/?action=period_query)
