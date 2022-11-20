@@ -55,11 +55,11 @@
     },
 
     "co2": {
-        "cleaning_filter": "cache/cleaning_filter_cmyK.npy",
+        "cleaning_filter": "cache/cleaning_filter_negative_key.npy",
 
         "segmented": true,
 
-        "color": "cmyk-k",
+        "color": "negative-key",
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
