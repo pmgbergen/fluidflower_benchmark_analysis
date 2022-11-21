@@ -85,7 +85,7 @@ class BinaryMassAnalysis:
             :, None
         ] * np.ones_like(self.base.img)
 
-    def volume_map(self, segmentation: np.ndarray, component: int) -> np.ndarray:
+    def volume_map(self, segmentation: np.ndarray, component: int, roi: Optional[Union[np.ndarray, list]] = None) -> np.ndarray:
         """
         Given segmentation and component, returns a volume map of the component
         from the segmentation where each pixel gives the volume in meters^3 associated
@@ -95,6 +95,8 @@ class BinaryMassAnalysis:
             segmentation (np.ndarray): segmented image
             component (int): the value that the component of interest takes in the
                 segmentation.
+            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed. 
+                Provided as lower left corner, upper right corner in [x,y] coordinates
 
         Returns:
             volume map (np.ndarray): volume associated to each pixel containing the prescribed
@@ -112,14 +114,19 @@ class BinaryMassAnalysis:
         else:
             # Compute volume map
             volume_map = (self.porosity * self.depth_map) * self.pixelarea
-
+        
+        
         # Extract only the correct volumes (depending on segmentation and chosen component)
         volume = np.zeros_like(volume_map)
         volume[segmentation == component] = volume_map[segmentation == component]
 
+        if roi is not None:
+            _, roi_box = da.extractROI(self.base, roi, return_roi=True)
+            volume = volume[roi_box]
+ 
         return volume
 
-    def external_pressure_to_density_co2(self, external_pressure: float) -> np.ndarray:
+    def external_pressure_to_density_co2(self, external_pressure: float, roi: Optional[Union[np.ndarray, list]] = None) -> np.ndarray:
         """
         A conversion from pressure (in bar) to density of CO2 (in g/m^3)
         is given by the linear formula here. The formula is found by using
@@ -130,17 +137,24 @@ class BinaryMassAnalysis:
 
         Arguments:
             external_pressure (float): external pressure, for example atmospheric pressure.
+            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed. 
+                Provided as lower left corner, upper right corner in [x,y] coordinates
 
         Returns:
             (np.ndarray): array associating each pixel with the CO2 density.
         """
+        if roi is not None:
+            _, roi_box = da.extractROI(self.base, roi, return_roi=True)
+            height_map = self.height_map[roi_box]
+        else:
+            height_map = self.height_map
         return 1000 * (
-            1.805726990977443 * (external_pressure + 0.101325 * self.height_map)
+            1.805726990977443 * (external_pressure + 0.101325 * height_map)
             - 0.009218969932330845
         )
 
     def free_co2_mass(
-        self, segmentation: np.ndarray, external_pressure: float, co2_component: int = 2
+        self, segmentation: np.ndarray, external_pressure: float, co2_component: int = 2, roi: Optional[Union[list, np.ndarray]] = None,
     ) -> float:
         """
         Given a segmentation, external pressure and the number
@@ -151,13 +165,19 @@ class BinaryMassAnalysis:
             segmentation (np.ndarray): segmented image
             external_pressure (float): external pressure, for example atmospheric pressure.
             co2_component (int): value of the component in segmentation that
-            corresponds to co2.
+                corresponds to co2.
+            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed. 
+                Provided as lower left corner, upper right corner in [x,y] coordinates
 
         Returns:
             (float): Mass of co2.
         """
-        volume = self.volume_map(segmentation, co2_component)
-        density_map = self.external_pressure_to_density_co2(external_pressure)
+        if roi is not None:
+            volume = self.volume_map(segmentation, co2_component, roi)
+            density_map = self.external_pressure_to_density_co2(external_pressure, roi)
+        else:
+            volume = self.volume_map(segmentation, co2_component)
+            density_map = self.external_pressure_to_density_co2(external_pressure)
         return np.sum(volume * density_map)
 
     def _compute_depth_map(
