@@ -48,9 +48,14 @@ mass_analysis = BinaryMassAnalysis(
 # Create empty lists for plotting purposes
 time_vec = []
 mass_co2_vec = []
+mass_co2_subregion_vec = []
 total_mass_vec = []
 mass_dissolved_co2_vec = []
+mass_dissolved_co2_subregion_vec = []
 density_dissolved_co2 = []
+
+# Choose a subregion (now box A)
+subregion = np.array([[1.1, 0.6], [2.8, 0.0]])
 
 # current relative time
 t = 0
@@ -71,8 +76,19 @@ for c, im in enumerate(list_dir):
     # Compute mass of dissolved CO2 as the difference between total mass and mass of free CO2
     mass_dissolved_co2_vec.append(total_mass(t) - mass_co2)
 
-    # Compute volume of dissolved CO2
+    # Compute volume of dissolved CO2 in entire rig
     volume_dissolved = np.sum(mass_analysis.volume_map(seg, 1))
+
+    mass_co2_subregion_vec.append(mass_analysis.free_co2_mass(seg, pressure(t), roi = subregion))
+
+    # Compute volume of dissolved CO2 in subregion (for box A now)
+    volume_dissolved_subregion = np.sum(mass_analysis.volume_map(seg, 1, roi = subregion))
+
+    # Compute dissolved co2 in subregion provided above
+    if volume_dissolved > 1e-9:
+        mass_dissolved_co2_subregion_vec.append((total_mass(t)-mass_co2)*volume_dissolved_subregion/volume_dissolved)
+    else:
+        mass_dissolved_co2_subregion_vec.append(0)
 
     # Compute densitylike entity for dissolved CO2.
     if volume_dissolved > 1e-9:
@@ -105,6 +121,18 @@ plt.plot(time_vec, total_mass_vec)
 plt.xlabel("Time (min)")
 plt.ylabel("Mass (g)")
 
+plt.figure(" BOX A ")
+plt.subplot(311)
+plt.title("CO2 in box A")
+plt.plot(time_vec, mass_co2_subregion_vec)
+plt.xlabel("Time (min)")
+plt.ylabel("Mass (g)")
+
+plt.subplot(313)
+plt.title("Dissolved CO2 in box A")
+plt.plot(time_vec, mass_dissolved_co2_subregion_vec)
+plt.xlabel("Time (min)")
+plt.ylabel("Mass (g)")
 
 plt.figure("Dissolved CO2/Volume")
 plt.title("Dissolved CO2 divided by volume")
