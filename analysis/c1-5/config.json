@@ -28,11 +28,12 @@
     "segmentation": {
         "labels_path": "../cache/labels.npy",
         "water": [0],
-        "esf": [1,8,9],
+        "esf": [1,11,12],
         "c": [2,3,4],
 
         "comment": "for creating the segmentation used here, use the following keywords.",
         "monochromatic_color": "value",
+        "method": "median",
         "median disk radius": 50,
         "rescaling factor": 0.25,
         "marker_points": [
@@ -46,7 +47,10 @@
             [1520, 3470],
             [1390, 1935],
             [2115, 3500],
-            [2100, 1350]
+            [2100, 1350],
+            [2300, 815],
+            [2500, 815],
+            [2420, 2275]
         ],
         "region_size": 30,
         "dilation size": 0,
@@ -126,7 +130,7 @@
         "no posterior extra color": "blue",
         "no posterior threshold": [0.3, 0.09],
 
-        "verbosity": true
+        "verbosity": false
     },
 
     "co2(g)": {
