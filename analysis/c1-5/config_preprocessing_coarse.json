@@ -1,5 +1,5 @@
 {
-    "description": "FluidFlower Benchmark setup for runs C1-5.",
+    "description": "Preprocessing for FluidFlower Benchmark setup for runs C1-5.",
 
     "physical_asset": {
         "dimensions": {"width": 2.8, "height": 1.5},
@@ -28,14 +28,15 @@
     "segmentation": {
         "labels_path": "../cache/labels_coarse.npy",
         "water": [0],
-        "esf": [1,11,12],
+        "esf": [1,12,13],
         "c": [2,3,4],
+        "no-co2(g)": [10],
 
         "comment": "for creating the segmentation used here, use the following keywords.",
         "monochromatic_color": "value",
         "method": "median",
         "median disk radius": 50,
-        "rescaling factor": 0.1,
+        "rescaling factor": 0.25,
         "marker_points": [
             [1030, 3580],
             [370, 3575],
@@ -52,7 +53,7 @@
             [2500, 815],
             [2420, 2275],
 
-            [2030, 5820]
+            [2430, 5820]
         ],
         "region_size": 30,
         "dilation size": 0,
@@ -61,198 +62,13 @@
     },
 
     "co2": {
-        "cleaning_filter": "cache/cleaning_filter_negative_key.npy",
-
-        "segmented": true,
-
-        "color": "negative-key",
-
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize": 0.5,
-        "presmoothing weight": 0.1,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 200,
-
-        "threshold dynamic": true,
-        "threshold method": "first local min otsu",
-        "threshold value": 0.2,
-        "threshold value min": 0.01,
-        "threshold value max": 0.2,
-
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize": 0.5,
-        "postsmoothing weight": 0.05,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 200,
-
-        "posterior": true,
-        "posterior criterion": "value",
-        "posterior threshold": 0.1,
-
-        "verbosity": 0
-    },
-
-    "co2(g) red+green": {
-        "cleaning_filter": "cache/cleaning_filter_red_green.npy",
-
-        "segmented": true,
-
-        "color": "red+green",
-
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize x": 0.5,
-        "presmoothing weight": 0.1,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.2,
-        "threshold value min": 0.2,
-        "threshold value max": 0.4,
-
-        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 1000,
-        "max hole size": 1000,
-
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize x": 0.5,
-        "postsmoothing weight": 0.1,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
-
-        "posterior": true,
-        "posterior criterion": "value",
-        "posterior threshold": [0.4, 0.4, 0.26, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
-        "no posterior criterion": "value/value extra color",
-        "no posterior extra color": "blue",
-        "no posterior threshold": [0.3, 0.09],
-
-        "verbosity": false
+        "cleaning_filter": "cache/cleaning_filter_negative_key.npy"
     },
 
     "co2(g)": {
-        "cleaning_filter": "cache/cleaning_filter_blue.npy",
-
-        "segmented": true,
-
-        "color": "blue",
-
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize x": 0.25,
-        "presmoothing weight": 0.1,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.05,
-        "threshold value min": 0.02,
-        "threshold value max": 0.14,
-        "threshold conservative": false,
-
-        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 1000,
-        "max hole size": 1000,
-
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize x": 0.5,
-        "postsmoothing weight": 0.1,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
-
-        "posterior": true,
-        "posterior extra color": "red+green",
-        "posterior criterion": "value/value extra color",
-        "posterior threshold": [0.09, 0.3],
-
-        "verbosity": 0
+        "cleaning_filter": "cache/cleaning_filter_blue.npy"
     },
 
-    "co2(g) yellow": {
-        "cleaning_filter": "cache/cleaning_filter_yellow.npy",
-
-        "segmented": true,
-
-        "color": "yellow",
-
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize x": 0.25,
-
-        "presmoothing weight": 0.1,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.25,
-        "threshold value min": 0.23,
-        "threshold value max": 0.5,
-
-        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 1000,
-        "max hole size": 1000,
-
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize x": 0.5,
-        "postsmoothing weight": 0.1,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
-
-        "posterior": true,
-        "posterior color": "yellow",
-        "posterior criterion": "value",
-        "posterior threshold": [0.35],
-
-        "verbosity": false
-    },
-
-    "calibration": {"scaling": 1.0},
-
-    "comment": "from here on old, and soon to be removed",
-
-    "co2 hsv": {
-        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
-
-        "segmented": true,
-
-        "color": "hsv",
-        "hue lower bound": 0,
-        "hue upper bound": 70,
-
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize": 0.5,
-        "presmoothing weight": 0.1,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 200,
-
-        "threshold dynamic": true,
-        "threshold method": "first local min",
-        "threshold value": 0.1,
-        "threshold value min": [0.04, 0.025, 0.04, 0.04, 0.04, 0.04, 0.04, 0.08, 0.02, 0.02, 0.04],
-        "threshold value max": 0.1,
-
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize": 0.25,
-        "postsmoothing weight": 0.1,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 200,
-
-        "posterior": true,
-        "posterior criterion": "value",
-        "posterior threshold": 0.1,
-
-        "verbosity": false
-    }
+    "calibration": {"scaling": 1.0}
 
 }
