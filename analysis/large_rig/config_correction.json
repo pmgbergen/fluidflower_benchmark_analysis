@@ -1,15 +1,15 @@
 {
     "description": "unified correction config file for all images taken of the large rig",
     
-    "color_correction": {
-        "roi_color_correction": [[377, 502], [561, 510], [564, 249], [380, 240]]
+    "color": {
+        "roi": [[377, 502], [561, 510], [564, 249], [380, 240]]
     },
     
-    "drift_correction": {
-        "roi_drift_correction": [[153, 16], [788, 16], [788, 734], [153, 734]]
+    "drift": {
+        "roi": [[153, 16], [788, 16], [788, 734], [153, 734]]
     },
     
-    "curvature_correction": {
+    "curvature": {
         "init": {
             "horizontal_bulge": 5e-10,
             "horizontal_center_offset": 0,
