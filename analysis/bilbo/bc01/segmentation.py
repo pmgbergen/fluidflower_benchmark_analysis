@@ -16,8 +16,9 @@ analysis = MediumCO2Analysis(
     verbosity=True,  # print intermediate results to screen
 )
 
-# Consider only every second image
-images = images[::2]
+images = images[::10]
+#images = images[:144] + images[144::5]
+print(f"Number of images len(images).")
 
 # Perform standardized CO2 batch analysis on all images from BC02.
 analysis.batch_analysis(
