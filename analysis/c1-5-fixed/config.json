@@ -48,7 +48,7 @@
         "presmoothing max_num_iter": 200,
 
         "threshold dynamic": false,
-        "threshold value": [0.2, 0.04, 0.05, 0.04, 0.05, 0.05, 0.05, 0.04, 0.07, 0.07, 0.10, 0.075, 0.05, 0.05, 0.08],
+        "threshold value": [0.2, 0.04, 0.05, 0.04, 0.05, 0.05, 0.05, 0.04, 0.07, 0.07, 0.11, 0.075, 0.05, 0.05, 0.08],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
