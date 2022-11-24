@@ -1,0 +1,10 @@
+README for FluidFlower benchmark analysis of photographs taken of the large rig.
+
+The entire analysis including pre and post processing can be run by calling ./main.sh.
+
+The only requirement is to link all paths in all user_data.json files to the according
+data.
+
+So far, only the segmentation of the domain into water, CO2 enriched water, and CO2(g)
+is performed. Currently, it is assumed that the original images are already corrected
+for colors etc. Furthermore, no postanalysis is included. So
