@@ -11,7 +11,7 @@ import skimage
 # !----- 1. Step: Read curved image and initialize the config file
 
 # Choose a image of your choice.
-img = Path("//klient.uib.no/FELLES/LAB-IT/IFT/Resfys/medium_FF_AB_data/AB_image_set_time_from_folder/BC01/220507_time185200_DSC00445.JPG")
+img = Path("/home/jakub/images/ift/medium/BC01/220507_time185200_DSC00445.JPG")
 
 # Read image
 img = cv2.imread(str(img))
@@ -29,16 +29,10 @@ config["curvature"] = {
     "use_cache": True,
 }
 
-# plt.figure("Original image")
-# plt.imshow(img)
-# plt.show()
-
-# Add grid to the original image
-original_image_gridded = darsia.Image(img, width = 0.92, height= 0.55, color_space = "RGB").add_grid(dx = 0.1, dy = 0.1, color =(250,30,30))
-
-plt.figure("Original image - Grid")
-plt.imshow(original_image_gridded.img)
+plt.figure("Original image")
+plt.imshow(img)
 plt.show()
+
 
 # !----- 1. Step: ROI of Color checker for drift correction
 # Define two corner points of a rectangle which contains the color checker.
@@ -90,20 +84,12 @@ config["curvature"]["crop"] = {
 # Extract quad ROI
 img = darsia.extract_quadrilateral_ROI(img, **config["curvature"]["crop"])
 
-# Add gridd to cropped image
-cropped_image_gridded = darsia.Image(img, width = 0.92, height= 0.55, color_space = "RGB").add_grid(dx = 0.1, dy = 0.1, color =(250,30,30))
-
-plt.figure("Cropped image - Grid")
-plt.imshow(cropped_image_gridded.img)
-plt.show()
-
-
 # !----- 3. Step: Straighten the laser grid lines by correcting for bulge
 
-# # Plot...
-# plt.figure("Cropped image")
-# plt.imshow(img)
-# plt.show()
+# Plot...
+plt.figure("Cropped image")
+plt.imshow(img)
+plt.show()
 
 # If not satisfied with the cropped image (due to bulge effects, uncomment the
 # following code and correct for bulge.
@@ -135,7 +121,7 @@ plt.show()
 # }
 #
 ## Apply final curvature correction
-# img = curvature_correction.simple_curvature_correction(img, **config["bulge"])
+# img = curvature_correction.simple_curvature_correction(img, **config["curvature"]["bulge"])
 
 # !----- Summary of the config - copy and move to another file.
 print(config)
