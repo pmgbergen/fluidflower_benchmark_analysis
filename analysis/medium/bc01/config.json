@@ -1,0 +1,96 @@
+{
+    "description": "FluidFlower Benchmark config file for bc01",
+
+    "physical_asset": {
+        "dimensions": {
+            "width": 0.92,
+            "height": 0.55,
+            "depth": 0.01,
+            "expansion": 0.002
+        },
+
+        "parameters": {"porosity": 0.44}
+    },
+    
+    "injection_start": "220507 064749",
+
+    "drift": {
+        "roi": [[600, 6750], [50, 7575]]
+    },
+
+    "color": {
+        "reference": "custom",
+        "custom_colorchecker_path": "./color_checker_BC02.npy",
+
+        "roi": [[6795, 100], [6800, 577], [7513, 578], [7506, 102]]
+    },
+
+    "curvature": {
+        "crop": {
+            "pts_src": [[299, 35], [274, 4461], [7667, 4440], [7636, 32]],
+            "width": 0.92,
+            "height": 0.55
+        },
+        "use_cache": true
+    },
+
+    "segmentation": {
+        "comment": "reuse the same labels as computed for bc02",
+
+        "labels_path": "cache/labels_bc02.npy"
+    },
+
+    "co2": {
+        "cleaning_filter": "cache/cleaning_filter_value.npy",
+
+        "color": "value",
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 0.01,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold auto": true,
+        "threshold value min": 0.01,
+        "todo threshold value max": 0.01,
+
+        "threshold value": 0.12,
+
+        "verbosity": false
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "cache/cleaning_filter_blue.npy",
+
+        "color": "blue",
+
+        "presmoothing": true,
+        "presmoothing method": "anisotropic bregman",
+        "presmoothing resize x": 0.1,
+        "presmoothing resize y": 0.8,
+        "presmoothing weight": 0.05,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold auto": true,
+        "threshold value min": 0.03,
+
+        "threshold value off": 0.08,
+
+        "postsmoothing": true,
+        "presmoothing method": "anisotropic bregman",
+        "postsmoothing resize": 0.25,
+        "postsmoothing weight": 0.01,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "threshold posterior gradient modulus": 0.0015,
+
+        "verbosity": false
+    },
+
+    "calibration": {"scaling": 1.0}
+}
