@@ -10,7 +10,7 @@ from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 from benchmark.utils.misc import read_paths_from_user_data
 
 # Read user-defined paths to images, number of baseline images, and config file
-images, baseline, config, results = read_paths_from_user_data("user_data.json")
+images, baseline, config, results = read_paths_from_user_data("user_data_coarse.json")
 
 # Define FluidFlower analysis
 co2_analysis = BenchmarkCO2Analysis(
