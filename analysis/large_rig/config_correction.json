@@ -1,0 +1,41 @@
+{
+    "description": "unified correction config file for all images taken of the large rig",
+    
+    "color_correction": {
+        "roi_color_correction": [[377, 502], [561, 510], [564, 249], [380, 240]]
+    },
+    
+    "drift_correction": {
+        "roi_drift_correction": [[153, 16], [788, 16], [788, 734], [153, 734]]
+    },
+    
+    "curvature_correction": {
+        "init": {
+            "horizontal_bulge": 5e-10,
+            "horizontal_center_offset": 0,
+            "vertical_bulge": 0,
+            "vertical_center_offset": 0
+        },
+        
+        "crop": {
+            "pts_src": [[28, 30], [41, 4383], [7917, 4371], [7917, 19]],
+            "width": 2.8,
+            "height": 1.5,
+            "in meters": true
+        },
+        
+        "bulge": {
+            "horizontal_bulge": -0.0,
+            "horizontal_center_offset": 0,
+            "vertical_bulge": -4.06061733411027e-09,
+            "vertical_center_offset": -8
+        },
+        
+        "stretch": {
+            "horizontal_stretch": -1.7060115267192474e-09,
+            "horizontal_center_offset": -286,
+            "vertical_stretch": 3.2177888435429053e-09,
+            "vertical_center_offset": 702
+        }
+    }
+}
