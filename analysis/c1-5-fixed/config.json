@@ -26,36 +26,11 @@
     },
 
     "segmentation": {
-        "labels_path": "../cache/labels.npy",
+        "labels_path": "../cache/labels_coarse.npy",
         "water": [0],
-        "esf": [1,11,12],
+        "esf": [1,12,13],
         "c": [2,3,4],
-
-        "comment": "for creating the segmentation used here, use the following keywords.",
-        "monochromatic_color": "value",
-        "method": "median",
-        "median disk radius": 50,
-        "rescaling factor": 0.25,
-        "marker_points": [
-            [1030, 3580],
-            [370, 3575],
-            [3231, 564],
-            [2760, 4020],
-            [1560, 5800],
-            [3500, 4600],
-            [1345, 5760],
-            [1520, 3470],
-            [1390, 1935],
-            [2115, 3500],
-            [2100, 1350],
-            [2300, 815],
-            [2500, 815],
-            [2420, 2275]
-        ],
-        "region_size": 30,
-        "dilation size": 0,
-        "boundary size": 90,
-        "verbosity": false
+        "no-co2(g)": [10]
     },
 
     "co2": {
@@ -73,7 +48,7 @@
         "presmoothing max_num_iter": 200,
 
         "threshold dynamic": false,
-        "threshold value": [0.2, 0.04, 0.04, 0.04, 0.05, 0.07, 0.05, 0.05, 0.07, 0.07, 0.075, 0.075, 0.05, 0.08],
+        "threshold value": [0.2, 0.04, 0.05, 0.04, 0.05, 0.05, 0.05, 0.04, 0.07, 0.07, 0.10, 0.075, 0.05, 0.05, 0.08],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -105,7 +80,7 @@
         "presmoothing max_num_iter": 100,
 
         "threshold dynamic": false,
-        "threshold value": [0.2, 0.2, 0.07, 0.2, 0.02, 0.07, 0.2, 0.02, 0.02, 0.2, 0.04, 0.2, 0.2, 0.055], 
+        "threshold value": [0.2, 0.2, 0.04, 0.2, 0.04, 0.06, 0.2, 0.02, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.07], 
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
         "min area size": 1000,
@@ -121,7 +96,7 @@
         "posterior": true,
         "posterior extra color": "red+green",
         "posterior criterion": "value/value extra color",
-        "posterior threshold": [0.09, 0.3],
+        "posterior threshold": [0.09, 0.35],
 
         "verbosity": 0
     },
