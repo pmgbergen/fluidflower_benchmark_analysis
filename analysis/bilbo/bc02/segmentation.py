@@ -38,13 +38,7 @@ analysis = MediumCO2Analysis(
     baseline=baseline,  # paths to baseline images
     config=config,  # path to config file
     results = results, # path to results directory
-    update_setup=False,  # flag controlling whether aux. data needs update
-    verbosity=True,  # print intermediate results to screen
 )
 
 # Perform standardized CO2 batch analysis on all images from BC02.
-analysis.batch_analysis(
-    images=images,  # paths to images to be considered
-    plot_contours=False,  # print contour lines for CO2 onto image
-    write_contours_to_file = True, # print to file the same plot as prompted for plot_contours,
-)
+analysis.batch_segmentation(images)
