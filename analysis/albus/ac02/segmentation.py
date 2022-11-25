@@ -11,9 +11,8 @@ images, baseline, config, results = read_paths_from_user_data("user_data.json")
 # Define FluidFlower based on a full set of basline images
 analysis = MediumCO2Analysis(
     baseline=baseline,  # paths to baseline images
-    config=config | config_translation,  # path to config file
+    config=config,  # path to config file
     results = results, # path to results directory
-    translation = translation, # relative translation to some baseline image, to be applied.
 )
 
 #images = images[:144] + images[144::5]
