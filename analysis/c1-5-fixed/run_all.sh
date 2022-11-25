@@ -1,5 +1,7 @@
 #!/bin/bash
-cd c1
+cd preprocessing
+python preprocessing.py
+cd ../c1
 python segmentation.py
 cd ../c2
 python segmentation.py
