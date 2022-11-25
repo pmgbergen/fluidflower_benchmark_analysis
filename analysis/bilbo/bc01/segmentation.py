@@ -1,5 +1,5 @@
 """
-Analysis of FluidFlower Benchmark Run BC01.
+Standard segmentation script, for Medium rig.
 """
 from benchmark.standardsetups.mediumco2analysis import MediumCO2Analysis
 from benchmark.utils.misc import read_paths_from_user_data
@@ -12,18 +12,9 @@ analysis = MediumCO2Analysis(
     baseline=baseline,  # paths to baseline images
     config=config,  # path to config file
     results = results, # path to results directory
-    update_setup=False,  # flag controlling whether aux. data needs update
-    verbosity=True,  # print intermediate results to screen
 )
 
-images = images[::10]
-#images = images[:144] + images[144::5]
-print(f"Number of images len(images).")
+images = images[:144] + images[144::5]
 
 # Perform standardized CO2 batch analysis on all images from BC02.
-analysis.batch_analysis(
-    images=images,  # paths to images to be considered
-    plot_contours=False,  # print contour lines for CO2 onto image
-    write_contours_to_file = True, # print to file the same plot as prompted for plot_contours
-    write_segmentation_to_file = True,
-)
+analysis.batch_segmentation(images)
