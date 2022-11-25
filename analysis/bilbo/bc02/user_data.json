@@ -1,0 +1,9 @@
+{
+    "off images folder": "/media/jakub/Elements/Jakub/benchmark/BC02",
+    "images folder": "/home/jakub/images/ift/medium/BC02",
+    "file ending": "*.JPG",
+    "number baseline images": 10,
+    "config": "./config.json",
+    "off results": "/media/jakub/Elements/Jakub/benchmark/results/bc02",
+    "results": "results"
+}
