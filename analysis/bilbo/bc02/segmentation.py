@@ -7,31 +7,7 @@ from benchmark.utils.misc import read_paths_from_user_data
 # Read user-defined paths to images, number of baseline images, and config file
 images, baseline, config, results = read_paths_from_user_data("user_data.json")
 
-images = [
-    images[10],
-    images[13],
-    images[16],
-    images[19],
-    images[21],
-    images[24],
-    images[27],
-    images[30],
-    images[33],
-    images[36],
-    images[50],
-    images[60],
-    images[70],
-    images[80],
-    images[90],
-    images[100],
-    images[125],
-    images[150],
-    images[175],
-    images[200],
-    images[225],
-    images[250],
-    images[280],
-]
+#images = images[:144] + images[144::5]
 
 # Define FluidFlower based on a full set of basline images
 analysis = MediumCO2Analysis(
