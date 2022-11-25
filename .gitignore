@@ -130,5 +130,7 @@ dmypy.json
 
 # Data
 *.npy
+*.csv
 *.jpg
 *.JPG
+user_*.json

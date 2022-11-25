@@ -1,2 +1,4 @@
 # Ignore user-specific data
-user_data.json
+user_*.json
+*threshold*.json
+
