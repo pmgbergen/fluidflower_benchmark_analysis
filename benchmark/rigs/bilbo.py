@@ -84,7 +84,7 @@ class Bilbo(darsia.AnalysisBase):
         # of the medium including some of the ESF sand, as strong
         # light fluctuations interfere with the top of the ESF layer.
         self.extended_water = np.zeros_like(self.water)
-        self.extended_water[:450, :] = True
+        self.extended_water[:500, :] = True
 
         self.labels = labels
 
