@@ -19,8 +19,5 @@ co2_analysis = BenchmarkCO2Analysis(
     results = results, # path to results directory
 )
 
-images = images[::5] + images[-6:]
-images = images[-6:]
-
 # Perform standardized CO2 segmentation on all images
 co2_analysis.batch_segmentation(images)
