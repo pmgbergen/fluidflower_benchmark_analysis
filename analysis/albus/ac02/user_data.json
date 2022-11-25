@@ -1,0 +1,7 @@
+{
+    "images folder": "/home/jakub/images/ift/medium/albus/AC02",
+    "file ending": "*.JPG",
+    "number baseline images": 10,
+    "config": "./config.json",
+    "results": "results"
+}
