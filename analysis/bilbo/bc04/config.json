@@ -104,7 +104,7 @@
     },
 
     "co2(g)": {
-        "cleaning_filter": "cache/cleaning_filter_blue.npy",
+        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
 
         "segmented": true,
         "color": "hsv-after",
@@ -119,14 +119,14 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 100,
 
-        "threshold dynamic": false,
-        "threshold value": [0.5, 0.5, 0.5, 0.5, 0.5, 0.062, 0.5, 0.5, 0.055, 0.5, 0.06],
+        "off threshold dynamic": false,
+        "off threshold value": [0.5, 0.5, 0.5, 0.5, 0.5, 0.062, 0.5, 0.5, 0.055, 0.5, 0.06],
 
-        "off threshold dynamic": true,
-        "off threshold method": "first local min enhanced",
-        "off threshold value": 0.3,
-        "off threshold value min": 0.05,
-        "off threshold value max": 0.4,
+        "threshold dynamic": true,
+        "threshold method": "first local min enhanced",
+        "threshold value": 0.4,
+        "threshold value min": 0.04,
+        "threshold value max": 0.4,
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
         "min area size": 100,
@@ -141,13 +141,13 @@
 
         "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.1,
+        "posterior threshold": 0.08,
 
-        "verbosity": 1
+        "verbosity": 3
     },
 
     "co2(g) yellow": {
-        "cleaning_filter": "cache/cleaning_filter_blue.npy",
+        "cleaning_filter": "cache/cleaning_filter_yellow.npy",
 
         "segmented": true,
         "color": "cmyk-yellow",
@@ -184,7 +184,7 @@
         "posterior criterion": "value",
         "posterior threshold": 0.7,
 
-        "verbosity": false
+        "verbosity": 3
     },
 
     "calibration": {"scaling": 1.0}
