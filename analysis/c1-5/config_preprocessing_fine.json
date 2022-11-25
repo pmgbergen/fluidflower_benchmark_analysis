@@ -1,0 +1,59 @@
+{
+    "description": "Config for FluidFlower Benchmark - provides accurate segmentation of ESF layers.",
+
+    "physical_asset": {
+        "dimensions": {"width": 2.8, "height": 1.5},
+        "parameters": {"porosity": 0.44}
+    },
+
+    "drift": {
+        "roi": [[1050, 2630], [1340, 2920]]
+    },
+
+    "color": {
+        "active": true,
+        "roi": [[338, 455], [516, 455], [518, 190], [341, 190]]
+    },
+
+    "curvature": {
+        "crop": {
+            "pts_src": [[0, 0], [0, 4260], [7952, 4260], [7952, 0]],
+            "width": 2.8,
+            "height": 1.5
+        },
+
+        "use_cache": true
+    },
+
+    "segmentation": {
+        "labels_path": "../cache/labels_fine.npy",
+        "water": [0],
+        "esf": [1,11,12],
+        "c": [2,3,4],
+
+        "comment": "for creating the segmentation used here, use the following keywords.",
+        "monochromatic_color": "value",
+        "method": "tvd",
+        "marker_points": [
+            [370, 3575],
+            [1030, 3580],
+            [2130, 3600],
+            [3250, 570],
+            [2780, 4050],
+            [3520, 4610]
+        ],
+        "region_size": 30,
+        "dilation size": 0,
+        "boundary size": 90,
+        "verbosity": true
+    },
+
+    "co2": {
+    },
+
+    "co2(g)": {
+    },
+
+    "calibration": {"scaling": 1.0}
+
+}
