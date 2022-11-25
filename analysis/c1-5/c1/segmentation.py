@@ -29,3 +29,11 @@ out_file.close()
 gas_out_file = open("co2_gas_threshold.json", "w")
 json.dump(co2_analysis.co2_gas_analysis.threshold_cache, gas_out_file, indent=4)
 gas_out_file.close()
+
+## Print threshold cache
+out_file = open("co2_threshold_all.json", "w")
+json.dump(co2_analysis.co2_analysis.threshold_cache_all, out_file, indent=4)
+out_file.close()
+gas_out_file = open("co2_gas_threshold_all.json", "w")
+json.dump(co2_analysis.co2_gas_analysis.threshold_cache_all, gas_out_file, indent=4)
+gas_out_file.close()

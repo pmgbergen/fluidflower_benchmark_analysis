@@ -1,7 +1,7 @@
 {
-    "images folder": "/media/jakub/Elements/Jakub/benchmark/data/c3",
+    "images folder": "/media/jakub/Elements/Jakub/benchmark/data/large_rig/c3",
     "file ending": "*.TIF",
     "number baseline images": 10,
     "config": "../config.json",
-    "results": "/media/jakub/Elements/Jakub/benchmark/results/final/c3"
+    "results": "/media/jakub/Elements/Jakub/benchmark/results/final/large_rig/c3-test-II"
 }

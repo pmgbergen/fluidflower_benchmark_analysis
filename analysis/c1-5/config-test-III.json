@@ -33,9 +33,9 @@
 
         "comment": "for creating the segmentation used here, use the following keywords.",
         "monochromatic_color": "value",
-        "method": "median",
+        "method": "tvd",
         "median disk radius": 50,
-        "rescaling factor": 0.25,
+        "rescaling factor": 0.5,
         "marker_points": [
             [1030, 3580],
             [370, 3575],

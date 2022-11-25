@@ -73,8 +73,8 @@
         "presmoothing max_num_iter": 200,
 
         "threshold dynamic": true,
-        "threshold method": "first local min",
-        "threshold value": 0.4,
+        "threshold method": "first local min otsu",
+        "threshold value": 0.2,
         "threshold value min": 0.01,
         "threshold value max": 0.2,
 
@@ -89,7 +89,7 @@
         "posterior criterion": "value",
         "posterior threshold": 0.1,
 
-        "verbosity": false
+        "verbosity": 0
     },
 
     "co2(g) red+green": {
@@ -143,7 +143,6 @@
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
         "presmoothing resize x": 0.25,
-
         "presmoothing weight": 0.1,
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 100,
@@ -153,6 +152,7 @@
         "threshold value": 0.05,
         "threshold value min": 0.02,
         "threshold value max": 0.14,
+        "threshold conservative": false,
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
         "min area size": 1000,
@@ -170,7 +170,7 @@
         "posterior criterion": "value/value extra color",
         "posterior threshold": [0.09, 0.3],
 
-        "verbosity": false
+        "verbosity": 0
     },
 
     "co2(g) yellow": {
