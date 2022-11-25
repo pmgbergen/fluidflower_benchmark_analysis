@@ -1,7 +1,21 @@
-Each folder represents one run. It contains required scripts to run the analysis.
-The main script is analysis.py. To run the script, run:
+The benchmark initiative collects several experiments for different geometries,
+and of different kinds.
 
-python analysis.py
+In particular in the benchmark geometry (large rig), two sets of experiments
+have been performed: Tracer experiments, and CO2 experiments.
+
+In a smaller rig with two different geometries (Albus, Bilbo), CO2 experiments
+have been conducted.
+
+All of these experiments contain several runs, which all are analyzed using
+DarSIA. The script in this folder together with DarSIA allow to reproduce
+the analysis. It includes the preprocessing of images (color, shape, drift,
+compaction correction), segmentation of the domain in water, CO2 water, CO2 gas.
+
+Some of the folders contain a further readme with instrutions on how to
+run the specific study.
+
+--------------------------------------------------------------------------------
 
 Important user-input is a file which must(!) be called user_data.json. It will
 contain all important user/machine-specific information to run the analysis.
