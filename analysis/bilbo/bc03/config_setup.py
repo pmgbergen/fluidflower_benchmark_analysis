@@ -11,7 +11,7 @@ import skimage
 # !----- 1. Step: Read curved image and initialize the config file
 
 # Choose a image of your choice.
-img = Path("//klient.uib.no/FELLES/LAB-IT/IFT/Resfys/medium_FF_AB_data/AB_image_set_time_from_folder/BC03/220817_time130530_DSC00030.JPG")
+img = Path("/media/jakub/Elements/Jakub/benchmark/data/bilbo/BC03/220817_time130530_DSC00030.JPG")
 
 # Read image
 img = cv2.imread(str(img))
