@@ -33,15 +33,15 @@ ac14 = main_path / Path("AC14")
 base = {
     #    "ac01": list(sorted(ac01.glob("*")))[0],
     "ac02": list(sorted(ac02.glob("*")))[0],
-    "ac03": list(sorted(ac03.glob("*")))[0],
-    "ac04": list(sorted(ac04.glob("*")))[0],
+    #"ac03": list(sorted(ac03.glob("*")))[0],
+    #"ac04": list(sorted(ac04.glob("*")))[0],
     "ac05": list(sorted(ac05.glob("*")))[0],
-    "ac06": list(sorted(ac06.glob("*")))[0],
-    "ac07": list(sorted(ac07.glob("*")))[0],
-    "ac08": list(sorted(ac08.glob("*")))[0],
-    "ac09": list(sorted(ac09.glob("*")))[0],
-    "ac10": list(sorted(ac10.glob("*")))[0],
-    "ac14": list(sorted(ac14.glob("*")))[0],
+    #"ac06": list(sorted(ac06.glob("*")))[0],
+    #"ac07": list(sorted(ac07.glob("*")))[0],
+    #"ac08": list(sorted(ac08.glob("*")))[0],
+    #"ac09": list(sorted(ac09.glob("*")))[0],
+    #"ac10": list(sorted(ac10.glob("*")))[0],
+    #"ac14": list(sorted(ac14.glob("*")))[0],
 }
 
 img = {}
