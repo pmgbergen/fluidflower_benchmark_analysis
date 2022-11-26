@@ -1,0 +1,7 @@
+{
+    "images folder": "/media/jakub/Elements/Jakub/benchmark/data/albus/AC02",
+    "file ending": "*.JPG",
+    "number baseline images": 10,
+    "config": "./config_preprocessing.json",
+    "results": "/media/jakub/Elements/Jakub/benchmark/develop/albus/preprocessing"
+}
