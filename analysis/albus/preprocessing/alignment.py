@@ -13,7 +13,7 @@ import skimage
 # Assume the first image in each folder for each run can be used as
 # reference image for this run.
 
-with open("user_data.json", "r") as openfile:
+with open("user_data_alignment.json", "r") as openfile:
     user_data = json.load(openfile)
 main_path = user_data["albus folder"]
 
