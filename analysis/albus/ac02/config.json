@@ -134,7 +134,7 @@
         "o threshold safety": "min",
 
         "threshold dynamic": false,
-        "threshold value": [ 0.12, 0.12, 0.12, 0.02, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.02, 0.12],
+        "threshold value": [ 0.12, 0.12, 0.12, 0.03, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.03, 0.12],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
