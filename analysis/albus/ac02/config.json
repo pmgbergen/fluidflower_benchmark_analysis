@@ -35,36 +35,7 @@
         "labels_path": "cache/labels.npy",
         "water": [0],
         "esf": [2, 9, 11],
-        "c": [0],
-
-        "monochromatic_color": "gray",
-        "median disk radius": 50,
-        "rescaling factor": 0.2,
-        "marker_points": [
-            [520,2830],
-            [837,110],
-            [2257,5268],
-            [3188,5297],
-            [3923,4878],
-            [55, 2916],
-            [2621, 1412],
-            [753, 6957],
-            [2800, 5100],
-            [1280, 2700],
-            [1540, 1185],
-            [2055, 4674],
-            [2366, 5177],
-            [1930, 5085],
-            [2000, 1645],
-            [2115, 1630],
-
-            [1850, 2020]
-        ],
-        "region_size": 30,
-        "dilation size": 0,
-        "boundary": ["left", "right"],
-        "boundary size": 150,
-        "verbosity": true
+        "c": [5, 7, 8, 10]
     },
 
     "compaction": {
@@ -148,48 +119,6 @@
         "posterior threshold": 0.15,
 
         "verbosity": 0
-    },
-
-    "co2(g) blue": {
-        "cleaning_filter": "cache/cleaning_filter_blue.npy",
-
-        "segmented": true,
-        "color": "blue",
-
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize x": 0.2,
-        "presmoothing resize y": 1.0,
-        "presmoothing weight": 0.01,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "off threshold dynamic": true,
-        "off threshold method": "first local min enhanced",
-        "off threshold value": 0.12,
-        "off threshold value min": 0.01,
-        "off threshold value max": 0.12,
-        "off threshold safety": "min",
-
-        "threshold dynamic": false,
-        "threshold value": [ 0.12, 0.12, 0.031, 0.040, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.026, 0.12],
-
-        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 100,
-        "max hole size": 1000,
-
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize x": 0.2,
-        "postsmoothing weight": 0.01,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
-
-        "posterior": true,
-        "posterior criterion": "value",
-        "posterior threshold": 0.04,
-
-        "verbosity": 1
     },
 
     "calibration": {"scaling": 1.0}

@@ -33,10 +33,10 @@
     },
 
     "segmentation": {
-        "labels_path": "cache/labels.npy",
+        "labels_path": "../cache/labels.npy",
         "water": [0],
         "esf": [2, 9, 11],
-        "c": [0]
+        "c": [5, 7, 8, 10]
     },
 
     "compaction": {
