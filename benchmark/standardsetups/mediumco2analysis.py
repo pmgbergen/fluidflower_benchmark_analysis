@@ -255,7 +255,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         # Write segmentation to file
         write_segmentation_to_file = kwargs.pop("write_segmentation_to_file", True)
         write_coarse_segmentation_to_file = kwargs.pop(
-            "write_coarse_segmentation_to_file", True
+            "write_coarse_segmentation_to_file", False
         )
 
         if write_segmentation_to_file or write_coarse_segmentation_to_file:
