@@ -33,9 +33,9 @@
 
     "segmentation": {
         "labels_path": "cache/labels.npy",
-        "water": [0, 2],
-        "esf": [1, 10],
-        "c": [4, 6, 7],
+        "water": [0],
+        "esf": [2, 9, 11],
+        "c": [0],
 
         "monochromatic_color": "gray",
         "median disk radius": 50,
@@ -93,7 +93,7 @@
         "threshold value": 0.2,
         "threshold value min": 0.01,
         "threshold value max": 0.2,
-        "threshold safety": "min",
+        "threshold safety": "none",
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -117,7 +117,7 @@
         "hue lower bound": 0,
         "hue upper bound": 0.2,
         "saturation lower bound": 0.2,
-        "saturation upper bound": 0.6,
+        "saturation upper bound": 0.8,
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
@@ -126,19 +126,15 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 100,
 
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.12,
-        "threshold value min": 0.01,
-        "threshold value max": 0.12,
-        "threshold safety": "min",
+        "o threshold dynamic": true,
+        "o threshold method": "first local min enhanced",
+        "o threshold value": 0.12,
+        "o threshold value min": 0.01,
+        "o threshold value max": 0.12,
+        "o threshold safety": "min",
 
-        "off threshold dynamic": false,
-        "off threshold value": [ 0.12, 0.12, 0.031, 0.040, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.026, 0.12],
-
-        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 0,
-        "max hole size": 0,
+        "threshold dynamic": false,
+        "threshold value": [ 0.12, 0.12, 0.12, 0.02, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.02, 0.12],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -149,9 +145,9 @@
 
         "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.04,
+        "posterior threshold": 0.15,
 
-        "verbosity": 1
+        "verbosity": 0
     },
 
     "co2(g) blue": {
