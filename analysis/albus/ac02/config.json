@@ -93,6 +93,7 @@
         "threshold value": 0.2,
         "threshold value min": 0.01,
         "threshold value max": 0.2,
+        "threshold safety": "min",
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -109,6 +110,51 @@
     },
 
     "co2(g)": {
+        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
+
+        "segmented": true,
+        "color": "hsv-after",
+        "hue lower bound": 0,
+        "hue upper bound": 0.2,
+        "saturation lower bound": 0.2,
+        "saturation upper bound": 0.6,
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize x": 0.1,
+        "presmoothing weight": 0.01,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold dynamic": true,
+        "threshold method": "first local min enhanced",
+        "threshold value": 0.12,
+        "threshold value min": 0.01,
+        "threshold value max": 0.12,
+        "threshold safety": "min",
+
+        "off threshold dynamic": false,
+        "off threshold value": [ 0.12, 0.12, 0.031, 0.040, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.026, 0.12],
+
+        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
+        "min area size": 0,
+        "max hole size": 0,
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize x": 0.2,
+        "postsmoothing weight": 0.01,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "posterior criterion": "value",
+        "posterior threshold": 0.04,
+
+        "verbosity": 1
+    },
+
+    "co2(g) blue": {
         "cleaning_filter": "cache/cleaning_filter_blue.npy",
 
         "segmented": true,
@@ -122,11 +168,15 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 100,
 
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.12,
-        "threshold value min": 0.02,
-        "threshold value max": 0.12,
+        "off threshold dynamic": true,
+        "off threshold method": "first local min enhanced",
+        "off threshold value": 0.12,
+        "off threshold value min": 0.01,
+        "off threshold value max": 0.12,
+        "off threshold safety": "min",
+
+        "threshold dynamic": false,
+        "threshold value": [ 0.12, 0.12, 0.031, 0.040, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.026, 0.12],
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
         "min area size": 100,
