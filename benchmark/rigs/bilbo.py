@@ -91,7 +91,7 @@ class Bilbo(darsia.AnalysisBase):
         # boundaries of images can be identified. To exclude them manually
         # nitrocude a hardcoded zone.
         self.bottom_zone = np.zeros_like(self.water)
-        self.bottom_zone[-100:, :] = True
+        self.bottom_zone[-250:, :] = True
 
         self.labels = labels
 

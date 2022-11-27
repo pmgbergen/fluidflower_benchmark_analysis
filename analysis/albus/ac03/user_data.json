@@ -1,0 +1,7 @@
+{
+    "images folder": "E:\Git\fluidflower_benchmark_analysis\analysis\albus_images\AC03",
+    "file ending": "*.JPG",
+    "number baseline images": 10,
+    "config": "./config.json",
+    "results": "E:\Git\fluidflower_benchmark_analysis\analysis\albus_results\AC03"
+}
