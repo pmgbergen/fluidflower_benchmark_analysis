@@ -16,7 +16,7 @@ co2_analysis = MediumCO2Analysis(
 )
 
 # Restrict images to fewer ones, more in the beginning than later
-images = images[0:60:5] + images[60::20]
+#images = images[0:60:5] + images[60::20]
 
 # Perform standardized CO2 batch analysis on all images.
 co2_analysis.batch_segmentation(images)

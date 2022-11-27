@@ -110,8 +110,8 @@
         "color": "hsv-after",
         "hue lower bound": 0.0,
         "hue upper bound": 0.2,
-        "saturation lower bound": 0.8,
-        "saturation upper bound": 1.0,
+        "saturation lower bound": 0.3,
+        "saturation upper bound": 0.8,
 
         "presmoothing": true,
         "presmoothing method": "isotropic bregman",
@@ -121,15 +121,18 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 100,
 
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.4,
-        "threshold value min": 0.01,
-        "threshold value max": 0.4,
+        "off threshold dynamic": true,
+        "off threshold method": "first local min enhanced",
+        "off threshold value": 0.4,
+        "off threshold value min": 0.01,
+        "off threshold value max": 0.4,
+
+        "threshold dynamic": false,
+        "threshold value": [0.4, 0.4, 0.4, 0.4, 0.4, 0.01, 0.4, 0.4, 0.01, 0.4, 0.01],
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 100,
-        "max hole size": 1000,
+        "min area size": 0,
+        "max hole size": 0,
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -138,11 +141,11 @@
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 100,
 
-        "posterior": false,
+        "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.08,
+        "posterior threshold": 0.02,
 
-        "verbosity": 1
+        "verbosity": 0
     },
 
     "co2(g) yellow": {
