@@ -105,7 +105,7 @@
         "threshold value": 0.12,
         "threshold value min": 0.01,
         "threshold value max": 0.12,
-        "threshold safety": "min",
+        "threshold safety": "none",
 
         "off threshold dynamic": false,
         "off threshold value": [ 0.12, 0.12, 0.12, 0.03, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.03, 0.12],
