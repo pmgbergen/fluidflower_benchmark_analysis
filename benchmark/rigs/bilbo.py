@@ -84,7 +84,14 @@ class Bilbo(darsia.AnalysisBase):
         # of the medium including some of the ESF sand, as strong
         # light fluctuations interfere with the top of the ESF layer.
         self.extended_water = np.zeros_like(self.water)
-        self.extended_water[:500, :] = True
+        self.extended_water[:530, :] = True
+
+        # Hardcoded: Define bottom zone, essentially lower zone of the
+        # medium. Since images can move, strange effects, especially at
+        # boundaries of images can be identified. To exclude them manually
+        # nitrocude a hardcoded zone.
+        self.bottom_zone = np.zeros_like(self.water)
+        self.bottom_zone[-100:, :] = True
 
         self.labels = labels
 
