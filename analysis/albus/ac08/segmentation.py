@@ -14,12 +14,7 @@ analysis = MediumCO2Analysis(
     results = results, # path to results directory
 )
 
-#images = images[:144] + images[144::5]
-images = images[::3]
-images = images[:20]
-
 # Perform standardized CO2 batch analysis on all images from BC02.
 analysis.batch_segmentation(
     images,
-    #plot_contours=True
 )
