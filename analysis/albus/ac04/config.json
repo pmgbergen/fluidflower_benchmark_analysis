@@ -35,7 +35,7 @@
         "labels_path": "../cache/labels.npy",
         "water": [0],
         "esf": [2, 9, 11],
-        "c": [5, 7, 8, 10]
+        "c": [4, 7, 8, 10]
     },
 
     "compaction": {
@@ -116,7 +116,7 @@
 
         "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.1,
+        "posterior threshold": 0.08,
 
         "verbosity": 1
     },
