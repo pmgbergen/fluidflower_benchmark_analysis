@@ -36,7 +36,7 @@
         "labels_path": "../cache/labels.npy",
         "water": [0],
         "esf": [2, 9, 11],
-        "c": [5, 7, 8, 10]
+        "c": [4, 7, 8, 10]
     },
 
     "compaction": {
@@ -76,7 +76,7 @@
 
         "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.1,
+        "posterior threshold": 0.2,
 
         "verbosity": 1
     },
@@ -103,10 +103,7 @@
         "threshold value": 0.12,
         "threshold value min": 0.01,
         "threshold value max": 0.12,
-        "threshold safety": "min",
-
-        "off threshold dynamic": false,
-        "off threshold value": [ 0.12, 0.12, 0.12, 0.02, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.02, 0.12],
+        "threshold safety": "none",
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -117,7 +114,7 @@
 
         "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.1,
+        "posterior threshold": 0.05,
 
         "verbosity": 1
     },
