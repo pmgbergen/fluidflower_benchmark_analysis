@@ -116,7 +116,7 @@
 
         "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.05,
+        "posterior threshold": 0.15,
 
         "verbosity": 1
     },
