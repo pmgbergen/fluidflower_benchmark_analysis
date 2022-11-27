@@ -42,7 +42,7 @@
     },
 
     "compaction": {
-        "apply": false,
+        "apply": true,
         "N_patches": [20, 10],
         "rel_overlap": 0.1,
         "max_features": 200,
@@ -108,7 +108,7 @@
         "off threshold safety": "min",
 
         "threshold dynamic": false,
-        "threshold value": [ 0.12, 0.12, 0.12, 0.005, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.01, 0.12],
+        "threshold value": [ 0.12, 0.12, 0.12, 0.005, 0.12, 0.005, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.01, 0.12],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -119,7 +119,7 @@
 
         "posterior": true,
         "posterior criterion": "relative value",
-        "posterior threshold": 4.0,
+        "posterior threshold": 3.0,
 
         "verbosity": 1
     },
