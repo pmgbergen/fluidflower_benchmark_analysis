@@ -154,6 +154,8 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         expert_knowledge = np.logical_and(
             co2.img, np.logical_not(np.logical_or(self.esf_sand, self.c_sand))
         )
+        # Also exclude CO2 from the bottom of the rig - mostly due to shaking images.
+        expert_knowledge = np.logical_and(expert_knowledge, np.logical_not(self.bottom_zone))
         self.co2_gas_analysis.update_mask(expert_knowledge)
 
         # Extract co2 from analysis - restrict the analysis to areas with CO2.
