@@ -103,15 +103,15 @@
         "threshold value": 0.12,
         "threshold value min": 0.01,
         "threshold value max": 0.12,
-        "threshold safety": "min",
+        "threshold safety": "none",
 
         "off threshold dynamic": false,
         "off threshold value": [ 0.12, 0.12, 0.12, 0.03, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.03, 0.12],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize x": 0.5,
-        "postsmoothing weight": 0.1,
+        "postsmoothing resize x": 0.2,
+        "postsmoothing weight": 0.01,
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 100,
 
