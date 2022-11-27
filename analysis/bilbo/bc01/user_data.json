@@ -3,5 +3,5 @@
     "file ending": "*.JPG",
     "number baseline images": 10,
     "config": "./config.json",
-    "results": "E:\Git\fluidflower_benchmark_analysis\analysis\bilbo_images\BC01"
+    "results": "E:\Git\fluidflower_benchmark_analysis\analysis\bilbo_results\BC01"
 }

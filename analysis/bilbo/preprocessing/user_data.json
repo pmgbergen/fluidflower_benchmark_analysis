@@ -1,7 +1,7 @@
 {
-    "images folder": "/media/jakub/Elements/Jakub/benchmark/data/bilbo/BC02",
+    "images folder": "E:\Git\fluidflower_benchmark_analysis\analysis\bilbo_images\BC02",
     "file ending": "*.JPG",
     "number baseline images": 1,
     "config": "../config_preprocessing.json",
-    "results": "/media/jakub/Elements/Jakub/benchmark/results/bilbo/bc02"
+    "results": "E:\Git\fluidflower_benchmark_analysis\analysis\bilbo_results\BC02"
 }
