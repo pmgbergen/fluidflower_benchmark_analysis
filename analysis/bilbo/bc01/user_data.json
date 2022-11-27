@@ -1,9 +1,7 @@
 {
-    "off images folder": "/media/jakub/Elements/Jakub/benchmark/data/bilbo/BC01",
-    "images folder": "/home/jakub/images/ift/medium/BC01",
+    "images folder": "E:\Git\fluidflower_benchmark_analysis\analysis\bilbo_images\BC01",
     "file ending": "*.JPG",
     "number baseline images": 10,
     "config": "./config.json",
-    "off results": "/media/jakub/Elements/Jakub/benchmark/results/bilbo/bc01",
-    "results": "results-from-20"
+    "results": "E:\Git\fluidflower_benchmark_analysis\analysis\bilbo_images\BC01"
 }
