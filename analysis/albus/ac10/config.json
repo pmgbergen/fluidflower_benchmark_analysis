@@ -86,7 +86,7 @@
 
         "segmented": true,
         "color": "hsv-after",
-        "hue lower bound": 0.00,
+        "hue lower bound": 0.0,
         "hue upper bound": 0.2,
         "saturation lower bound": 0.3,
         "saturation upper bound": 1.0,
@@ -101,12 +101,12 @@
         "off threshold dynamic": true,
         "off threshold method": "first local min enhanced",
         "off threshold value": 0.12,
-        "off threshold value min": 0.01,
+        "off threshold value min": 0.005,
         "off threshold value max": 0.12,
-        "off threshold safety": "min",
+        "off threshold safety": "none",
 
         "threshold dynamic": false,
-        "threshold value": [ 0.12, 0.12, 0.12, 0.01, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.01, 0.12],
+        "threshold value": [ 0.12, 0.12, 0.12, 0.01, 0.12, 0.01, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.005, 0.12],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -116,10 +116,10 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "posterior criterion": "value",
-        "posterior threshold": 0.02,
+        "posterior criterion": "relative value",
+        "posterior threshold": 3.0,
 
-        "verbosity": 3
+        "verbosity": 1
     },
 
     "calibration": {"scaling": 1.0}
