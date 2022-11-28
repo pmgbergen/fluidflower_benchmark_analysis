@@ -16,7 +16,7 @@
 
     "color": {
         "reference": "custom",
-        "custom_colorchecker_path": "./color_checker_BC02.npy",
+        "custom_colorchecker_path": "../cache/custom_color_checker.npy",
         "roi": [[6802, 83], [6808, 562], [7524, 563], [7516, 86]]
     },
 
@@ -80,14 +80,14 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "off threshold dynamic": false,
-        "off threshold value": [0.042, 0.113, 0.193, 0.01, 0.144, 0.01, 0.117, 0.14, 0.12, 0.177, 0.096],
+        "threshold dynamic": false,
+        "threshold value": [ 0.183,  0.178,  0.105,  0.1, 0.11, 0.108, 0.11, 0.112, 0.108, 0.120, 0.07],
 
-        "threshold dynamic": true,
-        "threshold method": "first local min",
-        "threshold value": 0.2,
-        "threshold value min": 0.01,
-        "threshold value max": 0.2,
+        "off threshold dynamic": true,
+        "off threshold method": "first local min enhanced",
+        "off threshold value": 0.2,
+        "off threshold value min": 0.05,
+        "off threshold value max": 0.2,
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
@@ -110,7 +110,7 @@
         "color": "hsv-after",
         "hue lower bound": 0.1,
         "hue upper bound": 0.2,
-        "saturation lower bound": 0.7,
+        "saturation lower bound": 0.3,
         "saturation upper bound": 1.0,
 
         "presmoothing": true,
@@ -121,14 +121,14 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 100,
 
-        "off threshold dynamic": false,
-        "off threshold value": [0.5, 0.5, 0.5, 0.5, 0.5, 0.062, 0.5, 0.5, 0.055, 0.5, 0.06],
+        "threshold dynamic": false,
+        "threshold value": [0.5, 0.5, 0.5, 0.5, 0.5, 0.01, 0.5, 0.5, 0.01, 0.5, 0.01],
 
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.4,
-        "threshold value min": 0.01,
-        "threshold value max": 0.4,
+        "off threshold dynamic": true,
+        "off threshold method": "first local min enhanced",
+        "off threshold value": 0.4,
+        "off threshold value min": 0.01,
+        "off threshold value max": 0.4,
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
         "min area size": 100,
@@ -141,11 +141,11 @@
         "postsmoothing eps": 1e-4,
         "postsmoothing max_num_iter": 100,
 
-        "posterior": false,
+        "posterior": true,
         "posterior criterion": "value",
-        "posterior threshold": 0.08,
+        "posterior threshold": 0.02,
 
-        "verbosity": 3
+        "verbosity": 0
     },
 
     "co2(g) yellow": {
@@ -186,7 +186,7 @@
         "posterior criterion": "value",
         "posterior threshold": 0.7,
 
-        "verbosity": 3
+        "verbosity": 1
     },
 
     "calibration": {"scaling": 1.0}
