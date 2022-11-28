@@ -20,8 +20,7 @@
 
     "color": {
         "reference": "custom",
-        "custom_colorchecker_path": "./color_checker_BC02.npy",
-
+        "custom_colorchecker_path": "../cache/custom_color_checker.npy",
         "roi": [[6802, 81], [6807, 563], [7525, 563], [7517, 83]]
     },
 
