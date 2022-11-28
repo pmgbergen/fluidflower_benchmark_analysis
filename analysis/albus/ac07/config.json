@@ -65,7 +65,7 @@
         "threshold value": 0.2,
         "threshold value min": 0.01,
         "threshold value max": 0.2,
-        "threshold safety": "none",
+        "threshold safety": "peaks passed",
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
