@@ -83,11 +83,8 @@
         "presmoothing eps": 1e-4,
         "presmoothing max_num_iter": 200,
 
-        "threshold dynamic": true,
-        "threshold method": "first local min enhanced",
-        "threshold value": 0.2,
-        "threshold value min": 0.01,
-        "threshold value max": 0.2,
+        "threshold dynamic": false,
+        "threshold value": [ 0.2, 0.043, 0.026, 0.01, 0.083, 0.101, 0.062, 0.073, 0.086, 0.066, 0.063, 0.085],
 
         "postsmoothing": true,
         "postsmoothing method": "isotropic bregman",
