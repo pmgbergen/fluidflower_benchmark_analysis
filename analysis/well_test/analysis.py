@@ -6,7 +6,7 @@ from pathlib import Path
 from benchmark.standardsetups.benchmarktraceranalysis import \
     BenchmarkTracerAnalysis
 
-folder = Path("/home/jakub/images/ift/benchmark/well_test")
+folder = Path("/media/jakub/Elements/Jakub/benchmark/data/well_test")
 pt1 = Path("211002 well tests")
 pt2 = Path("211002 well tests_overnight")
 pt3 = Path("211003 well tests continued_1")
@@ -19,6 +19,7 @@ baseline = list(sorted((folder / Path("baseline")).glob(file_ending)))[:20]
 
 # Extract concentration.
 images = [
+    images[-1],
     images[0],
     images[10],
     images[20],

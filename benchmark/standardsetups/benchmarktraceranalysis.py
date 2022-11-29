@@ -28,7 +28,7 @@ class TailoredConcentrationAnalysis(darsia.ConcentrationAnalysis):
         # TODO include in config
         self.disk_radius = kwargs.pop("median_disk_radius", 20)
 
-    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
+    def postprocess_signal(self, signal: np.ndarray, img: np.ndarray) -> np.ndarray:
 
         # TODO try median as well
         # signal = skimage.restoration.denoise_tv_chambolle(
@@ -39,7 +39,7 @@ class TailoredConcentrationAnalysis(darsia.ConcentrationAnalysis):
         )
         signal = skimage.img_as_float(signal)
 
-        return super().postprocess_signal(signal)
+        return super().postprocess_signal(signal, img)
 
 
 class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):

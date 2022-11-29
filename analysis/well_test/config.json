@@ -54,6 +54,10 @@
     },
 
     "segmentation": {
+        "water": [0],
+        "esf": [1, 10, 11],
+        "c": [2, 3, 4],
+
         "labels_path": "cache/labels.npy",
         "monochromatic_color": "value",
         "median disk radius": 20,
