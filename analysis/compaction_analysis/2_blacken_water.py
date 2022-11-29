@@ -48,3 +48,4 @@ else:
 
     assert Path("blackened/src.png").exists()
     assert Path("blackened/dst.png").exists()
+    assert Path("blackened/zero.png").exists()

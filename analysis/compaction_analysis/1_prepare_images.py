@@ -15,8 +15,8 @@ import darsia
 # ! ----- Preliminaries - prepare two images for compaction analysis
 
 # Paths to two images of interest.
-path_src = Path("original/DSC06341.JPG")
-path_dst = Path("original/20210916-124123.JPG")
+path_dst = Path("original/DSC06341.JPG")
+path_src = Path("original/20210916-124123.JPG")
 
 # Base analysis object to organize the reading of images
 analysis = darsia.AnalysisBase(path_src, "./config_preparation.json")
@@ -44,3 +44,22 @@ if True:
     plt.figure()
     plt.imshow(img_dst.img)
     plt.show()
+
+
+
+# Same for alternative setup
+path_zero = Path("original/DSC08428.JPG")
+
+# Base analysis object to organize the reading of images
+analysis = darsia.AnalysisBase(path_zero, "./config_zero.json")
+
+# Now have path_src and path_dst as darsia Images accesible via
+# analysis.base and analysis.img respectively.
+img_zero = analysis.base
+
+# Store the corrected images (as numpy arrays).
+Path("./corrected").mkdir(exist_ok=True)
+np.save("corrected/zero.npy", img_zero.img)
+
+# Store corrected images as (JPG)
+cv2.imwrite("corrected/zero.jpg", cv2.cvtColor(skimage.img_as_ubyte(img_zero.img), cv2.COLOR_RGB2BGR), [int(cv2.IMWRITE_JPEG_QUALITY), 100])
