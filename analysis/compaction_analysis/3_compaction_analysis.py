@@ -33,23 +33,27 @@ print("make sure that the segmentation is for the src which should be deformed. 
 
 # Now have path_src and path_dst as darsia Images accesible via
 # analysis.base and analysis.img respectively.
-img_src = analysis.base
-img_dst = analysis.img
+img_src = fluidflower_src.base
+img_dst = fluidflower_dst.base
 
-plt.figure()
-plt.imshow(img_src.img)
-plt.figure()
-plt.imshow(img_dst.img)
-plt.figure()
-plt.imshow(labels_src)
-plt.figure()
-plt.imshow(labels_dst)
-plt.show()
+if False:
+    plt.figure()
+    plt.imshow(img_src.img)
+    plt.figure()
+    plt.imshow(img_dst.img)
+    plt.figure()
+    plt.imshow(labels_src)
+    plt.figure()
+    plt.imshow(labels_dst)
+    plt.show()
+
+# ! ---- 1. Iteration
+print("1. iteration")
 
 # Define compaction analysis tool
 config_compaction = {
     # Define the number of patches in x and y directions
-    "N_patches": [20, 10],
+    "N_patches": [10, 3],
     # Define a relative overlap, this makes it often slightly easier for the feature detection.
     "rel_overlap": 0.1,
     # Add some tuning parameters for the feature detection (these are actually the default
@@ -66,12 +70,45 @@ new_img, patch_translation = compaction_analysis(
     img_dst, plot_patch_translation=True, return_patch_translation=True
 )
 
+# ! ---- 2. Iteration
+print("2. iteration")
+
+# Define compaction analysis tool
+config_compaction = {
+    # Define the number of patches in x and y directions
+    #"N_patches": [20, 10],
+    "N_patches": [20, 10],
+    # Define a relative overlap, this makes it often slightly easier for the feature detection.
+    "rel_overlap": 0.1,
+    # Add some tuning parameters for the feature detection (these are actually the default
+    # values and could be also omitted.
+    "max_features": 200,
+    "tol": 0.05,
+}
+compaction_analysis = darsia.CompactionAnalysis(img_src, **config_compaction)
+
+new_img_2, patch_translation = compaction_analysis(
+    new_img, plot_patch_translation=True, return_patch_translation=True
+)
+
+
 # Plot the differences between the two original images and after the transformation.
-fig, ax = plt.subplots(1, num=1)
-ax.imshow(skimage.util.compare_images(img_src.img, img_dst.img, method="blend"))
-fig, ax = plt.subplots(1, num=2)
-ax.imshow(skimage.util.compare_images(img_src.img, new_img.img, method="blend"))
+#fig, ax = plt.subplots(1, num=1)
+#ax.imshow(skimage.util.compare_images(img_src.img, img_dst.img, method="blend"))
+plt.figure("1st iteration")
+plt.imshow(skimage.util.compare_images(img_src.img, new_img.img, method="blend"))
+plt.figure("2nd iteration")
+plt.imshow(skimage.util.compare_images(img_src.img, new_img_2.img, method="blend"))
 plt.show()
+
+
+## Store compaction corrected image
+#Path("compaction_corrected").mkdir(exist_ok=True)
+#cv2.imwrite("compaction_corrected/dst.jpg", new_img.dst)
+
+assert False
+
+# ! ---- 3. Post analysis
 
 # Divergence integrated over the domain
 divergence = compaction_analysis.divergence()
