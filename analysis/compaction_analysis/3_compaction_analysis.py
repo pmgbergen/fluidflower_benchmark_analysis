@@ -33,7 +33,9 @@ labels_src = fluidflower_src.labels.copy()
 fluidflower_dst = LargeFluidFlower(path_dst, "./config_compaction_dst.json", False)
 labels_dst = fluidflower_dst.labels.copy()
 
-print("make sure that the segmentation is for the src which should be deformed. or ist it dst which is deformed? not required before analyzing the deformation for each sandlayer")
+print(
+    "make sure that the segmentation is for the src which should be deformed. or ist it dst which is deformed? not required before analyzing the deformation for each sandlayer"
+)
 
 # Now have path_src and path_dst as darsia Images accesible via
 # analysis.base and analysis.img respectively.
@@ -96,7 +98,7 @@ print("2. iteration")
 # Define compaction analysis tool
 config_compaction = {
     # Define the number of patches in x and y directions
-    #"N_patches": [20, 10],
+    # "N_patches": [20, 10],
     "N_patches": [20, 10],
     # Define a relative overlap, this makes it often slightly easier for the feature detection.
     "rel_overlap": 0.1,
@@ -121,7 +123,7 @@ print("3. iteration")
 # Define compaction analysis tool
 config_compaction = {
     # Define the number of patches in x and y directions
-    #"N_patches": [20, 10],
+    # "N_patches": [20, 10],
     "N_patches": [20, 10],
     # Define a relative overlap, this makes it often slightly easier for the feature detection.
     "rel_overlap": 0.1,
@@ -179,24 +181,32 @@ config_compaction = {
 }
 compaction_analysis = darsia.CompactionAnalysis(img_ref, **config_compaction)
 compaction_analysis.add(sub1_compaction_analysis)
+compaction_analysis.plot()
 compaction_analysis.add(sub2_compaction_analysis)
+compaction_analysis.plot()
 compaction_analysis.add(sub3_compaction_analysis)
+compaction_analysis.plot()
 compaction_analysis.add(sub4_compaction_analysis)
+compaction_analysis.plot()
 
 img_ref_deformed = compaction_analysis.apply(img_ref)
 
 # Plot the differences between the two original images and after the transformation.
 plt.figure("Comparison of deformed ref and dst")
-plt.imshow(skimage.util.compare_images(img_dst.img, img_ref_deformed.img, method="blend"))
+plt.imshow(
+    skimage.util.compare_images(img_dst.img, img_ref_deformed.img, method="blend")
+)
 plt.show()
 
 # Store compaction corrected image
 Path("compaction_corrected").mkdir(exist_ok=True)
-cv2.imwrite("compaction_corrected/ref.jpg", img_ref_deformed.img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+cv2.imwrite(
+    "compaction_corrected/ref.jpg",
+    img_ref_deformed.img,
+    [int(cv2.IMWRITE_JPEG_QUALITY), 100],
+)
 
 # Plot results / arrows.
-patches = darsia.Patches(img_ref, 20, 10)
-compaction_analysis.plot()
 
 # Divergence integrated over the domain
 divergence = compaction_analysis.divergence()
@@ -210,7 +220,7 @@ assert False
 #
 ## It is also possible to evaluate the compaction approximation in arbitrary points.
 ## For instance, consider 4 points in metric coordinates (provided in x, y format):
-#pts = np.array(
+# pts = np.array(
 #    [
 #        [0.2, 1.4],
 #        [0.5, 0.5],
@@ -218,38 +228,38 @@ assert False
 #        [1.2, 0.75],
 #        [2.3, 1.1],
 #    ]
-#)
-#print("Consider the points:")
-#print(pts)
+# )
+# print("Consider the points:")
+# print(pts)
 #
-#deformation = compaction_analysis.evaluate(pts)
-#print("Deformation evaluated:")
-#print(deformation)
+# deformation = compaction_analysis.evaluate(pts)
+# print("Deformation evaluated:")
+# print(deformation)
 #
 ## One can also use a patched ROI and evaluate the deformation in the patch centers.
 ## For this, we start extracting a roi, here we choose a box, which in the end
 ## corresponds to box B from the benchmark analysis. This it is sufficient to
 ## define two corner points of the box:
-#box_B = np.array([[0.0, 1.2], [1.1, 0.6]])
+# box_B = np.array([[0.0, 1.2], [1.1, 0.6]])
 #
 ## and extract the corresponding ROI as darsia.Image (based on da_img_src):
-#img_box_B = darsia.extractROI(da_img_src, box_B)
+# img_box_B = darsia.extractROI(da_img_src, box_B)
 #
 ## To double check the box, we plot the resulting box.
-#plt.figure("Box B")
-#plt.imshow(img_box_B.img)
-#plt.show()
+# plt.figure("Box B")
+# plt.imshow(img_box_B.img)
+# plt.show()
 #
 ## Now we patch box B, the number of patches is arbitrary (here chosen to be 5 x 3):
-#patches_box_B = darsia.Patches(img_box_B, 5, 3)
+# patches_box_B = darsia.Patches(img_box_B, 5, 3)
 #
 ## The patch centers can be accessed:
-#patch_centers_box_B = patches_box_B.global_centers_cartesian
+# patch_centers_box_B = patches_box_B.global_centers_cartesian
 #
 ## The deformation in the centers of these points can be obtained by evaluating the
 ## deformation map in a similar fashion as above. The results comes in a matrix.
 ## Entry [row,col] is associated to patch with coordinate [row,col] using the
 ## conventional matrix indexing.
-#deformation_patch_centers_box_B = compaction_analysis.evaluate(patch_centers_box_B)
-#print("The deformation in the centers of the patches of Box B:")
-#print(deformation_patch_centers_box_B)
+# deformation_patch_centers_box_B = compaction_analysis.evaluate(patch_centers_box_B)
+# print("The deformation in the centers of the patches of Box B:")
+# print(deformation_patch_centers_box_B)
