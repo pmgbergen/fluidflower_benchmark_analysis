@@ -93,8 +93,8 @@ Ny, Nx = img.shape[:2]
 # Read the coordinates of the two largest impressions in y-direction (approx. top and bottom center)
 left = 0
 right = 0
-top = 106
-bottom = Ny - 4112
+top = 104
+bottom = Ny - 4104
 (
     horizontal_bulge,
     horizontal_bulge_center_offset,
@@ -104,16 +104,18 @@ bottom = Ny - 4112
     img=img, left=left, right=right, top=top, bottom=bottom
 )
 
+print(vertical_bulge, vertical_bulge_center_offset)
+
 # Choose horizontal and vertical bulge such that all laser grid lines are bulged inwards
 config["bulge"] = {
 
-            "horizontal_bulge": -0.0,
+            "horizontal_bulge": -1e-9,
 
             "horizontal_center_offset": 0,
 
-            "vertical_bulge": -4.06061733411027e-09,
+            "vertical_bulge":  vertical_bulge,
 
-            "vertical_center_offset": -8
+            "vertical_center_offset": vertical_bulge_center_offset
 
 }
 
@@ -125,7 +127,7 @@ da_img = darsia.Image(
     img, width=config["crop"]["width"], height=config["crop"]["height"]
 ).add_grid(dx=0.1, dy=0.1)
 
-if True:
+if False:
     plt.figure("bulged image")
     plt.imshow(da_img.img)
     plt.show()
@@ -134,9 +136,9 @@ if True:
 
 # Fetch stretch from previous studies based on images with laser grids
 config["stretch"] = {
-    "horizontal_stretch": -2e-09,
+    "horizontal_stretch": -2.5e-09,
     "horizontal_center_offset": -286,
-    "vertical_stretch": 7e-09,
+    "vertical_stretch": 2.5e-09,
     "vertical_center_offset": 702
 }
 

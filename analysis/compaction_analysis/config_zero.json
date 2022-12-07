@@ -24,15 +24,15 @@
             "height": 1.5
         },
         "bulge": {
-            "horizontal_bulge": -0.0,
+            "horizontal_bulge": -1e-9,
             "horizontal_center_offset": 0,
-            "vertical_bulge": -4.06061733411027e-09,
-            "vertical_center_offset": -8
+            "vertical_bulge": -4.111692286515876e-09,
+            "vertical_center_offset": -426
         },
         "stretch": {
-            "horizontal_stretch": -2e-09,
+            "horizontal_stretch": -2.5e-09,
             "horizontal_center_offset": -286,
-            "vertical_stretch": 7e-09,
+            "vertical_stretch": 2.5e-09,
             "vertical_center_offset": 702
         }
 
