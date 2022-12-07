@@ -63,7 +63,7 @@
         "region_size": 30,
         "dilation size": 0,
         "boundary size": 90,
-        "verbosity": false
+        "verbosity": true
     },
 
 
