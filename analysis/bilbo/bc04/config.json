@@ -14,18 +14,20 @@
     
     "injection_start": "220507 064749",
 
+    "drift": {
+        "roi": [[600, 6750], [50, 7575]]
+    },
+
     "color": {
         "reference": "custom",
         "custom_colorchecker_path": "../cache/custom_color_checker.npy",
-        "roi": [[6802, 83], [6808, 562], [7524, 563], [7516, 86]]
+        "roi": [[6802, 81], [6807, 563], [7525, 563], [7517, 83]]
     },
-
-    "drift": {"roi": [[631, 6703], [42, 7629]]},
 
     "curvature": {
         "use_cache": true,
         "crop": {
-            "pts_src": [[307, 5], [286, 4451], [7677, 4424], [7657, 28]],
+            "pts_src": [[295, 2], [272, 4460], [7688, 4431], [7650, 12]],
             "width": 0.92,
             "height": 0.55
         }
