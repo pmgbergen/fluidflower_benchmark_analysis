@@ -29,6 +29,7 @@ ac08 = main_path / Path("AC08")
 ac09 = main_path / Path("AC09")
 ac10 = main_path / Path("AC10")
 ac14 = main_path / Path("AC14")
+ac19 = main_path / Path("AC19")
 
 base = {
     #    "ac01": list(sorted(ac01.glob("*")))[0],
@@ -42,6 +43,7 @@ base = {
     "ac09": list(sorted(ac09.glob("*")))[0],
     "ac10": list(sorted(ac10.glob("*")))[0],
     "ac14": list(sorted(ac14.glob("*")))[0],
+    "ac19": list(sorted(ac19.glob("*")))[0],
 }
 
 img = {}

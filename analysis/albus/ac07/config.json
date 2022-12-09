@@ -12,21 +12,21 @@
         "parameters": {"porosity": 0.44}
     },
 
-    "drift": {"roi": [[700, 4840], [14, 5320]]},
+    "drift": {"roi": [[650, 4380], [14, 5310]]},
 
-    "translation": "../cache/translation_ac07.npy",
+    "off translation": "../cache/translation_ac07.npy",
     
     "color": {
         "reference": "custom",
         "custom_colorchecker_path": "cache/custom_color_checker.npy",
         "custom_colorchecker_update": true,
-        "roi": [[4908, 614], [5275, 617], [5287, 67], [4920, 65]]
+        "roi": [[4910, 613], [5273, 615], [5284, 68], [4920, 65]]
     },
     
     "curvature": {
         "use_cache": true,
         "crop": {
-            "pts_src": [[76, 58], [127, 2940], [5399, 2932], [5418, 34]],
+            "pts_src": [[16, 29], [53, 3008], [5442, 2995], [5466, 52]],
             "width": 0.899,
             "height": 0.492
         }

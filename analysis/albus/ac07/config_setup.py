@@ -48,17 +48,17 @@ plt.show()
 # And be generous; this does not need (and should not) be too accurate.
 # Use (row,col), i.e., (y,x) format.
 config["drift"]["roi"] = [
-    [700, 4840],
-    [14, 5320],
+    [650, 4380],
+    [14, 5310],
 ]
 
 # !----- 2. Step: Color checker
 # Find the coordinates for the four marks on the color checker. Starting from the
 # brown tile and proceeding counter clock wise. Use (x,y) format.
 config["color"]["roi"] = [
-    [4908, 614],
-    [5275, 617],
-    [5287, 67],
+    [4910, 613],
+    [5273, 615],
+    [5284, 68],
     [4920, 65],
 ]
 
@@ -79,10 +79,10 @@ fluidflower_height = 0.492
 # FluidFlower.
 config["curvature"]["crop"] = {
     "pts_src": [
-        [17, 34],
-        [54, 3005],
-        [5435, 2982],
-        [5452, 54],
+        [16, 29],
+        [53, 3008],
+        [5442, 2995],
+        [5466, 52],
     ],
     # Specify the true dimensions of the reference points - known as they are
     # points on the laser grid

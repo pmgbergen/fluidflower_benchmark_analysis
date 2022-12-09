@@ -16,7 +16,7 @@
       "roi": [[700, 4800], [1, 5270]]
     },
 
-    "translation": "../cache/translation_ac14.npy",
+    "off translation": "../cache/translation_ac14.npy",
     
     "color": {
         "reference": "custom",
@@ -28,7 +28,7 @@
     "curvature": {
         "use_cache": true,
         "crop": {
-            "pts_src": [[76, 58], [127, 2940], [5399, 2932], [5418, 34]],
+            "pts_src": [[0, 45], [36, 2987], [5403, 2975], [5413, 34]],
             "width": 0.899,
             "height": 0.492
         }

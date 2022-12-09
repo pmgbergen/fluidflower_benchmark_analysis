@@ -14,7 +14,7 @@
 
     "drift": {"roi": [[700, 4840], [14, 5320]]},
 
-    "translation": "../cache/translation_ac08.npy",
+    "off translation": "../cache/translation_ac08.npy",
     
     "color": {
         "reference": "custom",
@@ -26,7 +26,7 @@
     "curvature": {
         "use_cache": true,
         "crop": {
-            "pts_src": [[76, 58], [127, 2940], [5399, 2932], [5418, 34]],
+            "pts_src": [[73, 62], [113, 2971], [5398, 2952], [5430, 61]],
             "width": 0.899,
             "height": 0.492
         }
