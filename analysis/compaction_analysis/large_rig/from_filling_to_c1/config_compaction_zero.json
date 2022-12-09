@@ -29,8 +29,9 @@
         "c": [2,3,4],
 
         "monochromatic_color": "value",
-        "median disk radius": 50,
-        "rescaling factor": 0.25,
+        "method": "tvd",
+        "off median disk radius": 50,
+        "off rescaling factor": 0.25,
         "marker_points": [
             [1030, 3580],
             [370, 3575],
