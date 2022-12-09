@@ -11,8 +11,8 @@ import skimage
 # !----- 0. Step: Read curved image and initialize the config file
 
 # Choose a image of your choice.
-#img = Path("images/DSC06341.JPG")
-img = Path("images/20210916-124123.JPG")
+img = Path("original/DSC06341.JPG") # dst
+#img = Path("original/20210916-124123.JPG") # src
 
 # Read image
 img = cv2.imread(str(img))
@@ -30,10 +30,10 @@ config["curvature"] = {
     "use_cache": True,
 }
 
-#plt.figure("Original image")
-#plt.imshow(img)
-#plt.show()
-
+if False:
+    plt.figure("Original image")
+    plt.imshow(img)
+    plt.show()
 
 # !----- 1. Step: ROI of Color checker for drift correction
 # Define two corner points of a rectangle which contains the color checker.
@@ -75,9 +75,10 @@ img = curvature_correction.simple_curvature_correction(img, **config["init"])
 # Read coordinates of 4 points, defining a rectangular of known dimensions.
 # Here, we choose a bounding box with corners on the laser grid.
 
-#plt.figure("prebulged image")
-#plt.imshow(img)
-#plt.show()
+if False:
+    plt.figure("prebulged image")
+    plt.imshow(img)
+    plt.show()
 
 fluidflower_width = 2.8
 fluidflower_height = 1.5
@@ -88,7 +89,7 @@ frame_width = 0.00
 # corrects for bulging in the normal direction due to the curvature of the
 # FluidFlower.
 config["crop"] = {
-    "pts_src": [[29, 26], [49, 4410], [7920, 4392], [7914, 14]],
+    "pts_src": [[27, 25], [48, 4410], [7920, 4392], [7915, 13]],
     # Specify the true dimensions of the reference points - known as they are
     # points on the laser grid
     "width": fluidflower_width + 2 * frame_width,
@@ -101,9 +102,10 @@ img = darsia.extract_quadrilateral_ROI(img, **config["crop"])
 # !----- 3. Step: Straighten the laser grid lines by correcting for bulge
 
 ## Plot...
-#plt.figure("cropped image")
-#plt.imshow(img)
-#plt.show()
+if False:
+    plt.figure("cropped image")
+    plt.imshow(img)
+    plt.show()
 
 # ... and determine the parameters as described in the darsia-notes
 # For this, require the dimensions of the image
@@ -112,8 +114,8 @@ Ny, Nx = img.shape[:2]
 # Read the coordinates of the two largest impressions in y-direction (approx. top and bottom center)
 left = 0
 right = 0
-top = 125
-bottom = Ny - 4128
+top = 127
+bottom = Ny - 4129
 (
     horizontal_bulge,
     horizontal_bulge_center_offset,
@@ -123,6 +125,8 @@ bottom = Ny - 4128
     img=img, left=left, right=right, top=top, bottom=bottom
 )
 
+print(vertical_bulge, vertical_bulge_center_offset)
+
 # Choose horizontal and vertical bulge such that all laser grid lines are bulged inwards
 config["bulge"] = {
 
@@ -130,28 +134,29 @@ config["bulge"] = {
 
             "horizontal_center_offset": 0,
 
-            "vertical_bulge": -4.06061733411027e-09,
+            "vertical_bulge": vertical_bulge,
 
-            "vertical_center_offset": -8
+            "vertical_center_offset": vertical_bulge_center_offset
 
 }
 
 # Apply final curvature correction
 img = curvature_correction.simple_curvature_correction(img, **config["bulge"])
 
-## Plot...
-#plt.figure("bulged image")
-#plt.imshow(img)
-#plt.show()
+# Plot...
+if False:
+    plt.figure("bulged image")
+    plt.imshow(img)
+    plt.show()
 
 # !----- 4. Step: Correct for stretch
 
 # Fetch stretch from previous studies based on images with laser grids
 config["stretch"] = {
 
-            "horizontal_stretch": -1.7060115267192474e-09,
+            "horizontal_stretch": -2e-9,
 
-            "horizontal_center_offset": -286,
+            "horizontal_center_offset": -274,
 
             "vertical_stretch": 3.2177888435429053e-09,
 
@@ -166,9 +171,11 @@ img = curvature_correction.simple_curvature_correction(img, **config["stretch"])
 da_img = darsia.Image(
     img, width=config["crop"]["width"], height=config["crop"]["height"]
 ).add_grid(dx=0.1, dy=0.1)
-plt.figure("stretched image")
-plt.imshow(da_img.img)
-plt.show()
+
+if True:
+    plt.figure("stretched image")
+    plt.imshow(da_img.img)
+    plt.show()
 
 # !----- Summary of the config - copy and move to another file.
 print(config)
