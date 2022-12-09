@@ -14,19 +14,19 @@
 
     "drift": {"roi": [[700, 4800], [1, 5270]]},
 
-    "translation": "../cache/translation_ac10.npy",
+    "off translation": "../cache/translation_ac10.npy",
     
     "color": {
         "reference": "custom",
         "custom_colorchecker_path": "cache/custom_color_checker.npy",
         "custom_colorchecker_update": true,
-        "roi": [[4845, 607], [5212, 610], [5224, 58], [4857, 55]]
+        "roi": [[4847, 605], [5210, 607], [5221, 60], [4859, 57]]
     },
     
     "curvature": {
         "use_cache": true,
         "crop": {
-            "pts_src": [[76, 58], [127, 2940], [5399, 2932], [5418, 34]],
+            "pts_src": [[0, 36], [7, 3002], [5380, 2976], [5390, 45]],
             "width": 0.899,
             "height": 0.492
         }

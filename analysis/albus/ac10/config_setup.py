@@ -37,7 +37,7 @@ config["curvature"] = {
 # plt.show()
 
 # Add grid to the original image
-original_image_gridded = darsia.Image(img, width = 0.899, height= 0.492, color_space = "RGB").add_grid(dx = 0.1, dy = 0.1, color =(250,30,30))
+original_image_gridded = darsia.Image(img, width = 0.899, height= 0.492, color_space = "RGB") #.add_grid(dx = 0.1, dy = 0.1, color =(250,30,30))
 
 plt.figure("Original image - Grid")
 plt.imshow(original_image_gridded.img)
@@ -56,10 +56,10 @@ config["drift"]["roi"] = [
 # Find the coordinates for the four marks on the color checker. Starting from the
 # brown tile and proceeding counter clock wise. Use (x,y) format.
 config["color"]["roi"] = [
-    [4845, 607],
-    [5212, 610],
-    [5224, 58],
-    [4857, 55],
+    [4847, 605],
+    [5210, 607],
+    [5221, 60],
+    [4859, 57],
 ]
 
 # !----- 3. Step: Curvature correction
@@ -79,10 +79,10 @@ fluidflower_height = 0.492
 # FluidFlower.
 config["curvature"]["crop"] = {
     "pts_src": [
-        [0, 41],
-        [0, 3001],
-        [5378, 2975],
-        [5390, 47],
+        [0, 36],
+        [7, 3002],
+        [5380, 2976],
+        [5390, 45],
     ],
     # Specify the true dimensions of the reference points - known as they are
     # points on the laser grid
