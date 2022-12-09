@@ -25,15 +25,10 @@
     },
 
     "curvature": {
-        "init": {
-            "horizontal_bulge": 5e-10,
-            "horizontal_center_offset": 0,
-            "vertical_bulge": 0,
-            "vertical_center_offset": 0
-        },
+        "init": {"horizontal_bulge": 5e-10, "vertical_bulge": 0.0},
 
         "crop": {
-            "pts_src": [[29, 26], [49, 4410], [7920, 4392], [7914, 14]],
+            "pts_src": [[27, 25], [48, 4410], [7920, 4392], [7915, 13]],
             "width": 2.8,
             "height": 1.5
         },
@@ -41,13 +36,13 @@
         "bulge": {
             "horizontal_bulge": -0.0,
             "horizontal_center_offset": 0,
-            "vertical_bulge": -4.06061733411027e-09,
-            "vertical_center_offset": -8
+            "vertical_bulge": -4.077976730866976e-09,
+            "vertical_center_offset": -33
         },
 
         "stretch": {
-            "horizontal_stretch": -1.7060115267192474e-09,
-            "horizontal_center_offset": -286,
+            "horizontal_stretch": -2e-09,
+            "horizontal_center_offset": -274,
             "vertical_stretch": 3.2177888435429053e-09,
             "vertical_center_offset": 702
         },

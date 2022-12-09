@@ -127,7 +127,7 @@ da_img = darsia.Image(
     img, width=config["crop"]["width"], height=config["crop"]["height"]
 ).add_grid(dx=0.1, dy=0.1)
 
-if False:
+if True:
     plt.figure("bulged image")
     plt.imshow(da_img.img)
     plt.show()
@@ -136,8 +136,12 @@ if False:
 
 # Fetch stretch from previous studies based on images with laser grids
 config["stretch"] = {
-    "horizontal_stretch": -2.5e-09,
-    "horizontal_center_offset": -286,
+    "o horizontal_stretch": -2.5e-09,
+    "o horizontal_center_offset": -286,
+#    "horizontal_stretch": 0,
+#    "horizontal_center_offset": 0,
+    "horizontal_stretch": -2e-9,
+    "horizontal_center_offset": -274,
     "vertical_stretch": 2.5e-09,
     "vertical_center_offset": 702
 }

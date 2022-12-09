@@ -46,6 +46,23 @@ else:
     print("WARNING: It assumed that the corrected images are blackened by the user.")
     print("For the analysis in the paper, inkscape and a manual selection has been used.")
 
-    assert Path("blackened/src.png").exists()
-    assert Path("blackened/dst.png").exists()
-    assert Path("blackened/zero.png").exists()
+    # Read and detect the black regions.
+    dst = cv2.imread("blackened/dst.png")
+    zero = cv2.imread("blackened/zero.png")
+
+    dst_gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
+    zero_gray = cv2.cvtColor(zero, cv2.COLOR_BGR2GRAY)
+
+    dst_water = dst_gray == 0
+    zero_water = zero_gray == 0
+
+    if False:
+        plt.figure("dst water")
+        plt.imshow(dst_water)
+        plt.figure("zero water")
+        plt.imshow(zero_water)
+        plt.show()
+
+    # Store to file
+    np.save("blackened/dst_water.npy", dst_water)
+    np.save("blackened/zero_water.npy", zero_water)
