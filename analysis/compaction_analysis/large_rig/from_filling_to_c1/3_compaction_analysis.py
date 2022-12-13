@@ -141,7 +141,7 @@ cv2.imwrite(
 print("2. iteration")
 _, compaction_2 = iteration(img_dst, img_ref_1, mask_dst, mask_ref_1, [8, 4])
 mask_ref_2 = compaction_2.apply(mask_ref_1)
-compaction_analysis.add_correctly(compaction_2)
+compaction_analysis.add(compaction_2)
 img_ref_2 = compaction_analysis.apply(img_ref)
 
 cv2.imwrite(
@@ -153,7 +153,7 @@ cv2.imwrite(
 print("3. iteration")
 _, compaction_3 = iteration(img_dst, img_ref_2, mask_dst, mask_ref_2, [16, 8])
 mask_ref_3 = compaction_3.apply(mask_ref_2)
-compaction_analysis.add_correctly(compaction_3)
+compaction_analysis.add(compaction_3)
 img_ref_3 = compaction_analysis.apply(img_ref)
 
 cv2.imwrite(
@@ -165,7 +165,7 @@ cv2.imwrite(
 print("4. iteration")
 _, compaction_4 = iteration(img_dst, img_ref_3, mask_dst, mask_ref_3, [32, 16])
 mask_ref_4 = compaction_3.apply(mask_ref_3)
-compaction_analysis.add_correctly(compaction_4)
+compaction_analysis.add(compaction_4)
 img_ref_4 = compaction_analysis.apply(img_ref)
 
 cv2.imwrite(
@@ -177,7 +177,7 @@ cv2.imwrite(
 print("5. iteration")
 _, compaction_5 = iteration(img_dst, img_ref_4, mask_dst, mask_ref_4, [64, 32])
 mask_ref_5 = compaction_5.apply(mask_ref_4)
-compaction_analysis.add_correctly(compaction_5)
+compaction_analysis.add(compaction_5)
 img_ref_5 = compaction_analysis.apply(img_ref)
 
 cv2.imwrite(
@@ -206,6 +206,11 @@ if False:
 # Apply the total deformation
 img_ref_deformed = compaction_analysis.apply(img_ref)
 labels_deformed = compaction_analysis.apply(labels_ref)
+
+np.save("results/labels_ref.npy", labels_ref.img)
+np.save("results/labels_deformed.npy", labels_deformed.img)
+
+assert False
 
 # Plot the differences between the two original images and after the transformation.
 if False:
@@ -243,140 +248,22 @@ if True:
     # Determine the displacement in metric units on pixel level.
     displacement = compaction_analysis.displacement()
 
+    # Separate into the single components
+    displacement_x_vector = displacement[:, 0]
+    displacement_y_vector = displacement[:, 1]
+
+    # Convert into mesh format
+    Ny, Nx = labels_ref.img.shape[:2]
+    displacement_x = displacement_x_vector.reshape(Ny, Nx)
+    displacement_y = displacement_y_vector.reshape(Ny, Nx)
+    np.save("results/displacement_x.npy", displacement_x)
+    np.save("results/displacement_y.npy", displacement_y)
+
     plt.figure("displacement x")
-    plt.imshow(displacement[:, :, 0])
+    plt.imshow(displacement_x)
     plt.figure("displacement y")
-    plt.imshow(displacement[:, :, 1])
+    plt.imshow(displacement_y)
     plt.show()
-
-    np.save("results/displacement.npy", displacement)
 else:
-    displacement = np.load("results/displacement.npy")
-
-# ! ---- Analysis tools
-
-# Analysis of deformed labels
-
-
-def area_analysis(labels, thresh=10000):
-    regions = skimage.measure.regionprops(labels)
-
-    # Area
-    area = []
-    label_values = []
-    for l in range(len(regions)):
-        if regions[l].area > thresh:
-            area.append(regions[l].area)
-            label_values.append(regions[l].label)
-
-    return area, label_values
-
-
-# Mean displacement per label
-def centroid_displacement_analysis(labels, labels_ref, thresh=10000):
-    regions = skimage.measure.regionprops(labels)
-    regions_ref = skimage.measure.regionprops(labels_ref)
-
-    # Collect centroids
-    centroids = []
-    label_values = []
-    for l in range(len(regions)):
-        if regions[l].area > thresh:
-            centroids.append(regions[l].centroid)
-            label_values.append(regions[l].label)
-    centroids_ref = []
-    label_values_ref = []
-    for l in range(len(regions_ref)):
-        if regions_ref[l].area > thresh:
-            centroids_ref.append(regions_ref[l].centroid)
-            label_values_ref.append(regions_ref[l].label)
-
-    assert len(centroids) == len(centroids_ref)
-    assert all([label_values[i] == label_values_ref[i] for i in range(len(centroids))])
-
-    displacement_row = []
-    displacement_col = []
-    for i in range(len(centroids)):
-        displacement_row.append(centroids[i][0] - centroids_ref[i][0])
-        displacement_col.append(centroids[i][1] - centroids_ref[i][1])
-
-    return displacement_row, displacement_col, label_values
-
-
-def mean_strain_analysis(labels_ref, displacement, thresh=10000):
-    # Only 1d? TODO
-
-    displacement_y = displacement[:, :, 1]
-    strain_y = np.gradient(displacement_y, axis=0)
-
-    mean_strain_y = []
-    label_values = []
-    for l in range(len(regions)):
-        if regions[l].area > thresh:
-
-            # Determine roi
-            label_value = regions[l].label
-            mask = labels_ref == label_value
-
-            # Determine mean displacement in y direction
-            single_mean_strain_y = np.sum(strain_y[mask]) / np.count_nonzero(mask)
-
-            # Collect results
-            mean_strain_y.append(single_mean_strain_y)
-            label_values.append(label_value)
-
-    return mean_strain_y, label_values
-
-
-# ! ---- Actual analysis
-
-# Volume/area base analysis
-area_ref, label_values_ref = area_analysis(labels_ref.img)
-area_deformed, label_values_deformed = area_analysis(labels_deformed.img)
-
-print(label_values_ref)
-print(label_values_deformed)
-
-plt.figure("areas")
-plt.plot(area_ref)
-plt.plot(area_deformed)
-plt.show()
-
-plt.figure("relative deformation wrt ref")
-ratio = area_deformed / np.maximum(area_ref, 1) - 1
-plt.plot(ratio)
-plt.show()
-
-# Centroid displacement based analysis
-(
-    displacement_row,
-    displacement_col,
-    label_values_displacement,
-) = centroid_displacement_analysis(labels_deformed.img, labels_ref.img)
-plt.figure("row")
-plt.plot(displacement_row)
-plt.figure("col")
-plt.plot(displacement_col)
-plt.show()
-
-print(label_values_displacement)
-
-# Strain based analysis
-strain_y, label_values_strain = mean_strain_analysis(labels_ref.img, displacement)
-
-print(label_values_strain)
-
-plt.figure("strain")
-plt.plot(strain_y)
-plt.show()
-
-assert False
-
-# Divergence integrated over the domain
-divergence = compaction_analysis.divergence()
-
-plt.figure("divergence")
-plt.imshow(divergence)
-plt.show()
-
-assert False
+    displacement_x = np.load("results/displacement_x.npy")
+    displacement_y = np.load("results/displacement_y.npy")
