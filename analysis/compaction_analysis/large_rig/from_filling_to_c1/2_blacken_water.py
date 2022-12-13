@@ -1,7 +1,7 @@
 """
 Determine compaction of FluidFlower by comparing two different images.
 
-The images correpsond to the baseline image of the official well test
+The images correspond to the baseline image of the official well test
 performed under the benchmark, and one of the other baseline images,
 most likely close to C1. Between these two images, compaction/sedimentation
 has occurred, i.e., to most degree the sand sunk from the src (well test)
@@ -75,3 +75,11 @@ else:
     np.save("blackened/zero_water.npy", zero_water)
     np.save("blackened/dst_water_and_fault.npy", dst_water_and_fault)
     np.save("blackened/zero_water_and_fault.npy", zero_water_and_fault)
+
+    # In similar fashion read all labels.
+    zero_labels = cv2.imread("blackened/zero_labels.png")
+    zero_labels_gray = cv2.cvtColor(zero_labels, cv2.COLOR_BGR2GRAY)
+    np.save("blackened/zero_labels.npy", zero_labels_gray)
+
+    plt.imshow(zero_labels_gray)
+    plt.show()
