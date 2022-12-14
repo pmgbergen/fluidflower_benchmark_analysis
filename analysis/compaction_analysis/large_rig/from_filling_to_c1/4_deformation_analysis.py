@@ -28,6 +28,18 @@ labels_deformed = darsia.Image(
     height=1.5
 )
 
+# Reservoir as one
+reservoir_ref = darsia.Image(
+    np.load("results/reservoir_ref.npy").astype(int),
+    width=2.8,
+    height=1.5
+)
+reservoir_deformed = darsia.Image(
+    np.load("results/reservoir_deformed.npy").astype(int),
+    width=2.8,
+    height=1.5
+)
+
 # Displacement
 displacement_x = np.load("results/displacement_x.npy")
 displacement_y = np.load("results/displacement_y.npy")
@@ -36,11 +48,21 @@ displacement = np.zeros((rows, cols, 2), dtype=float)
 displacement[:,:,0] = displacement_x
 displacement[:,:,1] = displacement_y
 
+if False:
+    plt.figure("displacement x")
+    plt.imshow(displacement_x)
+    plt.colorbar()
+    plt.figure("displacement y")
+    plt.imshow(displacement_y)
+    plt.colorbar()
+    plt.show()
+
 # ! ---- Analysis tools
 
 # Analysis of deformed labels
 
 def area_analysis(labels, thresh=10000):
+
     regions = skimage.measure.regionprops(labels)
 
     # Area
@@ -53,6 +75,20 @@ def area_analysis(labels, thresh=10000):
 
     return area, label_values
 
+
+# Mean displacement per label
+def centroids(labels_ref, thresh=10000):
+    regions_ref = skimage.measure.regionprops(labels_ref)
+
+    # Collect centroids
+    centroids_ref = []
+    label_values_ref = []
+    for l in range(len(regions_ref)):
+        if regions_ref[l].area > thresh:
+            centroids_ref.append(regions_ref[l].centroid)
+            label_values_ref.append(regions_ref[l].label)
+
+    return centroids_ref, label_values_ref
 
 # Mean displacement per label
 def centroid_displacement_analysis(labels, labels_ref, thresh=10000):
@@ -132,11 +168,62 @@ def mean_strain_analysis(labels_ref, displacement, thresh=10000):
 
     return mean_strain_y, label_values
 
-# ! ---- Actual analysis
+# ! ---- Actual analysis - reservoir-based
+# Volume/area base analysis
+area_ref, label_values_ref = area_analysis(reservoir_ref.img)
+area_deformed, label_values_deformed = area_analysis(reservoir_deformed.img)
+area_ratio = area_deformed / np.maximum(area_ref, 1) - 1
+
+# Centroid displacement based analysis
+(
+    displacement_row,
+    displacement_col,
+    label_values_displacement,
+) = centroid_displacement_analysis(reservoir_deformed.img, reservoir_ref.img)
+
+# Strain based analysis
+strain_y, label_values_strain = mean_strain_analysis(reservoir_ref.img, displacement)
+
+# Double check all labels
+assert label_values_ref == label_values_deformed
+assert label_values_ref == label_values_displacement
+assert label_values_ref == label_values_strain
+
+# Spatial illustration of the results
+reservoir_ratio = np.zeros(labels_ref.img.shape[:2], dtype=float)
+reservoir_strain_y = np.zeros(labels_ref.img.shape[:2], dtype=float)
+reservoir_centroid_displacement = np.zeros(labels_ref.img.shape[:2], dtype=float)
+for i, label in enumerate(label_values_ref):
+    mask = reservoir_ref.img == label
+    pixel_height = 1.5 / reservoir_ref.img.shape[0]
+    reservoir_ratio[mask] = area_ratio[i]
+    reservoir_strain_y[mask] = strain_y[i]
+    reservoir_centroid_displacement[mask] = -displacement_row[i] * pixel_height
+
+plt.figure("relative deformation wrt ref, spatial")
+plt.imshow(reservoir_ratio)
+reservoir_centroids_ref, _ = centroids(reservoir_ref.img)
+for i in range(len(label_values_ref)):
+    plt.text(reservoir_centroids_ref[i][1], reservoir_centroids_ref[i][0], f"{area_ratio[i]:.4f}", c="w")
+plt.colorbar()
+plt.figure("y displacement")
+plt.imshow(reservoir_centroid_displacement)
+for i in range(len(label_values_ref)):
+    plt.text(reservoir_centroids_ref[i][1], reservoir_centroids_ref[i][0], f"{(-displacement_row[i] * pixel_height):.4f}", c="w")
+plt.colorbar()
+plt.figure("strain y, spatial")
+plt.imshow(reservoir_strain_y)
+for i in range(len(label_values_ref)):
+    plt.text(reservoir_centroids_ref[i][1], reservoir_centroids_ref[i][0], f"{strain_y[i]:.6f}", c="b")
+plt.colorbar()
+plt.show()
+
+# ! ---- Actual analysis - layer-based
 
 # Volume/area base analysis
 area_ref, label_values_ref = area_analysis(labels_ref.img)
 area_deformed, label_values_deformed = area_analysis(labels_deformed.img)
+area_ratio = area_deformed / np.maximum(area_ref, 1) - 1
 
 # Centroid displacement based analysis
 (
@@ -153,23 +240,6 @@ assert label_values_ref == label_values_deformed
 assert label_values_ref == label_values_displacement
 assert label_values_ref == label_values_strain
 
-plt.figure("areas")
-plt.plot(area_ref)
-plt.plot(area_deformed)
-
-plt.figure("relative deformation wrt ref")
-ratio = area_deformed / np.maximum(area_ref, 1) - 1
-plt.plot(ratio)
-
-plt.figure("row pixel displacement - centroid")
-plt.plot(displacement_row)
-plt.figure("col pixel displacement - centroid")
-plt.plot(displacement_col)
-
-plt.figure("strain y")
-plt.plot(strain_y)
-plt.show()
-
 # Spatial illustration of the results
 
 label_ratio = np.zeros(labels_ref.img.shape[:2], dtype=float)
@@ -178,18 +248,26 @@ label_centroid_displacement = np.zeros(labels_ref.img.shape[:2], dtype=float)
 for i, label in enumerate(label_values_ref):
     mask = labels_ref.img == label
     pixel_height = 1.5 / labels_ref.img.shape[0]
-    label_ratio[mask] = ratio[i]
+    label_ratio[mask] = area_ratio[i]
     label_strain_y[mask] = strain_y[i]
     label_centroid_displacement[mask] = -displacement_row[i] * pixel_height
 
+label_centroids_ref, _ = centroids(labels_ref.img)
+
 plt.figure("relative deformation wrt ref, spatial")
 plt.imshow(label_ratio)
+for i in range(len(label_values_ref)):
+    plt.text(label_centroids_ref[i][1], label_centroids_ref[i][0], f"{area_ratio[i]:.4f}", c="w")
 plt.colorbar()
 plt.figure("y displacement")
 plt.imshow(label_centroid_displacement)
+for i in range(len(label_values_ref)):
+    plt.text(label_centroids_ref[i][1], label_centroids_ref[i][0], f"{(-displacement_row[i] * pixel_height):.4f}", c="w")
 plt.colorbar()
 plt.figure("strain y, spatial")
 plt.imshow(label_strain_y)
+for i in range(len(label_values_ref)):
+    plt.text(label_centroids_ref[i][1], label_centroids_ref[i][0], f"{strain_y[i]:.6f}", c="b")
 plt.colorbar()
 plt.show()
 
