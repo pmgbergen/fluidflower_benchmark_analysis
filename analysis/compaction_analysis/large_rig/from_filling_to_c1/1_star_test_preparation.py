@@ -6,15 +6,15 @@ Test image is just before C1.
 
 """
 
+import copy
+from pathlib import Path
+
+import cv2
+import darsia
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-from pathlib import Path
-
 from benchmark.rigs.largefluidflower import LargeFluidFlower
-import darsia
-import cv2
-import copy
 
 # ! ----- Preliminaries - prepare two images for compaction analysis
 

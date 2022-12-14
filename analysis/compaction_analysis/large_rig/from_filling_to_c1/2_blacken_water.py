@@ -8,15 +8,15 @@ has occurred, i.e., to most degree the sand sunk from the src (well test)
 to dst (C1 like) scenarios.
 """
 
+from pathlib import Path
+
+import cv2
+import darsia
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-from pathlib import Path
-import cv2
-
 from benchmark.rigs.largefluidflower import LargeFluidFlower
 from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
-import darsia
 
 # ! ----- Preliminaries - prepare two images for compaction analysis
 
