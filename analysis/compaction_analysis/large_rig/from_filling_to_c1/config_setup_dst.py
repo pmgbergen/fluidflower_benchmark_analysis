@@ -11,8 +11,8 @@ import skimage
 # !----- 0. Step: Read curved image and initialize the config file
 
 # Choose a image of your choice.
-img = Path("original/DSC06341.JPG") # dst
-#img = Path("original/20210916-124123.JPG") # src
+img = Path("original/DSC06341.JPG")  # dst
+# img = Path("original/20210916-124123.JPG") # src
 
 # Read image
 img = cv2.imread(str(img))
@@ -129,15 +129,10 @@ print(vertical_bulge, vertical_bulge_center_offset)
 
 # Choose horizontal and vertical bulge such that all laser grid lines are bulged inwards
 config["bulge"] = {
-
-            "horizontal_bulge": -0.0,
-
-            "horizontal_center_offset": 0,
-
-            "vertical_bulge": vertical_bulge,
-
-            "vertical_center_offset": vertical_bulge_center_offset
-
+    "horizontal_bulge": -0.0,
+    "horizontal_center_offset": 0,
+    "vertical_bulge": vertical_bulge,
+    "vertical_center_offset": vertical_bulge_center_offset,
 }
 
 # Apply final curvature correction
@@ -153,15 +148,10 @@ if False:
 
 # Fetch stretch from previous studies based on images with laser grids
 config["stretch"] = {
-
-            "horizontal_stretch": -2e-9,
-
-            "horizontal_center_offset": -274,
-
-            "vertical_stretch": 3.2177888435429053e-09,
-
-            "vertical_center_offset": 702
-
+    "horizontal_stretch": -2e-9,
+    "horizontal_center_offset": -274,
+    "vertical_stretch": 3.2177888435429053e-09,
+    "vertical_center_offset": 702,
 }
 
 # Apply final curvature correction

@@ -18,7 +18,7 @@ img = cv2.imread(str(img))
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 # Brighten up image for better control
-#img = skimage.exposure.adjust_gamma(img, gamma=0.7)
+# img = skimage.exposure.adjust_gamma(img, gamma=0.7)
 
 # All relevant config parameters will be stored in a dictionary collecting several configs.
 # Initialize the config dict.
@@ -108,15 +108,10 @@ print(vertical_bulge, vertical_bulge_center_offset)
 
 # Choose horizontal and vertical bulge such that all laser grid lines are bulged inwards
 config["bulge"] = {
-
-            "horizontal_bulge": -1e-9,
-
-            "horizontal_center_offset": 0,
-
-            "vertical_bulge":  vertical_bulge,
-
-            "vertical_center_offset": vertical_bulge_center_offset
-
+    "horizontal_bulge": -1e-9,
+    "horizontal_center_offset": 0,
+    "vertical_bulge": vertical_bulge,
+    "vertical_center_offset": vertical_bulge_center_offset,
 }
 
 # Apply final curvature correction
@@ -138,12 +133,12 @@ if True:
 config["stretch"] = {
     "o horizontal_stretch": -2.5e-09,
     "o horizontal_center_offset": -286,
-#    "horizontal_stretch": 0,
-#    "horizontal_center_offset": 0,
+    #    "horizontal_stretch": 0,
+    #    "horizontal_center_offset": 0,
     "horizontal_stretch": -2e-9,
     "horizontal_center_offset": -274,
     "vertical_stretch": 2.5e-09,
-    "vertical_center_offset": 702
+    "vertical_center_offset": 702,
 }
 
 # Apply final curvature correction
