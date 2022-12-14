@@ -22,9 +22,14 @@ from benchmark.rigs.largefluidflower import LargeFluidFlower
 img_zero_npy = np.load("corrected/zero.npy")
 img_zero = darsia.Image(img_zero_npy, width=2.8, height=1.5)
 water_zero = np.load("blackened/zero_water_and_fault.npy")
-# water_zero = np.load("blackened/zero_water.npy")
+water_only_zero = np.load("blackened/zero_water.npy")
 water_zero = cv2.resize(
     water_zero.astype(int),
+    tuple(reversed(img_zero.img.shape[:2])),
+    interpolation=cv2.INTER_NEAREST,
+).astype(bool)
+water_only_zero = cv2.resize(
+    water_only_zero.astype(int),
     tuple(reversed(img_zero.img.shape[:2])),
     interpolation=cv2.INTER_NEAREST,
 ).astype(bool)
@@ -54,16 +59,17 @@ if False:
 # Fix a reference image
 img_ref = img_zero.copy()
 labels_ref = labels_zero.copy()
+plt.imshow(labels_ref)
+plt.show()
 
 # Masks
 mask_dst = darsia.Image(np.logical_not(water_dst), width=2.8, height=1.5)
 mask_ref_0 = darsia.Image(np.logical_not(water_zero), width=2.8, height=1.5)
 labels_ref = darsia.Image(labels_ref, width=2.8, height=1.5)
 num_labels = len(np.unique(labels_ref.img))
-print(num_labels)
 
-plt.imshow(labels_ref.img)
-plt.show()
+# Reservoir
+reservoir_ref = darsia.Image(np.logical_not(water_only_zero), width=2.8, height=1.5)
 
 # Preliminaries: Define base config for compaction analysis
 base_config_compaction = {
@@ -186,6 +192,9 @@ cv2.imwrite(
     [int(cv2.IMWRITE_JPEG_QUALITY), 100],
 )
 
+if True:
+    compaction_analysis.plot()
+
 if False:
     plt.figure("0")
     plt.imshow(mask_ref_0.img)
@@ -210,10 +219,13 @@ labels_deformed = compaction_analysis.apply(labels_ref)
 np.save("results/labels_ref.npy", labels_ref.img)
 np.save("results/labels_deformed.npy", labels_deformed.img)
 
-assert False
+# For the entire rig
+reservoir_deformed = compaction_analysis.apply(reservoir_ref)
+np.save("results/reservoir_ref.npy", reservoir_ref.img)
+np.save("results/reservoir_deformed.npy", reservoir_deformed.img)
 
 # Plot the differences between the two original images and after the transformation.
-if False:
+if True:
     plt.figure("Comparison of deformed ref and dst")
     plt.imshow(
         skimage.util.compare_images(img_dst.img, img_ref_deformed.img, method="blend")
@@ -232,6 +244,12 @@ if False:
     plt.figure("deformed labels")
     plt.imshow(labels_deformed.img)
 
+    plt.figure("original reservoir")
+    plt.imshow(reservoir_ref.img)
+
+    plt.figure("deformed reservoir")
+    plt.imshow(reservoir_deformed.img)
+
     plt.show()
 
     # Store compaction corrected image
@@ -243,8 +261,7 @@ if False:
         [int(cv2.IMWRITE_JPEG_QUALITY), 100],
     )
 
-
-if True:
+if False:
     # Determine the displacement in metric units on pixel level.
     displacement = compaction_analysis.displacement()
 
