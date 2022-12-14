@@ -71,6 +71,9 @@ num_labels = len(np.unique(labels_ref.img))
 # Reservoir
 reservoir_ref = darsia.Image(np.logical_not(water_only_zero), width=2.8, height=1.5)
 
+# Top boundary of the reservoir
+reservoir_top_ref = darsia.Image(np.load("blackened/zero_top_boundary.npy"), width = 2.8, height=1.5)
+
 # Preliminaries: Define base config for compaction analysis
 base_config_compaction = {
     # Define a relative overlap, this makes it often slightly easier for the feature detection.
@@ -223,6 +226,11 @@ np.save("results/labels_deformed.npy", labels_deformed.img)
 reservoir_deformed = compaction_analysis.apply(reservoir_ref)
 np.save("results/reservoir_ref.npy", reservoir_ref.img)
 np.save("results/reservoir_deformed.npy", reservoir_deformed.img)
+
+# For the top boundary of the reservoir
+reservoir_top_deformed = compaction_analysis.apply(reservoir_top_ref)
+np.save("results/reservoir_top_ref.npy", reservoir_top_ref.img)
+np.save("results/reservoir_top_deformed.npy", reservoir_top_deformed.img)
 
 # Plot the differences between the two original images and after the transformation.
 if True:

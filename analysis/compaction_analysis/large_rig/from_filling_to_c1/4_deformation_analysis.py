@@ -27,6 +27,14 @@ reservoir_deformed = darsia.Image(
     np.load("results/reservoir_deformed.npy").astype(int), width=2.8, height=1.5
 )
 
+# Reservoir top as one
+reservoir_top_ref = darsia.Image(
+    np.load("results/reservoir_top_ref.npy").astype(int), width=2.8, height=1.5
+)
+reservoir_top_deformed = darsia.Image(
+    np.load("results/reservoir_top_deformed.npy").astype(int), width=2.8, height=1.5
+)
+
 # Displacement
 displacement_x = np.load("results/displacement_x.npy")
 displacement_y = np.load("results/displacement_y.npy")
@@ -161,6 +169,38 @@ def mean_strain_analysis(labels_ref, displacement, thresh=10000):
 
     return mean_strain_y, label_values
 
+
+# ! ---- Actual analysis - top of the reservoir
+
+# Centroid displacement based analysis
+(
+    displacement_row,
+    displacement_col,
+    label_values_displacement,
+) = centroid_displacement_analysis(reservoir_top_deformed.img, reservoir_top_ref.img)
+
+pixel_height = 1.5 / reservoir_ref.img.shape[0]
+print(f"Top boundary deformes by {-displacement_row[0] * pixel_height}.")
+
+# Spatial illustration of the results
+reservoir_centroid_displacement = np.zeros(labels_ref.img.shape[:2], dtype=float)
+for i, label in enumerate(label_values_displacement):
+    mask = reservoir_top_ref.img == label
+    reservoir_centroid_displacement[mask] = -displacement_row[i] * pixel_height
+
+reservoir_centroids_ref, _ = centroids(reservoir_ref.img)
+plt.figure("y displacement")
+plt.imshow(reservoir_centroid_displacement)
+for i in range(len(label_values_displacement)):
+    plt.text(
+        reservoir_centroids_ref[i][1],
+        reservoir_centroids_ref[i][0],
+        f"{(-displacement_row[i] * pixel_height):.4f}",
+        c="b",
+    )
+plt.colorbar()
+
+plt.show()
 
 # ! ---- Actual analysis - reservoir-based
 # Volume/area base analysis

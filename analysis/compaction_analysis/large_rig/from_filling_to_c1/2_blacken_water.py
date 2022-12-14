@@ -83,3 +83,11 @@ else:
 
     plt.imshow(zero_labels_gray)
     plt.show()
+
+    # In similar fashion detect the top boundary fo the top layer
+    zero_top_boundary = cv2.imread("blackened/zero_top_layer.png")
+    zero_top_layer_gray = cv2.cvtColor(zero_top_boundary, cv2.COLOR_BGR2GRAY)
+    zero_top_boundary_mask = zero_top_layer_gray == 0
+    np.save("blackened/zero_top_boundary.npy", zero_top_boundary_mask)
+    plt.imshow(zero_top_boundary_mask)
+    plt.show()
