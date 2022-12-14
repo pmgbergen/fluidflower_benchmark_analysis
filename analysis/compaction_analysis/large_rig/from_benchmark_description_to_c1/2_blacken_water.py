@@ -21,9 +21,7 @@ from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 # ! ----- Preliminaries - prepare two images for compaction analysis
 
 print("WARNING: It assumed that the corrected images are blackened by the user.")
-print(
-    "For the analysis in the paper, inkscape and a manual selection has been used."
-)
+print("For the analysis in the paper, inkscape and a manual selection has been used.")
 
 # Read and detect the black regions.
 dst = cv2.imread("blackened/dst.png")

@@ -64,7 +64,10 @@ def iteration(
     )
 
     transformed_img, patch_translation = compaction_analysis(
-        img_src, plot_patch_translation=plot, return_patch_translation=True, mask=mask_src
+        img_src,
+        plot_patch_translation=plot,
+        return_patch_translation=True,
+        mask=mask_src,
     )
 
     if plot:
@@ -78,10 +81,12 @@ def iteration(
 
     return transformed_img, compaction_analysis
 
-def refine_patches(p: list, levels = 1) -> list:
+
+def refine_patches(p: list, levels=1) -> list:
     for level in range(levels):
         p = [p[i] * 2 for i in range(len(p))]
     return p
+
 
 # ! ---- 0. Iteration
 print("0. iteration")
@@ -103,12 +108,12 @@ cv2.imwrite(
 # ! ---- Multiscale analysis
 
 # Specification of ms approach
-patches = [4,2]
+patches = [4, 2]
 num_ms_iterations = 5
 
 # Total compaction
 config_compaction = copy.deepcopy(base_config_compaction)
-config_compaction["N_patches"] = refine_patches(patches, num_ms_iterations-1)
+config_compaction["N_patches"] = refine_patches(patches, num_ms_iterations - 1)
 compaction_analysis = darsia.ReversedCompactionAnalysis(img_src, **config_compaction)
 
 # Initialization
@@ -120,7 +125,9 @@ for i in range(1, num_ms_iterations + 1):
 
     # Apply one level of multiscale compaction
     print(f"{i}. iteration")
-    _, compaction_next = iteration(img_dst, img_src_deformed, mask_dst, mask_src_deformed, patches)
+    _, compaction_next = iteration(
+        img_dst, img_src_deformed, mask_dst, mask_src_deformed, patches
+    )
 
     # Update the total compaction analysis
     compaction_analysis.add(compaction_next)
@@ -133,7 +140,9 @@ for i in range(1, num_ms_iterations + 1):
     # Store deformed image
     cv2.imwrite(
         f"compaction_corrected/src_{i}.jpg",
-        cv2.cvtColor(skimage.img_as_ubyte(np.clip(img_src_deformed.img, 0, 1)), cv2.COLOR_RGB2BGR),
+        cv2.cvtColor(
+            skimage.img_as_ubyte(np.clip(img_src_deformed.img, 0, 1)), cv2.COLOR_RGB2BGR
+        ),
         [int(cv2.IMWRITE_JPEG_QUALITY), 100],
     )
 
@@ -247,32 +256,48 @@ bm_img_with_original_boxes = np.copy(img_src.img)
 cv2.drawContours(bm_img_with_original_boxes, contours_box_A, -1, (180, 180, 180), 3)
 cv2.drawContours(bm_img_with_original_boxes, contours_box_B, -1, (180, 180, 180), 3)
 cv2.drawContours(bm_img_with_original_boxes, contours_box_C, -1, (180, 180, 180), 3)
-cv2.drawContours(bm_img_with_original_boxes, contours_extended_box_C, -1, (180, 180, 180), 3)
+cv2.drawContours(
+    bm_img_with_original_boxes, contours_extended_box_C, -1, (180, 180, 180), 3
+)
 
 # C1 run with original boxes
 c1_img_with_original_boxes = np.copy(img_dst.img)
 cv2.drawContours(c1_img_with_original_boxes, contours_box_A, -1, (180, 180, 180), 3)
 cv2.drawContours(c1_img_with_original_boxes, contours_box_B, -1, (180, 180, 180), 3)
 cv2.drawContours(c1_img_with_original_boxes, contours_box_C, -1, (180, 180, 180), 3)
-cv2.drawContours(c1_img_with_original_boxes, contours_extended_box_C, -1, (180, 180, 180), 3)
+cv2.drawContours(
+    c1_img_with_original_boxes, contours_extended_box_C, -1, (180, 180, 180), 3
+)
 
 # Plot contours of deformed boxes on c1 images
 c1_img_with_deformed_boxes = np.copy(img_dst.img)
-cv2.drawContours(c1_img_with_deformed_boxes, contours_deformed_box_A, -1, (180, 180, 180), 3)
-cv2.drawContours(c1_img_with_deformed_boxes, contours_deformed_box_B, -1, (180, 180, 180), 3)
-cv2.drawContours(c1_img_with_deformed_boxes, contours_deformed_box_C, -1, (180, 180, 180), 3)
-cv2.drawContours(c1_img_with_deformed_boxes, contours_deformed_extended_box_C, -1, (180, 180, 180), 3)
+cv2.drawContours(
+    c1_img_with_deformed_boxes, contours_deformed_box_A, -1, (180, 180, 180), 3
+)
+cv2.drawContours(
+    c1_img_with_deformed_boxes, contours_deformed_box_B, -1, (180, 180, 180), 3
+)
+cv2.drawContours(
+    c1_img_with_deformed_boxes, contours_deformed_box_C, -1, (180, 180, 180), 3
+)
+cv2.drawContours(
+    c1_img_with_deformed_boxes, contours_deformed_extended_box_C, -1, (180, 180, 180), 3
+)
 
 # Plot contours of both boxes on top of C1
 c1_img_with_both_boxes = np.copy(img_dst.img)
 cv2.drawContours(c1_img_with_both_boxes, contours_box_A, -1, (180, 180, 180), 3)
 cv2.drawContours(c1_img_with_both_boxes, contours_box_B, -1, (180, 180, 180), 3)
 cv2.drawContours(c1_img_with_both_boxes, contours_box_C, -1, (180, 180, 180), 3)
-cv2.drawContours(c1_img_with_both_boxes, contours_extended_box_C, -1, (180, 180, 180), 3)
+cv2.drawContours(
+    c1_img_with_both_boxes, contours_extended_box_C, -1, (180, 180, 180), 3
+)
 cv2.drawContours(c1_img_with_both_boxes, contours_deformed_box_A, -1, (180, 0, 180), 3)
 cv2.drawContours(c1_img_with_both_boxes, contours_deformed_box_B, -1, (180, 0, 180), 3)
 cv2.drawContours(c1_img_with_both_boxes, contours_deformed_box_C, -1, (180, 0, 180), 3)
-cv2.drawContours(c1_img_with_both_boxes, contours_deformed_extended_box_C, -1, (180, 0, 180), 3)
+cv2.drawContours(
+    c1_img_with_both_boxes, contours_deformed_extended_box_C, -1, (180, 0, 180), 3
+)
 
 # Plot
 if True:

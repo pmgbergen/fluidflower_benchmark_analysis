@@ -19,7 +19,9 @@ path_src = Path("original/20211001-145251.JPG")
 path_dst = Path("original/211124_time082740_DSC00067.JPG")
 
 # Base analysis object to organize the reading of images
-analysis = darsia.AnalysisBase(path_dst, "./config.json") # NOTE: Config.json is tailored to dst.
+analysis = darsia.AnalysisBase(
+    path_dst, "./config.json"
+)  # NOTE: Config.json is tailored to dst.
 analysis.load_and_process_image(path_src)
 
 # Now have path_src and path_dst as darsia Images accesible via
