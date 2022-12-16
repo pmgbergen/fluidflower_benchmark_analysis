@@ -14,7 +14,8 @@ from benchmark.utils.time_from_image_name import ImageTime
 from scipy import interpolate
 from skimage.measure import label, regionprops
 
-from total_injected_mass_large_FF import total_mass
+from total_injected_mass_large_FF import (total_mass_co2_port1,
+                                          total_mass_co2_port2)
 
 # ! ---- Choose user.
 
@@ -79,6 +80,9 @@ elif user == "jakub":
     )
 
 labels = np.load(labels_path)
+
+# ! ---- Material properties.
+dissolution_limit = 1.8  # kg / m**3
 
 # ! ---- Analyze each run separately.
 
@@ -152,23 +156,29 @@ for i, directory in enumerate(seg_folders):
 
     # ! ---- Data structures.
 
+    # Choose a subregion
+    subregions = {}
+    subregions["all"] = None  # represents entire domain.
+    subregions["boxA"] = np.array([[1.1, 0.6], [2.8, 0.0]])
+    subregions["boxB"] = np.array([[0, 1.2], [1.1, 0.6]])
+
     # Create empty lists for plotting purposes
     time_vec = []
     total_mass_co2_vec = []
-    total_mass_mobile_co2_vec = []
-    total_mass_mobile_co2_subregion1_vec = []
-    total_mass_mobile_co2_subregion2_vec = []
-    total_mass_dissolved_co2_vec = []
-    total_mass_dissolved_co2_subregion1_vec = []
-    total_mass_dissolved_co2_subregion2_vec = []
-    total_mass_dissolved_co2_esf_vec = []
-    total_mass_dissolved_co2_esf_subregion1_vec = []
-    total_mass_dissolved_co2_esf_subregion2_vec = []
-    density_dissolved_co2 = []
-
-    # Choose a subregion
-    subregion1 = np.array([[1.1, 0.6], [2.8, 0.0]])  # boxA
-    subregion2 = np.array([[0, 1.2], [1.1, 0.6]])  # boxB
+    total_mass_mobile_co2_vec = {}
+    total_mass_dissolved_co2_vec = {}
+    total_mass_dissolved_co2_esf_vec = {}
+    for item in ["port1", "port2", "total"]:
+        total_mass_mobile_co2_vec[item] = {}
+        total_mass_dissolved_co2_vec[item] = {}
+        total_mass_dissolved_co2_esf_vec[item] = {}
+        for roi in subregions.keys():
+            total_mass_mobile_co2_vec[item][roi] = []
+            total_mass_dissolved_co2_vec[item][roi] = []
+            total_mass_dissolved_co2_esf_vec[item][roi] = []
+    density_dissolved_co2_vec = {}
+    for item in ["port1", "port2"]:
+        density_dissolved_co2_vec[item] = []
 
     # Initialize relative time, corresponding to the injection start
     t = 0
@@ -222,110 +232,126 @@ for i, directory in enumerate(seg_folders):
                 rest[seg_label == regions[i].label] = True
 
         # Decompose segmentation into the injections of first and seconds well.
-        seg_port1 = np.zeros_like(seg, dtype=seg.dtype)
-        seg_port1[rest] = seg[rest]
+        decomposed_seg = {}
+        decomposed_seg["port1"] = np.zeros_like(seg, dtype=seg.dtype)
+        decomposed_seg["port1"][rest] = seg[rest]
 
-        seg_port2 = np.zeros_like(seg, dtype=seg.dtype)
-        seg_port2[top_right] = seg[top_right]
+        decomposed_seg["port2"] = np.zeros_like(seg, dtype=seg.dtype)
+        decomposed_seg["port2"][top_right] = seg[top_right]
 
-        # Restrict the lower plume to the ESF layer above
-        esf_label = 3  # hardcode # hardcode
-        seg_port1_esf = np.zeros_like(seg_port1, dtype=seg_port1.dtype)
-        seg_port1_esf[labels == esf_label] = seg_port1[labels == esf_label]
+        # Restrict the lower plume to the ESF layer above.
+        esf_label = 3  # hardcoded
+        for item in ["port1", "port2"]:
+            decomposed_seg[item + "_esf"] = np.zeros_like(
+                decomposed_seg[item], dtype=decomposed_seg[item].dtype
+            )
+            decomposed_seg[item + "_esf"][labels == esf_label] = decomposed_seg[item][
+                labels == esf_label
+            ]
 
-        # ! ---- Perform sparse mass analysis on the segmentation corresponding to port 1.
+        # ! ---- Perform sparse mass analysis on the segmentation.
 
-        # Determine total mass of co2 (injected through port 1)
-        total_mass_co2 = total_mass(t)
-        total_mass_co2_vec.append(total_mass_co2)
+        # Main idea. Treat injection through port1 and port2 separately and
+        # sum them up. The difference between the two injections is that
+        # both injection plumes have constant but different CO2 concentrations.
+        # Determine various masses (total CO2, mobile CO2, dissolved CO2) and
+        # consider various rois (entire domain, boxA, boxB).
+
+        # Determine total mass of co2 (injected through port 1 and port 2)
+        total_mass_co2 = {}
+        total_mass_co2["port1"] = total_mass_co2_port1(t)
+        total_mass_co2["port2"] = total_mass_co2_port2(t)
+        total_mass_co2["total"] = sum(
+            [total_mass_co2[item] for item in ["port1", "port2"]]
+        )
 
         # Compute total mass of free co2 based on segmentation
-        total_mass_mobile_co2 = mass_analysis.free_co2_mass(seg_port1, pressure(t), 2)
-        total_mass_mobile_co2_subregion1 = mass_analysis.free_co2_mass(
-            seg_port1, pressure(t), roi=subregion1
-        )
-        total_mass_mobile_co2_subregion2 = mass_analysis.free_co2_mass(
-            seg_port1, pressure(t), roi=subregion2
-        )
-        total_mass_mobile_co2_vec.append(total_mass_mobile_co2)
-        total_mass_mobile_co2_subregion1_vec.append(total_mass_mobile_co2_subregion1)
-        total_mass_mobile_co2_subregion2_vec.append(total_mass_mobile_co2_subregion2)
+        total_mass_mobile_co2 = {}
+        for item in ["port1", "port2", "total"]:
+            total_mass_mobile_co2[item] = {}
+
+        for item in ["port1", "port2"]:
+            for roi, subregion in subregions.items():
+                total_mass_mobile_co2[item][roi] = mass_analysis.free_co2_mass(
+                    decomposed_seg[item], pressure(t), 2, roi=subregion
+                )
+        for roi in subregions.keys():
+            total_mass_mobile_co2["total"][roi] = sum(
+                [total_mass_mobile_co2[item][roi] for item in ["port1", "port2"]]
+            )
 
         # Compute total mass of dissolved CO2 as the difference between total mass and mass of free CO2
-        total_mass_dissolved_co2 = total_mass_co2 - total_mass_mobile_co2
-        total_mass_dissolved_co2_vec.append(total_mass_dissolved_co2)
+        total_mass_dissolved_co2 = {}
+        for item in ["port1", "port2", "total"]:
+            total_mass_dissolved_co2[item] = {}
+            total_mass_dissolved_co2[item]["all"] = (
+                total_mass_co2[item] - total_mass_mobile_co2[item]["all"]
+            )
 
-        # Compute volume of dissolved CO2 in entire rig
-        volume_dissolved = mass_analysis.volume(seg_port1, 1)
+        # Prepare for seal analysis.
+        total_mass_dissolved_co2_esf = {}
+        for item in ["port1", "port2", "total"]:
+            total_mass_dissolved_co2_esf[item] = {}
+
+        # Compute volume of dissolved CO2.
+        volume_dissolved_co2 = {}
+        for item in ["port1", "port2", "port1_esf", "port2_esf"]:
+            volume_dissolved_co2[item] = {}
+            for roi, subregion in subregions.items():
+                volume_dissolved_co2[item][roi] = mass_analysis.volume(
+                    decomposed_seg[item], 1, roi=subregion
+                )
 
         # Compute dissolved co2 in subregions and seal.
         # Assume constant mass concentration allowing to
         # use simple volume fractions as scaling.
-        if volume_dissolved > 1e-9:
+        concentration_dissolved_co2 = {}
+        for item in ["port1", "port2"]:
+            if volume_dissolved_co2[item]["all"] > 1e-9:
 
-            # Compute volume of dissolved CO2 in the subregions
-            volume_dissolved_subregion1 = mass_analysis.volume(
-                seg_port1, 1, roi=subregion1
-            )
-            volume_dissolved_subregion2 = mass_analysis.volume(
-                seg_port1, 1, roi=subregion2
-            )
+                # Determine density/mass concentration of dissolved CO2.
+                concentration_dissolved_co2[item] = max(
+                    dissolution_limit,
+                    total_mass_dissolved_co2[item]["all"]
+                    / volume_dissolved_co2[item]["all"],
+                )
+            else:
+                concentration_dissolved_co2[item] = 0.0
 
-            # Compute volume of dissolved CO2 in seal
-            volume_dissolved_esf = mass_analysis.volume(seg_port1_esf, 1)
-
-            # Compute volume of dissolved CO2 in seal in subregions (restrict segmentation to the ESF layer for this)
-            volume_dissolved_esf_subregion1 = mass_analysis.volume(
-                seg_port1_esf, 1, roi=subregion1
+        # Determine total mass of dissolved CO2.
+        for roi in ["all", "boxA", "boxB"]:
+            for item in ["port1", "port2"]:
+                total_mass_dissolved_co2[item][roi] = (
+                    concentration_dissolved_co2[item] * volume_dissolved_co2[item][roi]
+                )
+                total_mass_dissolved_co2_esf[item][roi] = (
+                    concentration_dissolved_co2[item]
+                    * volume_dissolved_co2[item + "_esf"][roi]
+                )
+            total_mass_dissolved_co2["total"][roi] = sum(
+                [total_mass_dissolved_co2[item][roi] for item in ["port1", "port2"]]
             )
-            volume_dissolved_esf_subregion2 = mass_analysis.volume(
-                seg_port1_esf, 1, roi=subregion2
-            )
-
-            # Determine density/mass concentration of dissolved CO2.
-            concentration_dissolved_co2 = total_mass_dissolved_co2 / volume_dissolved
-
-            # Determine total mass of dissolved CO2.
-            total_mass_dissolved_co2_subregion1 = (
-                concentration_dissolved_co2 * volume_dissolved_subregion1
-            )
-            total_mass_dissolved_co2_subregion2 = (
-                concentration_dissolved_co2 * volume_dissolved_subregion2
-            )
-            total_mass_dissolved_co2_esf = (
-                concentration_dissolved_co2 * volume_dissolved_esf
-            )
-            total_mass_dissolved_co2_esf_subregion1 = (
-                concentration_dissolved_co2 * volume_dissolved_esf_subregion1
-            )
-            total_mass_dissolved_co2_esf_subregion2 = (
-                concentration_dissolved_co2 * volume_dissolved_esf_subregion2
+            total_mass_dissolved_co2_esf["total"][roi] = sum(
+                [total_mass_dissolved_co2_esf[item][roi] for item in ["port1", "port2"]]
             )
 
-        else:
-            # For numerical stability (to not divide by 0):
-            concentration_dissolved_co2 = 0.0
-            total_mass_dissolved_co2_subregion1 = 0.0
-            total_mass_dissolved_co2_subregion2 = 0.0
-            total_mass_dissolved_co2_esf = 0.0
-            total_mass_dissolved_co2_esf_subregion1 = 0.0
-            total_mass_dissolved_co2_esf_subregion2 = 0.0
+        # ! ---- Collect results.
+        total_mass_co2_vec.append(total_mass_co2["total"])
 
-        # Collect results
-        density_dissolved_co2.append(concentration_dissolved_co2)
-        total_mass_dissolved_co2_subregion1_vec.append(
-            total_mass_dissolved_co2_subregion1
-        )
-        total_mass_dissolved_co2_subregion2_vec.append(
-            total_mass_dissolved_co2_subregion2
-        )
-        total_mass_dissolved_co2_esf_vec.append(total_mass_dissolved_co2_esf)
-        total_mass_dissolved_co2_esf_subregion1_vec.append(
-            total_mass_dissolved_co2_esf_subregion1
-        )
-        total_mass_dissolved_co2_esf_subregion2_vec.append(
-            total_mass_dissolved_co2_esf_subregion2
-        )
+        for item in ["port1", "port2", "total"]:
+            for roi in subregions.keys():
+                total_mass_mobile_co2_vec[item][roi].append(
+                    total_mass_mobile_co2[item][roi]
+                )
+                total_mass_dissolved_co2_vec[item][roi].append(
+                    total_mass_dissolved_co2[item][roi]
+                )
+                total_mass_dissolved_co2_esf_vec[item][roi].append(
+                    total_mass_dissolved_co2_esf[item][roi]
+                )
+
+        for item in ["port1", "port2"]:
+            density_dissolved_co2_vec[item].append(concentration_dissolved_co2[item])
 
         # ! --- Dense representation for CO2 concentration in water
         dense_concentration_dissolved_co2 = np.zeros(
@@ -333,17 +359,17 @@ for i, directory in enumerate(seg_folders):
         )
 
         # Masks for dissolved and mobile CO2
-        mask_dissolved_co2_port1 = seg_port1 == 1
-        mask_mobile_co2_port1 = seg_port1 == 2
+        for item in ["port1", "port2"]:
+            mask_dissolved_co2 = decomposed_seg[item] == 1
+            mask_mobile_co2 = decomposed_seg[item] == 2
 
-        # Dissolved CO2 (in kg / m**3 - convert mass)
-        dense_concentration_dissolved_co2[mask_dissolved_co2_port1] = (
-            concentration_dissolved_co2 / 1000
-        )
+            # Dissolved CO2 (in kg / m**3 - convert mass) - assume constant concentration for each plume
+            dense_concentration_dissolved_co2[mask_dissolved_co2] = (
+                concentration_dissolved_co2[item] / 1000
+            )
 
-        # Mobile CO2
-        dissolution_limit = 1.8  # kg / m**3
-        dense_concentration_dissolved_co2[mask_mobile_co2_port1] = dissolution_limit
+            # Mobile CO2
+            dense_concentration_dissolved_co2[mask_mobile_co2] = dissolution_limit
 
         # Store to file
         if user == "jakub":
@@ -407,18 +433,30 @@ for i, directory in enumerate(seg_folders):
                 im.name,
             )
 
-    df = pd.DataFrame()
-    df["Time_[min]"] = time_vec
-    df["Mobile_CO2_[g]"] = total_mass_mobile_co2_vec
-    df["Dissolved_CO2_[g]"] = total_mass_dissolved_co2_vec
-    df["Mobile_CO2_boxA_[g]"] = total_mass_mobile_co2_subregion1_vec
-    df["Dissolved_CO2_boxA_[g]"] = total_mass_dissolved_co2_subregion1_vec
-    df["Dissolved_CO2_esf_boxA_[g]"] = total_mass_dissolved_co2_esf_subregion1_vec
-    df["Mobile_CO2_boxB_[g]"] = total_mass_mobile_co2_subregion2_vec
-    df["Dissolved_CO2_boxB_[g]"] = total_mass_dissolved_co2_subregion2_vec
-    df["Dissolved_CO2_esf_boxB_[g]"] = total_mass_dissolved_co2_esf_subregion2_vec
-    df["Dissolved_CO2_esf_[g]"] = total_mass_dissolved_co2_esf_vec
-    if user == "benyamine":
-        df.to_excel(directory[-3:-1] + "_port1.xlsx", index=None)
-    elif user == "jakub":
-        df.to_excel(str(Path(f"{run_id}_port1.xlsx")), index=None)
+    # ! ---- Collect all data in excel sheets
+
+    for item in ["port1", "port2", "total"]:
+
+        df = pd.DataFrame()
+        df["Time_[min]"] = time_vec
+
+        df["Total_CO2"] = total_mass_co2_vec
+
+        df["Mobile_CO2_[g]"] = total_mass_mobile_co2_vec[item]["all"]
+        df["Dissolved_CO2_[g]"] = total_mass_dissolved_co2_vec[item]["all"]
+        df["Dissolved_CO2_esf_[g]"] = total_mass_dissolved_co2_esf_vec[item]["all"]
+
+        for roi in ["boxA", "boxB"]:
+            df[f"Mobile_CO2_{roi}_[g]"] = total_mass_mobile_co2_vec[item][roi]
+            df[f"Dissolved_CO2_{roi}_[g]"] = total_mass_dissolved_co2_vec[item][roi]
+            df[f"Dissolved_CO2_esf_{roi}_[g]"] = total_mass_dissolved_co2_esf_vec[item][
+                roi
+            ]
+
+        if item in ["port1", "port2"]:
+            df[f"Concentration_CO2_{item}"] = density_dissolved_co2_vec[item]
+
+        if user == "benyamine":
+            df.to_excel(directory[-3:-1] + f"_{item}.xlsx", index=None)
+        elif user == "jakub":
+            df.to_excel(str(Path(f"{run_id}_{item}.xlsx")), index=None)
