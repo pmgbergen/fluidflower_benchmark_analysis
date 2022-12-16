@@ -1,7 +1,7 @@
 {
-    "images folder": "/media/jakub/Elements/Jakub/benchmark/data/large_rig/c1",
+    "images folder": "H:/sets/corrected_tiff_pumping_effect/c1",
     "file ending": "*.TIF",
-    "number baseline images": 1,
+    "number baseline images": 10,
     "config": "../config_preprocessing_fine.json",
-    "results": "/media/jakub/Elements/Jakub/benchmark/results/large_rig/c1-test-empty"
+    "results": "H:/sets/segmented/c1"
 }

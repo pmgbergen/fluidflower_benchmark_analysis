@@ -22,3 +22,4 @@ co2_analysis = BenchmarkCO2Analysis(
 
 # Extract segentation of geometry
 fine_geometry_segmentation = co2_analysis.labels
+

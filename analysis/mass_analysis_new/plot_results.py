@@ -74,7 +74,7 @@ def mobile_co2_box_A():
     
     plt.draw()
     gs = fig.tight_layout()
-    plt.savefig("Mobile_co2_box_A",dpi = 1000)
+    # plt.savefig("Mobile_co2_box_A",dpi = 1000)
     
 def dissolved_co2_box_A():
     files = ["E:/Git/fluidflower_benchmark_analysis/analysis/mass_analysis_new/C1_boxA.xlsx",

@@ -51,9 +51,9 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
         # complying with "%y%m%d %H%M%D", e.g., "211127 083412"
-        self.injection_start: datetime = datetime.strptime(
-            self.config["injection_start"], "%y%m%d %H%M%S"
-        )
+        # self.injection_start: datetime = datetime.strptime(
+        #     self.config["injection_start"], "%y%m%d %H%M%S"
+        # )
 
         # Add possibility to apply compaction correction for each image
         if "compaction" in self.config.keys():

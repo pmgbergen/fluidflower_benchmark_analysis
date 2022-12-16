@@ -9,6 +9,7 @@ from numpy import genfromtxt
 from benchmark.utils.time_from_image_name import ImageTime
 from datetime import datetime,timedelta
 import pandas as pd
+from total_mass_function import total_mass_MFC
 
 # Read atmospheric pressure data (found at https://veret.gfi.uib.no/?action=period_query)
 # NOTE: The atmospheric pressures are as of now not corrected for elevation (as Jan commented upon in the email)

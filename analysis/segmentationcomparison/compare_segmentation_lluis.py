@@ -24,8 +24,8 @@ read lluis images and create segmentation
 """
 
 # Paths to images
-path_c = "C:/Users/Erlend/src/darsia/images/lluis_segmentations/C/C_t3.png"
-path_s = "C:/Users/Erlend/src/darsia/images/lluis_segmentations/S/Sg_t3.png"
+path_c = "E:/Git/fluidflower_benchmark_analysis/analysis/segmentationcomparison/bilbo/simulatoins/C_t3.png"
+path_s = "E:/Git/fluidflower_benchmark_analysis/analysis/segmentationcomparison/bilbo/simulatoins/sg_t3.png"
 
 # ROI where the actual images are
 ROI_im = (slice(276,1536),slice(371,2586))
