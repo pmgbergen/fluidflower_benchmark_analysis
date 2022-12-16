@@ -93,7 +93,7 @@ def read_paths_from_user_data(
 
 
 def segmentation_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
-    """Store numpy as csv file.
+    """Store numpy array of segmentation (water, CO2(w), CO2(g)) as csv file.
 
     Args:
         path (Path): path for dst
@@ -122,3 +122,32 @@ def segmentation_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
 
     # Store array with preceding header
     np.savetxt(path, arr, fmt="%d", delimiter=",", header=header)
+
+def concentration_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
+    """Store numpy of as csv file.
+
+    Args:
+        path (Path): path for dst
+        array (np.ndarray): array to be stored
+        inFileName (Path): origin image
+
+    """
+    # Build csv file with standard text on top.
+    header = f"Generated from {str(inFileName)}."
+
+    header += (
+        "\nEach entry identifies the CO2 mass concentration in the water phase in a 1 cm by 1 cm cell."
+    )
+
+    header += "\n2d array representing the laser grid of the benchmark description,"
+
+    header += (
+        "\nordered row-wise from top to bottom, and column-wise from left to right."
+    )
+
+    header += "\nThe first entry corresponds to the cell centered at coordinates (0.035 m, 1.525 m)"
+
+    header += "\nw.r.t. the spatial maps outlined in Section 3.1 of the description."
+
+    # Store array with preceding header
+    np.savetxt(path, arr, fmt="%.4f", delimiter=",", header=header)
