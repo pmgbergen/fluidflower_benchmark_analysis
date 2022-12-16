@@ -92,7 +92,7 @@ def read_paths_from_user_data(
     return images, baseline, config, results
 
 
-def array_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
+def segmentation_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
     """Store numpy as csv file.
 
     Args:

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.bilbo import Bilbo
-from benchmark.utils.misc import array_to_csv, read_time_from_path
+from benchmark.utils.misc import segmentation_to_csv, read_time_from_path
 
 
 class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
@@ -326,7 +326,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
                 (self.path_to_results / Path("coarse_csv_segmentation")).mkdir(
                     parents=True, exist_ok=True
                 )
-                array_to_csv(
+                segmentation_to_csv(
                     self.path_to_results
                     / Path("coarse_csv_segmentation")
                     / Path(f"{img_id}_coarse_segmentation.csv"),
@@ -542,7 +542,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
                 (self.path_to_results / Path("coarse_csv_segmentation")).mkdir(
                     parents=True, exist_ok=True
                 )
-                array_to_csv(
+                segmentation_to_csv(
                     self.path_to_results
                     / Path("coarse_csv_segmentation")
                     / Path(f"{img_id}_coarse_segmentation.csv"),
