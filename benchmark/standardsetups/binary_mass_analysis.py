@@ -35,6 +35,7 @@ class BinaryMassAnalysis:
         depth_map: Optional[np.ndarray] = None,
         depth_measurements: Optional[tuple[np.ndarray, ...]] = None,
         porosity: Optional[Union[np.ndarray, float]] = None,
+        cache: Optional[Union[str, Path]] = None,
     ) -> None:
         """
         Initializer for mass analysis class.
@@ -50,6 +51,7 @@ class BinaryMassAnalysis:
                     corresponding to each horizontal and vertical entry.
             porosity (Optional[Union[np.ndarray, float]]): porosity map. Can be
                     provided as a uniform scalar value as well.
+            cache (Optional[Union[str, Path]]): folder for caching auxiliary results.
 
         """
         self.base = base
@@ -67,7 +69,13 @@ class BinaryMassAnalysis:
 
         # Define depth map
         if depth_measurements is not None:
-            self.depth_map = self._compute_depth_map(depth_measurements)
+            if cache is not None and Path(cache).exists():
+                self.depth_map = np.load(Path(cache))
+            else:
+                self.depth_map = self._compute_depth_map(depth_measurements)
+                if cache is not None:
+                    Path(cache).parents[0].mkdir(parents=True, exist_ok=True)
+                    np.save(Path(cache), self.depth_map)
         elif depth_map is not None:
             self.depth_map = depth_map
         else:
@@ -85,7 +93,12 @@ class BinaryMassAnalysis:
             :, None
         ] * np.ones_like(self.base.img)
 
-    def volume_map(self, segmentation: np.ndarray, component: int, roi: Optional[Union[np.ndarray, list]] = None) -> np.ndarray:
+    def volume_map(
+        self,
+        segmentation: np.ndarray,
+        component: int,
+        roi: Optional[Union[np.ndarray, list]] = None,
+    ) -> np.ndarray:
         """
         Given segmentation and component, returns a volume map of the component
         from the segmentation where each pixel gives the volume in meters^3 associated
@@ -95,7 +108,7 @@ class BinaryMassAnalysis:
             segmentation (np.ndarray): segmented image
             component (int): the value that the component of interest takes in the
                 segmentation.
-            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed. 
+            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed.
                 Provided as lower left corner, upper right corner in [x,y] coordinates
 
         Returns:
@@ -114,8 +127,7 @@ class BinaryMassAnalysis:
         else:
             # Compute volume map
             volume_map = (self.porosity * self.depth_map) * self.pixelarea
-        
-        
+
         # Extract only the correct volumes (depending on segmentation and chosen component)
         volume = np.zeros_like(volume_map)
         volume[segmentation == component] = volume_map[segmentation == component]
@@ -123,10 +135,35 @@ class BinaryMassAnalysis:
         if roi is not None:
             _, roi_box = da.extractROI(self.base, roi, return_roi=True)
             volume = volume[roi_box]
- 
+
         return volume
 
-    def external_pressure_to_density_co2(self, external_pressure: float, roi: Optional[Union[np.ndarray, list]] = None) -> np.ndarray:
+    def volume(
+        self,
+        segmentation: np.ndarray,
+        component: int,
+        roi: Optional[Union[np.ndarray, list]] = None,
+    ) -> float:
+        """
+        Given segmentation and component, returns the total volume of the component
+        from the segmentation where each pixel gives the volume in meters^3 associated
+        to that pixel. If there is no compontent found at a pixel this map takes the value 0.
+
+        Arguments:
+            segmentation (np.ndarray): segmented image
+            component (int): the value that the component of interest takes in the
+                segmentation.
+            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed.
+                Provided as lower left corner, upper right corner in [x,y] coordinates
+
+        Returns:
+            volume (float): total volume containing the prescribed component.
+        """
+        return np.sum(self.volume_map(segmentation, component, roi))
+
+    def external_pressure_to_density_co2(
+        self, external_pressure: float, roi: Optional[Union[np.ndarray, list]] = None
+    ) -> np.ndarray:
         """
         A conversion from pressure (in bar) to density of CO2 (in g/m^3)
         is given by the linear formula here. The formula is found by using
@@ -137,7 +174,7 @@ class BinaryMassAnalysis:
 
         Arguments:
             external_pressure (float): external pressure, for example atmospheric pressure.
-            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed. 
+            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed.
                 Provided as lower left corner, upper right corner in [x,y] coordinates
 
         Returns:
@@ -154,7 +191,11 @@ class BinaryMassAnalysis:
         )
 
     def free_co2_mass(
-        self, segmentation: np.ndarray, external_pressure: float, co2_component: int = 2, roi: Optional[Union[list, np.ndarray]] = None,
+        self,
+        segmentation: np.ndarray,
+        external_pressure: float,
+        co2_component: int = 2,
+        roi: Optional[Union[list, np.ndarray]] = None,
     ) -> float:
         """
         Given a segmentation, external pressure and the number
@@ -166,7 +207,7 @@ class BinaryMassAnalysis:
             external_pressure (float): external pressure, for example atmospheric pressure.
             co2_component (int): value of the component in segmentation that
                 corresponds to co2.
-            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed. 
+            roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed.
                 Provided as lower left corner, upper right corner in [x,y] coordinates
 
         Returns:
