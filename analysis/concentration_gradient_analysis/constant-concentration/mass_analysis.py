@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import skimage
 from benchmark.standardsetups.binary_mass_analysis import BinaryMassAnalysis
-from benchmark.utils.misc import concentration_to_csv, read_time_from_path
+from benchmark.utils.misc import (concentration_to_csv, read_time_from_path,
+                                  sg_to_csv, sw_to_csv)
 from benchmark.utils.time_from_image_name import ImageTime
 from scipy import interpolate
 from skimage.measure import label, regionprops
@@ -70,11 +71,19 @@ depth_measurements = (
     np.load(d_meas),
 )
 
-# ! ---- Fetch spatial porosity map
+# ! ---- Fetch spatial material properties
 if user == "benyamine":
     porosity = 0.44
+    swi = np.zeros((4260, 7951), dtype=float)
 elif user == "jakub":
-    porosity = np.load("/home/jakub/src/fluidflower_benchmark_analysis/analysis/depths/large_rig/porosity.npy")
+    porosity = np.load(
+        "/home/jakub/src/fluidflower_benchmark_analysis/analysis/depths/large_rig/porosity.npy"
+    )
+    swi = np.load(
+        "/home/jakub/src/fluidflower_benchmark_analysis/analysis/depths/large_rig/swi.npy"
+    )
+    if True:
+        swi[:, :] = 0
 
 # ! ---- Segmentation of the geometry providing a mask for the lower ESF layer.
 
@@ -201,8 +210,8 @@ for i, directory in enumerate(seg_folders):
 
         # Update relative time by reading the time from the file name and comparing with previous
 
-        # TODO Does this if statement introduce a inconsistency? may want to use t_new
         if user == "benyamine":
+            # TODO Does this if statement introduce a inconsistency? may want to use t_new
             if c != 0:
                 t += ImageTime.dt(list_dir[c - 1], list_dir[c])
             time_vec.append(t)
@@ -216,6 +225,15 @@ for i, directory in enumerate(seg_folders):
             seg = np.load(os.path.join(directory, im))
         elif user == "jakub":
             seg = np.load(im)
+
+        # ! ---- Determine saturations
+
+        # Full water saturation aside of residual saturations in gas regions
+        sw = np.ones(seg.shape[:2], dtype=float)
+        sw[seg == 2] = swi[seg == 2]
+
+        # Complementary condition for gas saturation
+        sg = 1 - sw
 
         # ! ---- Decompose segmentation into regions corresponding to injection in port 1 and port 2.
 
@@ -278,69 +296,144 @@ for i, directory in enumerate(seg_folders):
 
         for item in ["port1", "port2"]:
             for roi, subregion in subregions.items():
-                # TODO weight by saturation here.
                 total_mass_mobile_co2[item][roi] = mass_analysis.free_co2_mass(
-                    decomposed_seg[item], pressure(t), 2, roi=subregion
+                    decomposed_seg[item],
+                    pressure(t),
+                    2,
+                    roi=subregion,
+                    gas_saturation=sg,
                 )
         for roi in subregions.keys():
             total_mass_mobile_co2["total"][roi] = sum(
                 [total_mass_mobile_co2[item][roi] for item in ["port1", "port2"]]
             )
 
-        # Compute total mass of dissolved CO2 as the difference between total mass and mass of free CO2
+        # Compute volume of gas region
+        mass_dissolved_co2_along_gaseous_phase = {}
+        for item in ["port1", "port2"]:
+            volume_dissolved_co2_along_mobile_co2 = mass_analysis.volume(
+                decomposed_seg[item], 2, roi=None, saturation=sw
+            )
+            mass_dissolved_co2_along_gaseous_phase[item] = (
+                dissolution_limit * volume_dissolved_co2_along_mobile_co2
+            )
+
+        # Compute auxiliary quantity - all known dissolved CO2 at full water saturation.
+        # Total CO2 minus mobile CO2 minus the dissolved CO2 along the gaseous phase
+        aux_mass_dissolved_co2_for_full_sw = {}
+        for item in ["port1", "port2"]:
+            aux_mass_dissolved_co2_for_full_sw[item] = (
+                total_mass_co2[item]
+                - total_mass_mobile_co2[item]["all"]
+                - mass_dissolved_co2_along_gaseous_phase[item]
+            )
+
+        # Prepare for analysis of dissolved CO2
         total_mass_dissolved_co2 = {}
+        mass_dissolved_co2_for_full_sw = {}
+        mass_dissolved_co2_for_swi = {}
         for item in ["port1", "port2", "total"]:
             total_mass_dissolved_co2[item] = {}
-            total_mass_dissolved_co2[item]["all"] = (
-                total_mass_co2[item] - total_mass_mobile_co2[item]["all"]
-            )
+            mass_dissolved_co2_for_full_sw[item] = {}
+            mass_dissolved_co2_for_swi[item] = {}
 
         # Prepare for seal analysis.
         total_mass_dissolved_co2_esf = {}
+        mass_dissolved_co2_esf_for_full_sw = {}
+        mass_dissolved_co2_esf_for_swi = {}
         for item in ["port1", "port2", "total"]:
             total_mass_dissolved_co2_esf[item] = {}
+            mass_dissolved_co2_esf_for_full_sw[item] = {}
+            mass_dissolved_co2_esf_for_swi[item] = {}
 
-        # Compute volume of dissolved CO2.
-        volume_dissolved_co2 = {}
+        # Compute volume of dissolved CO2 at full sw.
+        volume_dissolved_co2_for_full_sw = {}
         for item in ["port1", "port2", "port1_esf", "port2_esf"]:
-            volume_dissolved_co2[item] = {}
+            volume_dissolved_co2_for_full_sw[item] = {}
             for roi, subregion in subregions.items():
-                volume_dissolved_co2[item][roi] = mass_analysis.volume(
+                volume_dissolved_co2_for_full_sw[item][roi] = mass_analysis.volume(
                     decomposed_seg[item], 1, roi=subregion
+                )
+
+        # Compute volume of dissolved CO2 at swi.
+        volume_dissolved_co2_for_swi = {}
+        for item in ["port1", "port2", "port1_esf", "port2_esf"]:
+            volume_dissolved_co2_for_swi[item] = {}
+            for roi, subregion in subregions.items():
+                volume_dissolved_co2_for_swi[item][roi] = mass_analysis.volume(
+                    decomposed_seg[item], 2, roi=subregion
                 )
 
         # Compute dissolved co2 in subregions and seal.
         # Assume constant mass concentration allowing to
         # use simple volume fractions as scaling.
-        concentration_dissolved_co2 = {}
+        concentration_dissolved_co2_for_full_sw = {}
         for item in ["port1", "port2"]:
-            if volume_dissolved_co2[item]["all"] > 1e-9:
+            if volume_dissolved_co2_for_full_sw[item]["all"] > 1e-9:
 
                 # Determine density/mass concentration of dissolved CO2.
-                concentration_dissolved_co2[item] = max(
+                concentration_dissolved_co2_for_full_sw[item] = max(
                     dissolution_limit,
-                    total_mass_dissolved_co2[item]["all"]
-                    / volume_dissolved_co2[item]["all"],
+                    aux_mass_dissolved_co2_for_full_sw[item]
+                    / volume_dissolved_co2_for_full_sw[item]["all"],
                 )
             else:
-                concentration_dissolved_co2[item] = 0.0
+                concentration_dissolved_co2_for_full_sw[item] = 0.0
 
-        # Determine total mass of dissolved CO2.
+        # Determine mass of dissolved CO2 for full sw
         for roi in ["all", "boxA", "boxB"]:
             for item in ["port1", "port2"]:
+                mass_dissolved_co2_for_full_sw[item][roi] = (
+                    concentration_dissolved_co2_for_full_sw[item]
+                    * volume_dissolved_co2_for_full_sw[item][roi]
+                )
+                mass_dissolved_co2_esf_for_full_sw[item][roi] = (
+                    concentration_dissolved_co2_for_full_sw[item]
+                    * volume_dissolved_co2_for_full_sw[item + "_esf"][roi]
+                )
+            mass_dissolved_co2_for_full_sw["total"][roi] = sum(
+                [
+                    mass_dissolved_co2_for_full_sw[item][roi]
+                    for item in ["port1", "port2"]
+                ]
+            )
+            mass_dissolved_co2_esf_for_full_sw["total"][roi] = sum(
+                [
+                    mass_dissolved_co2_esf_for_full_sw[item][roi]
+                    for item in ["port1", "port2"]
+                ]
+            )
+
+        # Determine mass of dissolved CO2 at swi
+        for roi in ["all", "boxA", "boxB"]:
+            for item in ["port1", "port2"]:
+                mass_dissolved_co2_for_swi[item][roi] = (
+                    dissolution_limit * volume_dissolved_co2_for_swi[item][roi]
+                )
+                mass_dissolved_co2_esf_for_swi[item][roi] = (
+                    dissolution_limit * volume_dissolved_co2_for_swi[item + "_esf"][roi]
+                )
+            mass_dissolved_co2_for_swi["total"][roi] = sum(
+                [mass_dissolved_co2_for_swi[item][roi] for item in ["port1", "port2"]]
+            )
+            mass_dissolved_co2_esf_for_swi["total"][roi] = sum(
+                [
+                    mass_dissolved_co2_esf_for_swi[item][roi]
+                    for item in ["port1", "port2"]
+                ]
+            )
+
+        # Total mass of dissolved CO2
+        for roi in ["all", "boxA", "boxB"]:
+            for item in ["port1", "port2", "total"]:
                 total_mass_dissolved_co2[item][roi] = (
-                    concentration_dissolved_co2[item] * volume_dissolved_co2[item][roi]
+                    mass_dissolved_co2_for_full_sw[item][roi]
+                    + mass_dissolved_co2_for_swi[item][roi]
                 )
                 total_mass_dissolved_co2_esf[item][roi] = (
-                    concentration_dissolved_co2[item]
-                    * volume_dissolved_co2[item + "_esf"][roi]
+                    mass_dissolved_co2_esf_for_full_sw[item][roi]
+                    + mass_dissolved_co2_esf_for_swi[item][roi]
                 )
-            total_mass_dissolved_co2["total"][roi] = sum(
-                [total_mass_dissolved_co2[item][roi] for item in ["port1", "port2"]]
-            )
-            total_mass_dissolved_co2_esf["total"][roi] = sum(
-                [total_mass_dissolved_co2_esf[item][roi] for item in ["port1", "port2"]]
-            )
 
         # ! ---- Collect results.
         total_mass_co2_vec.append(total_mass_co2["total"])
@@ -358,7 +451,9 @@ for i, directory in enumerate(seg_folders):
                 )
 
         for item in ["port1", "port2"]:
-            density_dissolved_co2_vec[item].append(concentration_dissolved_co2[item])
+            density_dissolved_co2_vec[item].append(
+                concentration_dissolved_co2_for_full_sw[item]
+            )
 
         # ! --- Dense representation for CO2 concentration in water
         dense_concentration_dissolved_co2 = np.zeros(
@@ -372,7 +467,7 @@ for i, directory in enumerate(seg_folders):
 
             # Dissolved CO2 (in kg / m**3 - convert mass) - assume constant concentration for each plume
             dense_concentration_dissolved_co2[mask_dissolved_co2] = (
-                concentration_dissolved_co2[item] / 1000
+                concentration_dissolved_co2_for_full_sw[item] / 1000
             )
 
             # Mobile CO2
@@ -387,6 +482,8 @@ for i, directory in enumerate(seg_folders):
                 "/media/jakub/Elements/Jakub/benchmark/results/large_rig/fixed-thresholds/"
             )
             run_folder = Path(f"{run_id}")
+
+            # Concentration
 
             # Store numpy arrays
             filename_npy = stem.replace("_segmentation", "_concentration") + ".npy"
@@ -437,6 +534,90 @@ for i, directory in enumerate(seg_folders):
             concentration_to_csv(
                 full_filename_csv,
                 dense_concentration_dissolved_co2_coarse,
+                im.name,
+            )
+
+            # Sw
+
+            # Store numpy arrays
+            filename_npy = stem.replace("_segmentation", "_sw") + ".npy"
+            npy_sw_folder = Path("sw_npy")
+            full_filename_npy = (
+                results_folder / run_folder / npy_sw_folder / Path(filename_npy)
+            )
+            full_filename_npy.parents[0].mkdir(parents=True, exist_ok=True)
+            np.save(full_filename_npy, sw)
+
+            # Store jpg images
+            filename_jpg = stem.replace("_segmentation", "_sw") + ".jpg"
+            jpg_sw_folder = Path("sw_jpg")
+            full_filename_jpg = (
+                results_folder / run_folder / jpg_sw_folder / Path(filename_jpg)
+            )
+            full_filename_jpg.parents[0].mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(
+                str(full_filename_jpg),
+                skimage.img_as_ubyte(sw),
+                [int(cv2.IMWRITE_JPEG_QUALITY), 100],
+            )
+
+            # Store as coarse csv files, corresponding to 1cm by 1cm cells.
+            sw_coarse = cv2.resize(
+                sw,
+                (280, 150),
+                interpolation=cv2.INTER_AREA,
+            )
+            filename_csv = stem.replace("_segmentation", "_sw") + ".csv"
+            csv_sw_folder = Path("sw_csv")
+            full_filename_csv = (
+                results_folder / run_folder / csv_sw_folder / Path(filename_csv)
+            )
+            full_filename_csv.parents[0].mkdir(parents=True, exist_ok=True)
+            sw_to_csv(
+                full_filename_csv,
+                sw_coarse,
+                im.name,
+            )
+
+            # Sg
+
+            # Store numpy arrays
+            filename_npy = stem.replace("_segmentation", "_sg") + ".npy"
+            npy_sg_folder = Path("sg_npy")
+            full_filename_npy = (
+                results_folder / run_folder / npy_sg_folder / Path(filename_npy)
+            )
+            full_filename_npy.parents[0].mkdir(parents=True, exist_ok=True)
+            np.save(full_filename_npy, sg)
+
+            # Store jpg images
+            filename_jpg = stem.replace("_segmentation", "_sg") + ".jpg"
+            jpg_sg_folder = Path("sg_jpg")
+            full_filename_jpg = (
+                results_folder / run_folder / jpg_sg_folder / Path(filename_jpg)
+            )
+            full_filename_jpg.parents[0].mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(
+                str(full_filename_jpg),
+                skimage.img_as_ubyte(sg),
+                [int(cv2.IMWRITE_JPEG_QUALITY), 100],
+            )
+
+            # Store as coarse csv files, corresponding to 1cm by 1cm cells.
+            sg_coarse = cv2.resize(
+                sg,
+                (280, 150),
+                interpolation=cv2.INTER_AREA,
+            )
+            filename_csv = stem.replace("_segmentation", "_sg") + ".csv"
+            csv_sg_folder = Path("sg_csv")
+            full_filename_csv = (
+                results_folder / run_folder / csv_sg_folder / Path(filename_csv)
+            )
+            full_filename_csv.parents[0].mkdir(parents=True, exist_ok=True)
+            sg_to_csv(
+                full_filename_csv,
+                sg_coarse,
                 im.name,
             )
 
