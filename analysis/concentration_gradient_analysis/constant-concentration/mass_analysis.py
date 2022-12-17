@@ -82,7 +82,8 @@ elif user == "jakub":
     swi = np.load(
         "/home/jakub/src/fluidflower_benchmark_analysis/analysis/depths/large_rig/swi.npy"
     )
-    if True:
+    zero_swi = False
+    if zero_swi:
         swi[:, :] = 0
 
 # ! ---- Segmentation of the geometry providing a mask for the lower ESF layer.
@@ -487,7 +488,7 @@ for i, directory in enumerate(seg_folders):
 
             # Store numpy arrays
             filename_npy = stem.replace("_segmentation", "_concentration") + ".npy"
-            npy_concentration_folder = Path("concentration_npy")
+            npy_concentration_folder = Path("concentration_npy") if zero_swi else Path("swi_concentration_npy")
             full_filename_npy = (
                 results_folder
                 / run_folder
@@ -499,7 +500,7 @@ for i, directory in enumerate(seg_folders):
 
             # Store jpg images
             filename_jpg = stem.replace("_segmentation", "_concentration") + ".jpg"
-            jpg_concentration_folder = Path("concentration_jpg")
+            jpg_concentration_folder = Path("concentration_jpg") if zero_swi else Path("swi_concentration_jpg")
             full_filename_jpg = (
                 results_folder
                 / run_folder
@@ -523,7 +524,7 @@ for i, directory in enumerate(seg_folders):
                 interpolation=cv2.INTER_AREA,
             )
             filename_csv = stem.replace("_segmentation", "_concentration") + ".csv"
-            csv_concentration_folder = Path("concentration_csv")
+            csv_concentration_folder = Path("concentration_csv") if zero_swi else Path("swi_concentration_csv")
             full_filename_csv = (
                 results_folder
                 / run_folder
@@ -541,7 +542,7 @@ for i, directory in enumerate(seg_folders):
 
             # Store numpy arrays
             filename_npy = stem.replace("_segmentation", "_sw") + ".npy"
-            npy_sw_folder = Path("sw_npy")
+            npy_sw_folder = Path("sw_npy") if zero_swi else Path("swi_sw_npy")
             full_filename_npy = (
                 results_folder / run_folder / npy_sw_folder / Path(filename_npy)
             )
@@ -550,7 +551,7 @@ for i, directory in enumerate(seg_folders):
 
             # Store jpg images
             filename_jpg = stem.replace("_segmentation", "_sw") + ".jpg"
-            jpg_sw_folder = Path("sw_jpg")
+            jpg_sw_folder = Path("sw_jpg") if zero_swi else Path("swi_sw_jpg")
             full_filename_jpg = (
                 results_folder / run_folder / jpg_sw_folder / Path(filename_jpg)
             )
@@ -568,7 +569,7 @@ for i, directory in enumerate(seg_folders):
                 interpolation=cv2.INTER_AREA,
             )
             filename_csv = stem.replace("_segmentation", "_sw") + ".csv"
-            csv_sw_folder = Path("sw_csv")
+            csv_sw_folder = Path("sw_csv") if zero_swi else Path("swi_sw_csv")
             full_filename_csv = (
                 results_folder / run_folder / csv_sw_folder / Path(filename_csv)
             )
@@ -583,7 +584,7 @@ for i, directory in enumerate(seg_folders):
 
             # Store numpy arrays
             filename_npy = stem.replace("_segmentation", "_sg") + ".npy"
-            npy_sg_folder = Path("sg_npy")
+            npy_sg_folder = cth("sg_npy") if zero_swi else Path("swi_sg_npy")
             full_filename_npy = (
                 results_folder / run_folder / npy_sg_folder / Path(filename_npy)
             )
@@ -592,7 +593,7 @@ for i, directory in enumerate(seg_folders):
 
             # Store jpg images
             filename_jpg = stem.replace("_segmentation", "_sg") + ".jpg"
-            jpg_sg_folder = Path("sg_jpg")
+            jpg_sg_folder = Path("sg_jpg") if zero_swi else Path("swi_sg_jpg")
             full_filename_jpg = (
                 results_folder / run_folder / jpg_sg_folder / Path(filename_jpg)
             )
@@ -610,7 +611,7 @@ for i, directory in enumerate(seg_folders):
                 interpolation=cv2.INTER_AREA,
             )
             filename_csv = stem.replace("_segmentation", "_sg") + ".csv"
-            csv_sg_folder = Path("sg_csv")
+            csv_sg_folder = Path("sg_csv") if zero_swi else Path("swi_sg_csv")
             full_filename_csv = (
                 results_folder / run_folder / csv_sg_folder / Path(filename_csv)
             )
@@ -647,6 +648,6 @@ for i, directory in enumerate(seg_folders):
         if user == "benyamine":
             df.to_excel(directory[-3:-1] + f"_{item}.xlsx", index=None)
         elif user == "jakub":
-            excel_path = Path(f"results/{run_id}_{item}.xlsx")
+            excel_path = Path(f"results/{run_id}_{item}.xlsx") if zero_swi else Path(f"swi_results/{run_id}_{item}.xlsx")
             excel_path.parents[0].mkdir(parents=True, exist_ok=True)
             df.to_excel(str(excel_path), index=None)

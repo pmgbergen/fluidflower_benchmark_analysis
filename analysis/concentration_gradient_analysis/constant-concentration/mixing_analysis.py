@@ -20,6 +20,8 @@ import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
 from benchmark.utils.misc import read_time_from_path
 
+zero_swi = False
+
 for run in ["c1", "c2", "c3", "c4", "c5"]:
 
     # Fetch images and segmentations.
@@ -39,13 +41,22 @@ for run in ["c1", "c2", "c3", "c4", "c5"]:
             ).glob("*.npy")
         )
     )
-    concentrations = list(
-        sorted(
-            Path(
-                f"/media/jakub/Elements/Jakub/benchmark/results/large_rig/fixed-thresholds/{run}/concentration_npy"
-            ).glob("*.npy")
+    if zero_swi:
+        concentrations = list(
+            sorted(
+                Path(
+                    f"/media/jakub/Elements/Jakub/benchmark/results/large_rig/fixed-thresholds/{run}/concentration_npy"
+                ).glob("*.npy")
+            )
         )
-    )
+    else:
+        concentrations = list(
+            sorted(
+                Path(
+                    f"/media/jakub/Elements/Jakub/benchmark/results/large_rig/fixed-thresholds/{run}/swi_concentration_npy"
+                ).glob("*.npy")
+            )
+        )
     num_concentrations = len(concentrations)
 
     # Setup up fluidflower
@@ -56,9 +67,9 @@ for run in ["c1", "c2", "c3", "c4", "c5"]:
     # Fetch reference time
     ref_time = read_time_from_path(images[0])
 
-    # Contour analysis.
-    contour_analysis = darsia.ContourAnalysis(verbosity=False)
-    co2_g_analysis = darsia.ContourAnalysis(verbosity=False)
+    ## Contour analysis.
+    #contour_analysis = darsia.ContourAnalysis(verbosity=False)
+    #co2_g_analysis = darsia.ContourAnalysis(verbosity=False)
 
     # Keep track of the quantity of interest for each segmentation, and the respective time
     concentration_gradient_integral = []
@@ -141,9 +152,14 @@ for run in ["c1", "c2", "c3", "c4", "c5"]:
         qty / 1.5 for qty in concentration_gradient_integral
     ]
 
-    Path("results").mkdir(parents=True, exist_ok=True)
-    np.save(f"results/{run}_qty_5.npy", rel_concentration_gradient_integral)
-    np.save(f"results/{run}_time.npy", rel_time)
+    if zero_swi:
+        Path("results").mkdir(parents=True, exist_ok=True)
+        np.save(f"results/{run}_qty_5.npy", rel_concentration_gradient_integral)
+        np.save(f"results/{run}_time.npy", rel_time)
+    else:
+        Path("swi_results").mkdir(parents=True, exist_ok=True)
+        np.save(f"results/swi_{run}_qty_5.npy", rel_concentration_gradient_integral)
+        np.save(f"results/swi_{run}_time.npy", rel_time)
 
     plt.figure("Qty 5")
     plt.plot(rel_time, rel_concentration_gradient_integral, label=f"{run}")
