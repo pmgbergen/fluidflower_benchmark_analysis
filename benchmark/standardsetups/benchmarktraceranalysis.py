@@ -12,37 +12,51 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
+from datetime import datetime
 
-# from benchmark.utils.misc import read_time_from_path
-
-
-class TailoredConcentrationAnalysis(darsia.ConcentrationAnalysis):
+class TailoredConcentrationAnalysis(daria.SegmentedConcentrationAnalysis):
     def __init__(
         self,
-        base: Union[darsia.Image, list[darsia.Image]],
+        base: Union[daria.Image, list[daria.Image]],
+        labels: np.ndarray,
         color: Union[str, callable] = "gray",
         **kwargs,
     ) -> None:
-        super().__init__(base, color)
+        super().__init__(base, labels, color)
 
-        # TODO include in config
-        self.disk_radius = kwargs.pop("median_disk_radius", 20)
+        self.disk_radius = kwargs.get("median_disk_radius", 1)
+        self.labels = labels
 
     def postprocess_signal(self, signal: np.ndarray, img: np.ndarray) -> np.ndarray:
 
-        # TODO try median as well
-        # signal = skimage.restoration.denoise_tv_chambolle(
-        #    signal, weight=20, eps=1e-4, max_num_iter=100
-        # )
+        # Apply median to fill in whilte preserving edges.
         signal = skimage.filters.rank.median(
-            signal, skimage.morphology.disk(self.disk_radius)
+            skimage.img_as_ubyte(signal),
+            skimage.morphology.disk(self.disk_radius)
         )
+
+        # Convert back to float
         signal = skimage.img_as_float(signal)
 
-        return super().postprocess_signal(signal, img)
+        # TODO hardcode coarsening?
+
+        ## Smoothen the signal
+        #signal = skimage.restoration.denoise_tv_bregman(
+        #   signal, weight=1e-2, eps=1e-6, max_num_iter=100
+        #)
+
+        # Resize
+        signal = cv2.resize(signal, (280, 150), interpolation = cv2.INTER_AREA)
+
+        # TVD
+        signal = skimage.restoration.denoise_tv_bregman(
+            signal, weight = 8, eps = 1e-4, max_num_iter = 100
+        )
+
+        return super().postprocess_signal(signal)
 
 
-class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
+class BenchmarkTracerAnalysis(LargeFluidFlower, daria.SegmentedTracerAnalysis):
     """
     Class for managing the well test of the FluidFlower benchmark.
     """
@@ -70,17 +84,15 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
                 are printed to screen; default is False.
         """
         LargeFluidFlower.__init__(self, baseline, config, update_setup)
-        darsia.TracerAnalysis.__init__(self, baseline, config, update_setup)
+        daria.SegmentedTracerAnalysis.__init__(self, baseline, self.effective_volumes, self.labels, config, update_setup)
 
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
         # complying with "%y%m%d %H%M%D", e.g., "211127 083412"
         # TODO as part of the calibration, this will be returned.
-        # self.injection_start: datetime = datetime.strptime(
-        #    self.config["injection_start"], "%y%m%d %H%M%S"
-        # )
-        # TODO temporarily...
-        self.injection_start = self.base.timestamp
+        self.injection_start: datetime = datetime.strptime(
+           self.config["injection_start"], "%y%m%d %H%M%S"
+        )
 
         # Initialize results dictionary for post-analysis
         self.results: dict = {}
@@ -94,12 +106,13 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
 
     # ! ---- Analysis tools for detecting the tracer concentration
 
-    def define_tracer_analysis(self) -> darsia.ConcentrationAnalysis:
+    def define_tracer_analysis(self) -> daria.SegmentedConcentrationAnalysis:
         """
         Identify tracer concentration using a reduction to the garyscale space
         """
         tracer_analysis = TailoredConcentrationAnalysis(
             self.base,
+            self.labels,
             color="gray",
             **self.config["tracer"],
         )
@@ -117,9 +130,36 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         tracer_concentration = super().determine_tracer()
 
         # Add expert knowledge: Turn of any signal in the water zone
-        tracer_concentration.img[self.water] = 0
+        #tracer_concentration.img[self.water] = 0
 
         return tracer_concentration
+
+    def calibrate(self, images: list[Path], injection_rate: float) -> None:
+        """
+        Calibration routine, taking into account both discontinuity
+        across segment interfaces, as well as signal strength.
+        For the latter a known injection rate is matched.
+
+        Args:
+            images (list of paths): images used for the calibration.
+            injetion_rate (float): injection rate in ml/hrs.
+        """
+        # Read and process the images
+        print("Calibration: Processing images...")
+        processed_images = [self._read(img) for img in images]
+
+        # Calibrate the segment-wise scaling
+        print("Calibration: Segmentwise scaling...")
+        self.tracer_analysis.calibrate_segmentation_scaling(processed_images)
+
+        # Calibrate the overall signal via a simple constant rescaling
+        print("Calibration: Global scaling...")
+        if "scaling" in self.config["tracer"]:
+            self.tracer_analysis.update(scaling = self.config["tracer"]["scaling"])
+            print(self.tracer_analysis.scaling)
+        else:
+            self.tracer_analysis.calibrate(injection_rate = injection_rate, images = processed_images, initial_guess = (6,9))
+
 
     # ! ----- Analysis tools
 
@@ -135,6 +175,7 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
             np.ndarray: tracer concentration map
             dict: dictinary with all stored results from the post-analysis.
         """
+        print("single", img)
         # Load the current image
         self.load_and_process_image(img)
 
@@ -155,10 +196,11 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         ).total_seconds() * SECONDS_TO_HOURS
 
         # Plot and store image with contours
-        plot_concentration = kwargs.pop("plot_concentration", False)
-        write_concentration_to_file = kwargs.pop("write_concentration_to_file", False)
+        plot_concentration = kwargs.get("plot_concentration", False)
+        write_concentration_to_file = kwargs.get("write_concentration_to_file", False)
+        write_data_to_file = kwargs.get("write_data_to_file", False)
 
-        if plot_concentration or write_concentration_to_file:
+        if plot_concentration or write_concentration_to_file or write_data_to_file:
 
             # Plot
             if plot_concentration:
@@ -169,9 +211,15 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
             # Write to file
             if write_concentration_to_file:
                 cv2.imwrite(
-                    str(self.path_to_results / Path(f"{img_id}_concentration.jpg")),
+                    str(self.path_to_results / Path(f"concentration_{img_id}.jpg")),
                     cv2.cvtColor(tracer.img, cv2.COLOR_RGB2BGR),
                 )
+
+            # Write array and time to file:
+            if write_data_to_file:
+                img_array = cv2.resize(tracer.img, (280, 150))
+                time = (tracer.timestamp - self.injection_start).total_seconds()
+                np.savez(self.path_to_results / Path(f"data_{img_id}.npz"), img_array, time)
 
         return tracer, self.results
 

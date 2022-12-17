@@ -3,8 +3,11 @@
 
     "physical_asset": {
         "dimensions": {"width": 2.8, "height": 1.5},
-        "parameters": {"porosity": 0.44}
+        "parameters": {"porosity": 0.44},
+        "volumes_path": "cache/volumes.npy"
     },
+
+    "injection_start": "211002 171940",
 
     "drift": {
         "roi": [
@@ -50,7 +53,9 @@
             "horizontal_center_offset": -286,
             "vertical_stretch": 3.2177888435429053e-09,
             "vertical_center_offset": 702
-        }
+        },
+
+        "use_cache": true
     },
 
     "segmentation": {
@@ -69,14 +74,15 @@
             [2760, 4020],
             [1800, 5240],
             [3500, 4600],
-            [1345, 5760],
+            [1300, 5760],
             [1520, 3470],
-            [1390, 1935],
+            [1350, 1935],
             [2115, 3500],
-            [2100, 1350]
+            [1550, 1950],
+            [2290, 1180],
+            [2275, 3000]
         ],
         "region_size": 30,
-        "dilation size": 10,
         "boundary size": 90,
         "verbosity": false
 
@@ -84,6 +90,8 @@
 
     "tracer": {
         "cleaning_filter": "cache/cleaning_filter.npy",
-        "median_disk_radius": 20
+        "segmentation_scaling": "cache/segmentation_scaling.npy",
+        "median_disk_radius": 20,
+        "scaling": 7.2
     }
 }
