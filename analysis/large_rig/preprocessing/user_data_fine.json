@@ -1,7 +1,0 @@
-{
-    "images folder": "H:/sets/corrected_tiff_pumping_effect/c1",
-    "file ending": "*.TIF",
-    "number baseline images": 10,
-    "config": "../config_preprocessing_fine.json",
-    "results": "H:/sets/segmented/c1"
-}
