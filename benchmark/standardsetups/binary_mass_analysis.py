@@ -98,6 +98,7 @@ class BinaryMassAnalysis:
         segmentation: np.ndarray,
         component: int,
         roi: Optional[Union[np.ndarray, list]] = None,
+        saturation: Optional[np.ndarray] = None
     ) -> np.ndarray:
         """
         Given segmentation and component, returns a volume map of the component
@@ -110,6 +111,7 @@ class BinaryMassAnalysis:
                 segmentation.
             roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed.
                 Provided as lower left corner, upper right corner in [x,y] coordinates
+            saturation (Optional[np.ndarray]): saturation
 
         Returns:
             volume map (np.ndarray): volume associated to each pixel containing the prescribed
@@ -126,11 +128,15 @@ class BinaryMassAnalysis:
             )
         else:
             # Compute volume map
-            volume_map = (self.porosity * self.depth_map) * self.pixelarea
+            volume_map = np.multiply(self.porosity, self.depth_map) * self.pixelarea
 
         # Extract only the correct volumes (depending on segmentation and chosen component)
         volume = np.zeros_like(volume_map)
         volume[segmentation == component] = volume_map[segmentation == component]
+
+        # Weight by saturation.
+        if saturation is not None:
+            volume = np.multiply(volume, saturation)
 
         if roi is not None:
             _, roi_box = da.extractROI(self.base, roi, return_roi=True)
@@ -143,6 +149,7 @@ class BinaryMassAnalysis:
         segmentation: np.ndarray,
         component: int,
         roi: Optional[Union[np.ndarray, list]] = None,
+        saturation: Optional[np.ndarray] = None,
     ) -> float:
         """
         Given segmentation and component, returns the total volume of the component
@@ -155,11 +162,12 @@ class BinaryMassAnalysis:
                 segmentation.
             roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed.
                 Provided as lower left corner, upper right corner in [x,y] coordinates
+            saturation (Optional[np.ndarray]): saturation
 
         Returns:
             volume (float): total volume containing the prescribed component.
         """
-        return np.sum(self.volume_map(segmentation, component, roi))
+        return np.sum(self.volume_map(segmentation, component, roi, saturation))
 
     def external_pressure_to_density_co2(
         self, external_pressure: float, roi: Optional[Union[np.ndarray, list]] = None
@@ -196,6 +204,7 @@ class BinaryMassAnalysis:
         external_pressure: float,
         co2_component: int = 2,
         roi: Optional[Union[list, np.ndarray]] = None,
+        gas_saturation: Optional[np.ndarray] = None,
     ) -> float:
         """
         Given a segmentation, external pressure and the number
@@ -209,16 +218,13 @@ class BinaryMassAnalysis:
                 corresponds to co2.
             roi (Optional[Union[list, np.ndarray]]): roi where free CO2 should be computed.
                 Provided as lower left corner, upper right corner in [x,y] coordinates
+            gas_saturation (Optional[np.ndarray]): gas saturation per pixel.
 
         Returns:
             (float): Mass of co2.
         """
-        if roi is not None:
-            volume = self.volume_map(segmentation, co2_component, roi)
-            density_map = self.external_pressure_to_density_co2(external_pressure, roi)
-        else:
-            volume = self.volume_map(segmentation, co2_component)
-            density_map = self.external_pressure_to_density_co2(external_pressure)
+        volume = self.volume_map(segmentation, co2_component, roi, gas_saturation)
+        density_map = self.external_pressure_to_density_co2(external_pressure, roi)
         return np.sum(volume * density_map)
 
     def _compute_depth_map(
