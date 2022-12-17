@@ -70,6 +70,12 @@ depth_measurements = (
     np.load(d_meas),
 )
 
+# ! ---- Fetch spatial porosity map
+if user == "benyamine":
+    porosity = 0.44
+elif user == "jakub":
+    porosity = np.load("/home/jakub/src/fluidflower_benchmark_analysis/analysis/depths/large_rig/porosity.npy")
+
 # ! ---- Segmentation of the geometry providing a mask for the lower ESF layer.
 
 if user == "benyamine":
@@ -150,7 +156,7 @@ for i, directory in enumerate(seg_folders):
     mass_analysis = BinaryMassAnalysis(
         base_segmentation,
         depth_measurements=depth_measurements,
-        porosity=0.44,
+        porosity=porosity,
         cache="./cache/depth.npy",
     )
 
@@ -272,6 +278,7 @@ for i, directory in enumerate(seg_folders):
 
         for item in ["port1", "port2"]:
             for roi, subregion in subregions.items():
+                # TODO weight by saturation here.
                 total_mass_mobile_co2[item][roi] = mass_analysis.free_co2_mass(
                     decomposed_seg[item], pressure(t), 2, roi=subregion
                 )
@@ -459,4 +466,6 @@ for i, directory in enumerate(seg_folders):
         if user == "benyamine":
             df.to_excel(directory[-3:-1] + f"_{item}.xlsx", index=None)
         elif user == "jakub":
-            df.to_excel(str(Path(f"{run_id}_{item}.xlsx")), index=None)
+            excel_path = Path(f"results/{run_id}_{item}.xlsx")
+            excel_path.parents[0].mkdir(parents=True, exist_ok=True)
+            df.to_excel(str(excel_path), index=None)
