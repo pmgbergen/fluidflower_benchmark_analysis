@@ -124,7 +124,7 @@ def segmentation_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
     np.savetxt(path, arr, fmt="%d", delimiter=",", header=header)
 
 def concentration_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
-    """Store numpy of as csv file.
+    """Store numpy of CO2 concentration as csv file.
 
     Args:
         path (Path): path for dst
@@ -137,6 +137,64 @@ def concentration_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
 
     header += (
         "\nEach entry identifies the CO2 mass concentration in the water phase in a 1 cm by 1 cm cell."
+    )
+
+    header += "\n2d array representing the laser grid of the benchmark description,"
+
+    header += (
+        "\nordered row-wise from top to bottom, and column-wise from left to right."
+    )
+
+    header += "\nThe first entry corresponds to the cell centered at coordinates (0.035 m, 1.525 m)"
+
+    header += "\nw.r.t. the spatial maps outlined in Section 3.1 of the description."
+
+    # Store array with preceding header
+    np.savetxt(path, arr, fmt="%.4f", delimiter=",", header=header)
+
+def sw_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
+    """Store numpy array of water saturation of as csv file.
+
+    Args:
+        path (Path): path for dst
+        array (np.ndarray): array to be stored
+        inFileName (Path): origin image
+
+    """
+    # Build csv file with standard text on top.
+    header = f"Generated from {str(inFileName)}."
+
+    header += (
+        "\nEach entry identifies the water saturation in a 1 cm by 1 cm cell."
+    )
+
+    header += "\n2d array representing the laser grid of the benchmark description,"
+
+    header += (
+        "\nordered row-wise from top to bottom, and column-wise from left to right."
+    )
+
+    header += "\nThe first entry corresponds to the cell centered at coordinates (0.035 m, 1.525 m)"
+
+    header += "\nw.r.t. the spatial maps outlined in Section 3.1 of the description."
+
+    # Store array with preceding header
+    np.savetxt(path, arr, fmt="%.4f", delimiter=",", header=header)
+
+def sg_to_csv(path: Path, arr: np.ndarray, inFileName: Path) -> None:
+    """Store numpy of gas saturation as csv file.
+
+    Args:
+        path (Path): path for dst
+        array (np.ndarray): array to be stored
+        inFileName (Path): origin image
+
+    """
+    # Build csv file with standard text on top.
+    header = f"Generated from {str(inFileName)}."
+
+    header += (
+        "\nEach entry identifies the gas saturation in a 1 cm by 1 cm cell."
     )
 
     header += "\n2d array representing the laser grid of the benchmark description,"
