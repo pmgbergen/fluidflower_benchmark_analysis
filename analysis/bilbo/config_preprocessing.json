@@ -1,0 +1,66 @@
+{
+    "description": "Config for preprocessing of bilbo analysis, based on images from BC02",
+
+    "physical_asset": {
+        "dimensions": {
+            "width": 0.92,
+            "height": 0.55,
+            "depth": 0.01,
+            "expansion": 0.002
+        },
+
+        "parameters": {"porosity": 0.44}
+    },
+    
+    "drift": {"roi": [[600, 6750], [50, 7575]]},
+
+    "color": {
+        "reference": "custom",
+        "custom_colorchecker_path": "../cache/custom_color_checker.npy",
+        "custom_colorchecker_update": true,
+        "roi": [[6803, 93], [6809, 570], [7523, 572], [7514, 95]]
+    },
+
+    "curvature": {
+        "crop": {
+            "pts_src": [[306, 12], [284, 4458], [7677, 4434], [7649, 30]],
+            "width": 0.92,
+            "height": 0.55
+        },
+
+        "use_cache": true
+
+    },
+
+    "segmentation": {
+        "labels_path": "cache/labels.npy",
+        "water": [0, 2],
+        "esf": [1, 10],
+        "c": [4, 6, 7],
+
+        "median disk radius": 50,
+        "rescaling factor": 0.5,
+        "marker_points": [
+            [520,2830],
+            [837,110],
+            [938,2755],
+            [1666,4653],
+            [2030,1471],
+            [2257,5268],
+            [3188,5297],
+            [3923,4878],
+            [55, 2916],
+            [2621, 1412],
+            [753, 6957],
+            [2800, 5100]
+        ],
+        "region_size": 30,
+        "dilation size": 0,
+        "boundary size": 140,
+        "verbosity": false
+    },
+
+    "co2": {},
+    "co2(g)": {}
+
+}

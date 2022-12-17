@@ -6,7 +6,7 @@ from pathlib import Path
 from benchmark.standardsetups.benchmarktraceranalysis import \
     BenchmarkTracerAnalysis
 
-folder = Path("/home/jakub/images/ift/benchmark/well_test")
+folder = Path("/media/jakub/Elements/Jakub/benchmark/data/well_test")
 pt1 = Path("211002 well tests") # contains baseline: 4; phase 1.a: 5:35; break: 35:65; 1b: 65:95; break: 95:125; 1c: 125:155; break:155:185; phase 2.a 185:215; break: 215:245; phase 2b 245:275; break 275:305; phase 2c: 305:335; break: 335:end
 pt2 = Path("211002 well tests_overnight")
 pt3 = Path("211003 well tests continued_phase_3")
@@ -19,9 +19,6 @@ images_2 = list(sorted((folder / pt2).glob(file_ending)))
 images_3 = list(sorted((folder / pt3).glob(file_ending)))
 images = list(sorted((folder / pt3).glob(file_ending)))
 baseline = list(sorted((folder / Path("baseline")).glob(file_ending)))[:20]
-
-## Completely flushed rig for calibration
-#images = [folder / Path("220202_well_test") / Path("DSC04224.JPG")]
 
 # Define the tracer analysis object
 tracer_analysis = BenchmarkTracerAnalysis(

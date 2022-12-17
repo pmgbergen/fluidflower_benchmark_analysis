@@ -1,0 +1,162 @@
+{
+    "description": "FluidFlower Benchmark setup for run C2.",
+
+    "physical_asset": {
+        "dimensions": {"width": 2.8, "height": 1.5},
+        "parameters": {"porosity": 0.44}
+    },
+
+    "injection_start": "211204 100100",
+
+    "drift": {
+        "roi": [[1050, 2630], [1340, 2920]]
+    },
+
+    "color": {
+        "roi": [[338, 455], [517, 455], [518, 191], [342, 191]]
+    },
+
+    "curvature": {
+        "crop": {
+            "pts_src": [[0, 0], [0, 4260], [7952, 4260], [7952, 0]],
+            "width": 2.8,
+            "height": 1.5
+        },
+
+        "use_cache": true
+    },
+
+    "segmentation": {
+        "labels_path": "cache/labels_C1.npy",
+        "water": [0],
+        "esf": [1,8,9],
+        "c": [2,3,4],
+
+        "monochromatic_color": "value",
+        "median disk radius": 50,
+        "rescaling factor": 0.25,
+        "marker_points": [
+            [1030, 3580],
+            [370, 3575],
+            [3231, 564],
+            [2760, 4020],
+            [1560, 5800],
+            [3500, 4600],
+            [1345, 5760],
+            [1520, 3470],
+            [1390, 1935],
+            [2115, 3500],
+            [2100, 1350]
+        ],
+        "region_size": 30,
+        "dilation size": 0,
+        "boundary size": 90,
+        "verbosity": false
+    },
+
+    "co2": {
+        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
+
+        "segmented": true,
+
+        "color": "hsv",
+        "hue lower bound": 0,
+        "hue upper bound": 70,
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 0.1,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold dynamic": true,
+        "threshold method original try something new": "local/global min",
+        "threshold method": "first local min",
+        "threshold value": 0.1,
+        "threshold value min": [0.04, 0.02, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.02, 0.02, 0.04],
+        "threshold value max": 0.2,
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.25,
+        "postsmoothing weight": 0.1,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 200,
+
+        "posterior": true,
+        "posterior criterion": "value",
+        "posterior threshold": 0.1,
+
+        "verbosity": false
+    },
+
+    "co2 red": {
+        "cleaning_filter": "cache/cleaning_filter_red.npy",
+        "segmented": true,
+
+        "color": "red",
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 0.1,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold dynamic": true,
+        "threshold method": "first local min",
+        "threshold value": 0.1,
+        "threshold value min": 0.05,
+        "threshold value max": 0.18,
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 0.1,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 200,
+
+        "verbosity": false
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "cache/cleaning_filter_blue.npy",
+        "segmented": true,
+
+        "color": "blue",
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize x": 0.25,
+
+        "presmoothing weight": 0.1,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold dynamic": true,
+        "threshold method": "first local min",
+        "threshold value": 0.05,
+        "threshold value min": 0.05,
+        "threshold value max": 0.12,
+
+        "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
+        "min area size": 1000,
+        "max hole size": 1000,
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize x": 0.25,
+        "postsmoothing weight": 0.1,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "posterior criterion": "value",
+        "posterior threshold": 0.1,
+
+        "verbosity": false
+    },
+
+    "calibration": {"scaling": 1.0}
+}

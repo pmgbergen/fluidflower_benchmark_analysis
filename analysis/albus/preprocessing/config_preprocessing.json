@@ -1,0 +1,70 @@
+{
+    "description": "Config for preprocessing of albus analysis - geomety segentation based on AC02",
+
+    "physical_asset": {
+        "dimensions": {
+            "width": 0.899,
+            "height": 0.492,
+            "depth": 0.01,
+            "expansion": 0.002
+        },
+
+        "parameters": {"porosity": 0.44}
+    },
+    
+    "drift": {
+        "roi": [[2940, 2880], [3074, 3860]]
+    },
+
+    "color": {
+        "active": false
+    },
+
+    "curvature": {
+        "crop": {
+            "pts_src": [[76, 58], [127, 2940], [5399, 2932], [5418, 34]],
+            "width": 0.899,
+            "height": 0.492
+        },
+        "use_cache": false
+    },
+
+    "segmentation": {
+        "labels_path": "../cache/labels.npy",
+        "water": [0],
+        "esf": [2, 9, 11],
+        "c": [5, 7, 8, 10],
+
+        "monochromatic_color": "gray",
+        "median disk radius": 50,
+        "rescaling factor": 0.2,
+        "marker_points": [
+            [520,2830],
+            [837,110],
+            [2257,5268],
+            [3188,5297],
+            [3923,4878],
+            [55, 2916],
+            [2621, 1412],
+            [753, 6957],
+            [2800, 5100],
+            [1280, 2700],
+            [1540, 1185],
+            [2055, 4674],
+            [2366, 5177],
+            [1930, 5085],
+            [2000, 1645],
+            [2115, 1630],
+            [1850, 2020]
+        ],
+        "region_size": 30,
+        "dilation size": 0,
+        "boundary": ["left", "right"],
+        "boundary size": 150,
+        "verbosity": true
+    },
+
+    "co2": {},
+    "co2(g)": {}
+
+}

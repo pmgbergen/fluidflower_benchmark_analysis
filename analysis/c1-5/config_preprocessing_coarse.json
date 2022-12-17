@@ -1,0 +1,74 @@
+{
+    "description": "Preprocessing for FluidFlower Benchmark setup for runs C1-5.",
+
+    "physical_asset": {
+        "dimensions": {"width": 2.8, "height": 1.5},
+        "parameters": {"porosity": 0.44}
+    },
+
+    "drift": {
+        "roi": [[1050, 2630], [1340, 2920]]
+    },
+
+    "color": {
+        "active": true,
+        "roi": [[338, 455], [516, 455], [518, 190], [341, 190]]
+    },
+
+    "curvature": {
+        "crop": {
+            "pts_src": [[0, 0], [0, 4260], [7952, 4260], [7952, 0]],
+            "width": 2.8,
+            "height": 1.5
+        },
+
+        "use_cache": true
+    },
+
+    "segmentation": {
+        "labels_path": "../cache/labels_coarse.npy",
+        "water": [0],
+        "esf": [1,12,13],
+        "c": [2,3,4],
+        "no-co2(g)": [10],
+
+        "comment": "for creating the segmentation used here, use the following keywords.",
+        "monochromatic_color": "value",
+        "method": "median",
+        "median disk radius": 50,
+        "rescaling factor": 0.25,
+        "marker_points": [
+            [1030, 3580],
+            [370, 3575],
+            [3231, 564],
+            [2760, 4020],
+            [1560, 5800],
+            [3500, 4600],
+            [1345, 5760],
+            [1520, 3470],
+            [1390, 1935],
+            [2115, 3500],
+            [2100, 1350],
+            [2300, 815],
+            [2500, 815],
+            [2420, 2275],
+
+            [2430, 5820]
+        ],
+        "region_size": 30,
+        "dilation size": 0,
+        "boundary size": 90,
+        "verbosity": true
+    },
+
+    "co2": {
+        "cleaning_filter": "cache/cleaning_filter_negative_key.npy"
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "cache/cleaning_filter_blue.npy"
+    },
+
+    "calibration": {"scaling": 1.0}
+
+}

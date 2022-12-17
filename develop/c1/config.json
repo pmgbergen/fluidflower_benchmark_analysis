@@ -1,0 +1,203 @@
+{
+    "description": "FluidFlower Benchmark setup for run C1",
+
+    "physical_asset": {
+        "dimensions": {"width": 2.8, "height": 1.5},
+        "parameters": {"porosity": 0.44}
+    },
+
+    "injection_start": "211124 083100",
+
+    "drift": {
+        "roi": [
+            [153, 16],
+            [788, 16],
+            [788, 734],
+            [153, 734]
+        ]
+    },
+
+    "color": {
+        "roi": [
+            [377, 502],
+            [561, 510],
+            [564, 249],
+            [380, 240]
+        ]
+    },
+
+    "curvature": {
+        "init": {
+            "horizontal_bulge": 5e-10,
+            "horizontal_center_offset": 0,
+            "vertical_bulge": 0,
+            "vertical_center_offset": 0
+        },
+
+        "crop": {
+            "pts_src": [[28, 30], [41, 4383], [7917, 4371], [7917, 19]],
+            "width": 2.8,
+            "height": 1.5
+        },
+
+        "bulge": {
+            "horizontal_bulge": -0.0,
+            "horizontal_center_offset": 0,
+            "vertical_bulge": -4.06061733411027e-09,
+            "vertical_center_offset": -8
+        },
+
+        "stretch": {
+            "horizontal_stretch": -1.7060115267192474e-09,
+            "horizontal_center_offset": -286,
+            "vertical_stretch": 3.2177888435429053e-09,
+            "vertical_center_offset": 702
+        },
+
+        "use_cache": true
+    },
+
+    "segmentation": {
+        "labels_path": "cache/labels.npy",
+        "water": [0],
+        "esf": [1, 8, 9],
+        "c": [2, 3, 4],
+        "monochromatic_color": "value",
+        "median disk radius": 20,
+        "rescaling factor": 0.1,
+        "marker_points": [
+            [1030, 3580],
+            [370, 3575],
+            [3231, 564],
+            [2760, 4020],
+            [1800, 5240],
+            [3500, 4600],
+            [1345, 5760],
+            [1520, 3470],
+            [1390, 1935],
+            [2115, 3500],
+            [2100, 1350]
+        ],
+        "region_size": 30,
+        "dilation size": 10,
+        "boundary size": 90,
+        "verbosity": false
+
+    },
+
+    "co2": {
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_hsv.npy",
+
+        "segmented": false,
+
+        "color": "hsv",
+        "threshold min hue": 7,
+        "threshold max hue": 60,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value": 0.04,
+
+        "verbosity": true
+    },
+
+    "co2 old value": {
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_value.npy",
+
+        "segmented": false,
+
+        "color": "hsv",
+        "threshold min hue": 7,
+        "threshold max hue": 60,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value": 0.04,
+
+        "verbosity": false
+    },
+
+    "co2_hue": {
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_hue_10.npy",
+
+        "threshold min hue": 7,
+        "threshold max hue": 60,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value": 0.9,
+
+        "verbosity": false
+    },
+
+    "co2_layered": {
+        "cleaning_filter": "cache/co2_mask_cleaning_filter_layered.npy",
+
+        "threshold min hue esf": 8,
+        "threshold max hue esf": 50,
+
+        "threshold min hue c": 8,
+        "threshold max hue c": 50,
+
+        "threshold min hue rest": 8,
+        "threshold max hue rest": 50,
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold value esf": 0.09,
+        "threshold value c": 0.09,
+        "threshold value rest": 0.05,
+
+        "postsmoothing": true,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "verbosity": false
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "cache/mobile_co2_mask_cleaning_filter.npy",
+
+        "segmented": false,
+
+        "color": "blue",
+
+        "presmoothing": true,
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 5,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "threshold value": 0.05,
+
+        "postsmoothing": true,
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 5,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "threshold posterior gradient modulus": 0.002
+    },
+
+    "calibration": {"scaling": 1.0}
+
+}

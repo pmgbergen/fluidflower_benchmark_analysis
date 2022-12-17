@@ -7,15 +7,12 @@ from pathlib import Path
 from typing import Union
 
 import cv2
-import daria
+import darsia
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
 from datetime import datetime
-
-# from benchmark.utils.misc import read_time_from_path
-
 
 class TailoredConcentrationAnalysis(daria.SegmentedConcentrationAnalysis):
     def __init__(
@@ -30,7 +27,7 @@ class TailoredConcentrationAnalysis(daria.SegmentedConcentrationAnalysis):
         self.disk_radius = kwargs.get("median_disk_radius", 1)
         self.labels = labels
 
-    def postprocess_signal(self, signal: np.ndarray) -> np.ndarray:
+    def postprocess_signal(self, signal: np.ndarray, img: np.ndarray) -> np.ndarray:
 
         # Apply median to fill in whilte preserving edges.
         signal = skimage.filters.rank.median(
@@ -122,12 +119,12 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, daria.SegmentedTracerAnalysis):
 
         return tracer_analysis
 
-    def determine_tracer(self) -> daria.Image:
+    def determine_tracer(self) -> darsia.Image:
         """Extract tracer from currently loaded image, based on a reference image.
         Add expert knowledge, that there is no tracer in the water.
 
         Returns:
-            daria.Image: image array of spatial concentration map
+            darsia.Image: image array of spatial concentration map
         """
         # Extract concentration from the analysis
         tracer_concentration = super().determine_tracer()
@@ -149,7 +146,7 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, daria.SegmentedTracerAnalysis):
         """
         # Read and process the images
         print("Calibration: Processing images...")
-        processed_images = [self._read(img) for img in images[:1]]
+        processed_images = [self._read(img) for img in images]
 
         # Calibrate the segment-wise scaling
         print("Calibration: Segmentwise scaling...")

@@ -1,0 +1,17 @@
+# Structure of the compaction analysis.
+
+1_prepare...:
+  correct for curvature etc.
+
+1_star...:
+  check how well the corrected images lie over each other.
+
+2_blacken...:
+  check whether blackened version of images exists (have to be created with inkscape
+  create masks which detect the black region = water (and sealed fault)
+  extract labels for the reference image
+
+3_compaction...
+  analyze the compaction in a multiscale fashion
+  determine the final displacement
+  reduce to sparse data - area, centroid displacement, strain analysis

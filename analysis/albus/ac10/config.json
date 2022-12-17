@@ -1,0 +1,126 @@
+{
+    "description": "FluidFlower Benchmark config file for ac10",
+
+    "physical_asset": {
+        "dimensions": {
+            "width": 0.899,
+            "height": 0.492,
+            "depth": 0.01,
+            "expansion": 0.002
+        },
+
+        "parameters": {"porosity": 0.44}
+    },
+
+    "drift": {"roi": [[700, 4800], [1, 5270]]},
+
+    "off translation": "../cache/translation_ac10.npy",
+    
+    "color": {
+        "reference": "custom",
+        "custom_colorchecker_path": "cache/custom_color_checker.npy",
+        "custom_colorchecker_update": true,
+        "roi": [[4847, 605], [5210, 607], [5221, 60], [4859, 57]]
+    },
+    
+    "curvature": {
+        "use_cache": true,
+        "crop": {
+            "pts_src": [[0, 36], [7, 3002], [5380, 2976], [5390, 45]],
+            "width": 0.899,
+            "height": 0.492
+        }
+    },
+
+    "segmentation": {
+        "labels_path": "../cache/labels.npy",
+        "water": [0],
+        "esf": [2, 9, 11],
+        "c": [4, 7, 8, 10]
+    },
+
+    "compaction": {
+        "apply": true,
+        "N_patches": [20, 10],
+        "rel_overlap": 0.1,
+        "max_features": 200,
+        "tol": 0.05
+    },
+
+    "co2": {
+        "cleaning_filter": "cache/cleaning_filter_key.npy",
+
+        "segmented": true,
+        "color": "negative-key",
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize": 0.5,
+        "presmoothing weight": 0.1,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 200,
+
+        "threshold dynamic": true,
+        "threshold method": "first local min enhanced",
+        "threshold value": 0.2,
+        "threshold value min": 0.01,
+        "threshold value max": 0.2,
+        "threshold safety": "none",
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize": 0.5,
+        "postsmoothing weight": 0.05,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 200,
+
+        "posterior": true,
+        "posterior criterion": "value",
+        "posterior threshold": 0.1,
+
+        "verbosity": 1
+    },
+
+    "co2(g)": {
+        "cleaning_filter": "cache/cleaning_filter_hsv.npy",
+
+        "segmented": true,
+        "color": "hsv-after",
+        "hue lower bound": 0.0,
+        "hue upper bound": 0.2,
+        "saturation lower bound": 0.3,
+        "saturation upper bound": 1.0,
+
+        "presmoothing": true,
+        "presmoothing method": "isotropic bregman",
+        "presmoothing resize x": 0.1,
+        "presmoothing weight": 0.01,
+        "presmoothing eps": 1e-4,
+        "presmoothing max_num_iter": 100,
+
+        "off threshold dynamic": true,
+        "off threshold method": "first local min enhanced",
+        "off threshold value": 0.12,
+        "off threshold value min": 0.005,
+        "off threshold value max": 0.12,
+        "off threshold safety": "none",
+
+        "threshold dynamic": false,
+        "threshold value": [ 0.12, 0.12, 0.12, 0.01, 0.12, 0.01, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.005, 0.12],
+
+        "postsmoothing": true,
+        "postsmoothing method": "isotropic bregman",
+        "postsmoothing resize x": 0.2,
+        "postsmoothing weight": 0.01,
+        "postsmoothing eps": 1e-4,
+        "postsmoothing max_num_iter": 100,
+
+        "posterior": true,
+        "posterior criterion": "relative value",
+        "posterior threshold": 3.0,
+
+        "verbosity": 1
+    },
+
+    "calibration": {"scaling": 1.0}
+}

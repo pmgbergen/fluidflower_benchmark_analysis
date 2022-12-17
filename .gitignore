@@ -130,5 +130,17 @@ dmypy.json
 
 # Data
 *.npy
+*.csv
+*.npz
 *.jpg
 *.JPG
+*.zip
+*.png
+*.PNG
+*.svg
+*.xlsx
+
+
+# Develop folders and files
+develop
+tmp

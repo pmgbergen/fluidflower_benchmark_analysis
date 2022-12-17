@@ -1,0 +1,60 @@
+{
+    "description": "FluidFlower Benchmark setup for corrected and aligned images",
+
+    "physical_asset": {
+        "dimensions": {"width": 2.8, "height": 1.5},
+        "parameters": {"porosity": 0.44}
+    },
+
+    "drift": {
+        "active": false
+    },
+
+    "color": {
+        "active": false
+    },
+
+    "curvature": {
+        "crop": {
+            "pts_src": [[0, 0], [0,   4260], [7952, 4260], [7952, 0]],
+            "width": 2.8,
+            "height": 1.5
+        }
+    },
+
+    "segmentation": {
+        "labels_path": "cache/labels_src.npy",
+        "water": [0],
+        "esf": [1,8,9],
+        "c": [2,3,4],
+
+        "monochromatic_color": "value",
+        "median disk radius": 50,
+        "rescaling factor": 0.25,
+        "marker_points": [
+            [1030, 3580],
+            [370, 3575],
+            [3231, 564],
+            [2760, 4020],
+            [1560, 5800],
+            [3500, 4600],
+            [1345, 5760],
+            [1520, 3470],
+            [1390, 1935],
+            [2115, 3500],
+            [2100, 1350]
+        ],
+        "region_size": 30,
+        "dilation size": 0,
+        "boundary size": 90,
+        "verbosity": false
+    },
+
+
+    "co2": {},
+
+    "co2(g)": {},
+
+    "calibration": {"scaling": 1.0}
+
+}
