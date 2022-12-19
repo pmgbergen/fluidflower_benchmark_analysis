@@ -9,14 +9,17 @@ import numpy as np
 import pandas as pd
 import skimage
 from benchmark.standardsetups.binary_mass_analysis import BinaryMassAnalysis
-from benchmark.utils.misc import (concentration_to_csv, read_time_from_path,
-                                  sg_to_csv, sw_to_csv)
+from benchmark.utils.misc import (
+    concentration_to_csv,
+    read_time_from_path,
+    sg_to_csv,
+    sw_to_csv,
+)
 from benchmark.utils.time_from_image_name import ImageTime
 from scipy import interpolate
 from skimage.measure import label, regionprops
 
-from total_injected_mass_large_FF import (total_mass_co2_port1,
-                                          total_mass_co2_port2)
+from total_injected_mass_large_FF import total_mass_co2_port1, total_mass_co2_port2
 
 # ! ---- Choose user.
 
@@ -103,6 +106,9 @@ dissolution_limit = 1.8  # kg / m**3
 # ! ---- Analyze each run separately.
 
 for i, directory in enumerate(seg_folders):
+
+    if i < 4:
+        continue
 
     run_id = f"c{i+1}"
     print(f"Start with run {run_id}.")
@@ -488,7 +494,9 @@ for i, directory in enumerate(seg_folders):
 
             # Store numpy arrays
             filename_npy = stem.replace("_segmentation", "_concentration") + ".npy"
-            npy_concentration_folder = Path("concentration_npy") if zero_swi else Path("swi_concentration_npy")
+            npy_concentration_folder = (
+                Path("concentration_npy") if zero_swi else Path("swi_concentration_npy")
+            )
             full_filename_npy = (
                 results_folder
                 / run_folder
@@ -500,7 +508,9 @@ for i, directory in enumerate(seg_folders):
 
             # Store jpg images
             filename_jpg = stem.replace("_segmentation", "_concentration") + ".jpg"
-            jpg_concentration_folder = Path("concentration_jpg") if zero_swi else Path("swi_concentration_jpg")
+            jpg_concentration_folder = (
+                Path("concentration_jpg") if zero_swi else Path("swi_concentration_jpg")
+            )
             full_filename_jpg = (
                 results_folder
                 / run_folder
@@ -524,7 +534,9 @@ for i, directory in enumerate(seg_folders):
                 interpolation=cv2.INTER_AREA,
             )
             filename_csv = stem.replace("_segmentation", "_concentration") + ".csv"
-            csv_concentration_folder = Path("concentration_csv") if zero_swi else Path("swi_concentration_csv")
+            csv_concentration_folder = (
+                Path("concentration_csv") if zero_swi else Path("swi_concentration_csv")
+            )
             full_filename_csv = (
                 results_folder
                 / run_folder
@@ -648,6 +660,10 @@ for i, directory in enumerate(seg_folders):
         if user == "benyamine":
             df.to_excel(directory[-3:-1] + f"_{item}.xlsx", index=None)
         elif user == "jakub":
-            excel_path = Path(f"results/{run_id}_{item}.xlsx") if zero_swi else Path(f"swi_results/{run_id}_{item}.xlsx")
+            excel_path = (
+                Path(f"results/{run_id}_{item}.xlsx")
+                if zero_swi
+                else Path(f"swi_results/{run_id}_{item}.xlsx")
+            )
             excel_path.parents[0].mkdir(parents=True, exist_ok=True)
             df.to_excel(str(excel_path), index=None)

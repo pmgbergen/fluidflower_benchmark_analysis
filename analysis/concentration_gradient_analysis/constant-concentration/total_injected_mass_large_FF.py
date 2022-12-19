@@ -19,10 +19,9 @@ def total_mass_co2_port1(t: float) -> float:
     """
     if t < 4.5:
         return 1.82 * 10 / 2 * t / 1000
-    
+
     elif t < 300:
         return 1.82 * 10 / 2 * 4.5 / 1000 + 1.82 * 10 * (t - 4.5) / 1000
-
 
     elif t < 300 + 4.5:
         return (
@@ -31,10 +30,8 @@ def total_mass_co2_port1(t: float) -> float:
             + 1.82 * 10 / 2 * (t - 300) / 1000
         )
     else:
-        return (
-            1.82 * 10 * 4.5 / 1000
-            + 1.82 * 10 * (300 - 4.5) / 1000
-        )
+        return 1.82 * 10 * 4.5 / 1000 + 1.82 * 10 * (300 - 4.5) / 1000
+
 
 def total_mass_co2_port2(t: float) -> float:
     """
@@ -53,12 +50,9 @@ def total_mass_co2_port2(t: float) -> float:
     if t < 135:
         return 0
     elif t < 135 + 4.5:
-        return 1.82 * 10 / 2 * (t-135) / 1000
+        return 1.82 * 10 / 2 * (t - 135) / 1000
     elif t < 300:
-        return (
-            1.82 * 10 / 2 * 4.5 / 1000
-            + 1.82 * 10 * (t - 135 - 4.5) / 1000
-        )
+        return 1.82 * 10 / 2 * 4.5 / 1000 + 1.82 * 10 * (t - 135 - 4.5) / 1000
     elif t < 300 + 4.5:
         return (
             1.82 * 10 / 2 * 4.5 / 1000
@@ -66,7 +60,4 @@ def total_mass_co2_port2(t: float) -> float:
             + 1.82 * 10 / 2 * (t - 300) / 1000
         )
     else:
-        return (
-            1.82 * 10 * 4.5 / 1000
-            + 1.82 * 10 * (300 - 135 - 4.5) / 1000
-        )
+        return 1.82 * 10 * 4.5 / 1000 + 1.82 * 10 * (300 - 135 - 4.5) / 1000
