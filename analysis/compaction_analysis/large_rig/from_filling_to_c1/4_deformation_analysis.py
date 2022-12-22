@@ -133,7 +133,7 @@ def mean_displacement_analysis(labels_ref, displacement, thresh=10000):
             mask = labels_ref == label_value
 
             # Determine mean displacement in y direction
-            single_mean_displacment_y = np.sum(displacement_y[mask]) / np.count_nonzero(
+            single_mean_displacement_y = np.sum(displacement_y[mask]) / np.count_nonzero(
                 mask
             )
 
@@ -141,7 +141,7 @@ def mean_displacement_analysis(labels_ref, displacement, thresh=10000):
             mean_displacement_y.append(single_mean_displacement_y)
             label_values.append(label_value)
 
-    return displacement_y, label_values
+    return mean_displacement_y, label_values
 
 
 def mean_strain_analysis(labels_ref, displacement, thresh=10000):
@@ -149,7 +149,7 @@ def mean_strain_analysis(labels_ref, displacement, thresh=10000):
     regions_ref = skimage.measure.regionprops(labels_ref)
 
     displacement_y = displacement[:, :, 1]
-    strain_y = np.gradient(displacement_y, axis=0)
+    strain_y = -np.gradient(displacement_y, axis=0) # Take into account the directionality of the y-axis.
 
     mean_strain_y = []
     label_values = []
@@ -196,7 +196,7 @@ for i in range(len(label_values_displacement)):
         reservoir_centroids_ref[i][1],
         reservoir_centroids_ref[i][0],
         f"{(-displacement_row[i] * pixel_height):.4f}",
-        c="b",
+        c="0",
     )
 plt.colorbar()
 
@@ -262,7 +262,7 @@ for i in range(len(label_values_ref)):
         reservoir_centroids_ref[i][1],
         reservoir_centroids_ref[i][0],
         f"{strain_y[i]:.6f}",
-        c="b",
+        c="0",
     )
 plt.colorbar()
 plt.show()
@@ -281,6 +281,12 @@ area_ratio = area_deformed / np.maximum(area_ref, 1) - 1
     label_values_displacement,
 ) = centroid_displacement_analysis(labels_deformed.img, labels_ref.img)
 
+# Mean y displacement based analysis
+(
+    mean_displacement,
+    label_values_displacement_y,
+) = mean_displacement_analysis(labels_ref.img, displacement)
+
 # Strain based analysis
 strain_y, label_values_strain = mean_strain_analysis(labels_ref.img, displacement)
 
@@ -294,12 +300,14 @@ assert label_values_ref == label_values_strain
 label_ratio = np.zeros(labels_ref.img.shape[:2], dtype=float)
 label_strain_y = np.zeros(labels_ref.img.shape[:2], dtype=float)
 label_centroid_displacement = np.zeros(labels_ref.img.shape[:2], dtype=float)
+label_mean_displacement = np.zeros(labels_ref.img.shape[:2], dtype=float)
 for i, label in enumerate(label_values_ref):
     mask = labels_ref.img == label
     pixel_height = 1.5 / labels_ref.img.shape[0]
     label_ratio[mask] = area_ratio[i]
     label_strain_y[mask] = strain_y[i]
     label_centroid_displacement[mask] = -displacement_row[i] * pixel_height
+    label_mean_displacement[mask] = mean_displacement[i]
 
 label_centroids_ref, _ = centroids(labels_ref.img)
 
@@ -313,6 +321,20 @@ for i in range(len(label_values_ref)):
         c="w",
     )
 plt.colorbar()
+
+storefig = False
+if storefig:
+    plt.savefig("results/output/volume/tmp_layers_relative_volume_reduction.png")
+np.save("results/layers_relative_volume_reduction.npy", label_ratio)
+
+header = "row pixel, col pixel, relative volume/area reduction"
+arr = np.zeros((len(label_values_ref), 3), dtype=float)
+arr[:,0] = np.array([label_centroids_ref[i][1] for i in range(len(label_values_ref))])
+arr[:,1] = np.array([label_centroids_ref[i][0] for i in range(len(label_values_ref))])
+arr[:,2] = np.array(area_ratio)
+fmt = "%d", "%d", "%.4f"
+np.savetxt("results/output/volume/relative_volume_reduction.csv", arr, fmt=fmt, delimiter=",")
+
 plt.figure("y displacement")
 plt.imshow(label_centroid_displacement)
 for i in range(len(label_values_ref)):
@@ -323,6 +345,29 @@ for i in range(len(label_values_ref)):
         c="w",
     )
 plt.colorbar()
+#if storefig:
+#    plt.savefig("results/tmp_layers_y_displacement.png")
+np.save("results/layers_y_displacement.npy", label_centroid_displacement)
+
+plt.figure("mean y displacement")
+plt.imshow(label_mean_displacement)
+for i in range(len(label_values_ref)):
+    plt.text(
+        label_centroids_ref[i][1],
+        label_centroids_ref[i][0],
+        f"{mean_displacement[i]:.4f}",
+        c="w",
+    )
+plt.colorbar()
+if storefig:
+    plt.savefig("results/output/displacement/tmp_layers_y_mean_displacement.png")
+np.save("results/layers_y_mean_displacement.npy", label_centroid_displacement)
+
+header = "row pixel, col pixel, mean y displacement in meters"
+arr[:,2] = np.array(mean_displacement)
+fmt = "%d", "%d", "%.4f"
+np.savetxt("results/output/displacement/mean_y_displacement.csv", arr, fmt=fmt, delimiter=",")
+
 plt.figure("strain y, spatial")
 plt.imshow(label_strain_y)
 for i in range(len(label_values_ref)):
@@ -330,7 +375,16 @@ for i in range(len(label_values_ref)):
         label_centroids_ref[i][1],
         label_centroids_ref[i][0],
         f"{strain_y[i]:.6f}",
-        c="b",
+        c="w",
     )
 plt.colorbar()
+if storefig:
+    plt.savefig("results/tmp_layers_strain_y.png")
+np.save("results/layers_strain_y.npy", label_strain_y)
+
+header = "row pixel, col pixel, mean normal strain in y-direction"
+arr[:,2] = np.array(strain_y)
+fmt = "%d", "%d", "%.7f"
+np.savetxt("results/output/strain/mean_normal_strain_y.csv", arr, fmt=fmt, delimiter=",")
+
 plt.show()
