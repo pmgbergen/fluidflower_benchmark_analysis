@@ -22,34 +22,70 @@ c1_img = darsia.Image(c1_npy, width=2.8, height=1.5)
 c1_water = np.load("labels/c1_water.npy")
 c1_mask_img = darsia.Image(np.logical_not(c1_water), width=2.8, height=1.5)
 
-# C2 
+# C2
 c2_npy = np.load("images/c2.npy")
 c2_img = darsia.Image(c2_npy, width=2.8, height=1.5)
 c2_water = c1_water.copy()
 c2_mask_img = darsia.Image(np.logical_not(c2_water), width=2.8, height=1.5)
 
-## C3
-#c3_npy = np.load("images/c3.npy")
-#c3_img = darsia.Image(c3_npy, width=2.8, height=1.5)
-#c3_water = np.load("labels/c3_water.npy")
-#
-## C4
-#c4_npy = np.load("images/c4.npy")
-#c4_img = darsia.Image(c4_npy, width=2.8, height=1.5)
-#c4_water = c4_water.copy()
-#
-## C5
-#c5_npy = np.load("images/c5.npy")
-#c5_img = darsia.Image(c5_npy, width=2.8, height=1.5)
-#c5_water = c3_water.copy()
+# C3
+c3_npy = np.load("images/c3.npy")
+c3_img = darsia.Image(c3_npy, width=2.8, height=1.5)
+c3_water = np.load("labels/c3_water.npy")
+c3_mask_img = darsia.Image(np.logical_not(c3_water), width=2.8, height=1.5)
+
+# C4
+c4_npy = np.load("images/c4.npy")
+c4_img = darsia.Image(c4_npy, width=2.8, height=1.5)
+c4_water = c3_water.copy()
+c4_mask_img = c3_mask_img.copy()
+
+# C5
+c5_npy = np.load("images/c5.npy")
+c5_img = darsia.Image(c5_npy, width=2.8, height=1.5)
+c5_water = c3_water.copy()
+c5_mask_img = c3_mask_img.copy()
 
 # Fix a reference image
-img_ref = c1_img.copy()
-img_dst = c2_img.copy()
+comparison = "c3_vs_c4"
 
-# Masks
-mask_ref = c1_mask_img.copy()
-mask_dst = c2_mask_img.copy()
+if comparison == "c1_vs_c2":
+
+    # Images
+    img_ref = c1_img.copy()
+    img_dst = c2_img.copy()
+
+    # Masks
+    mask_ref = c1_mask_img.copy()
+    mask_dst = c2_mask_img.copy()
+
+elif comparison == "c2_vs_c3":
+    # Images
+    img_ref = c2_img.copy()
+    img_dst = c3_img.copy()
+
+    # Masks
+    mask_ref = c2_mask_img.copy()
+    mask_dst = c3_mask_img.copy()
+
+elif comparison == "c3_vs_c4":
+    # Images
+    img_ref = c3_img.copy()
+    img_dst = c4_img.copy()
+
+    # Masks
+    mask_ref = c3_mask_img.copy()
+    mask_dst = c4_mask_img.copy()
+
+elif comparison == "c4_vs_c5":
+    # Images
+    img_ref = c4_img.copy()
+    img_dst = c5_img.copy()
+
+    # Masks
+    mask_ref = c4_mask_img.copy()
+    mask_dst = c5_mask_img.copy()
+
 mask_ref_0 = mask_ref.copy()
 
 # Preliminaries: Define base config for compaction analysis
@@ -68,7 +104,7 @@ print("gh")
 # Total compaction - initialize
 config_compaction = copy.deepcopy(base_config_compaction)
 config_compaction["N_patches"] = [64, 32]
-#config_compaction["N_patches"] = [128, 64]
+# config_compaction["N_patches"] = [128, 64]
 compaction_analysis = darsia.ReversedCompactionAnalysis(img_ref, **config_compaction)
 
 # One iteration of multiscale compaction analysis
@@ -113,13 +149,13 @@ cv2.imwrite(
 
 # ! ---- Multiscale analysis
 levels = [
-    #[4, 2],
-    #[8, 4],
-    #[16, 8],
-    #[32, 16],
+    # [4, 2],
+    # [8, 4],
+    # [16, 8],
+    # [32, 16],
     [64, 32],
-    #[128, 64],
-#    [256, 128],
+    # [128, 64],
+    #    [256, 128],
 ]
 
 print("1. iteration")
@@ -134,58 +170,58 @@ cv2.imwrite(
     [int(cv2.IMWRITE_JPEG_QUALITY), 100],
 )
 
-#print("2. iteration")
-#_, compaction_2 = iteration(img_dst, img_ref_1, mask_dst, mask_ref_1, levels[1])
-#mask_ref_2 = compaction_2.apply(mask_ref_1)
-#compaction_analysis.add(compaction_2)
-#img_ref_2 = compaction_analysis.apply(img_ref)
+# print("2. iteration")
+# _, compaction_2 = iteration(img_dst, img_ref_1, mask_dst, mask_ref_1, levels[1])
+# mask_ref_2 = compaction_2.apply(mask_ref_1)
+# compaction_analysis.add(compaction_2)
+# img_ref_2 = compaction_analysis.apply(img_ref)
 #
-#cv2.imwrite(
+# cv2.imwrite(
 #    "compaction_corrected/ref_2.jpg",
 #    cv2.cvtColor(skimage.img_as_ubyte(np.clip(img_ref_2.img, 0, 1)), cv2.COLOR_RGB2BGR),
 #    [int(cv2.IMWRITE_JPEG_QUALITY), 100],
-#)
+# )
 #
-#print("3. iteration")
-#_, compaction_3 = iteration(img_dst, img_ref_2, mask_dst, mask_ref_2, levels[2])
-#mask_ref_3 = compaction_3.apply(mask_ref_2)
-#compaction_analysis.add(compaction_3)
-#img_ref_3 = compaction_analysis.apply(img_ref)
+# print("3. iteration")
+# _, compaction_3 = iteration(img_dst, img_ref_2, mask_dst, mask_ref_2, levels[2])
+# mask_ref_3 = compaction_3.apply(mask_ref_2)
+# compaction_analysis.add(compaction_3)
+# img_ref_3 = compaction_analysis.apply(img_ref)
 #
-#cv2.imwrite(
+# cv2.imwrite(
 #    "compaction_corrected/ref_3.jpg",
 #    cv2.cvtColor(skimage.img_as_ubyte(np.clip(img_ref_3.img, 0, 1)), cv2.COLOR_RGB2BGR),
 #    [int(cv2.IMWRITE_JPEG_QUALITY), 100],
-#)
+# )
 #
-#print("4. iteration")
-#_, compaction_4 = iteration(img_dst, img_ref_3, mask_dst, mask_ref_3, levels[3])
-#mask_ref_4 = compaction_3.apply(mask_ref_3)
-#compaction_analysis.add(compaction_4)
-#img_ref_4 = compaction_analysis.apply(img_ref)
+# print("4. iteration")
+# _, compaction_4 = iteration(img_dst, img_ref_3, mask_dst, mask_ref_3, levels[3])
+# mask_ref_4 = compaction_3.apply(mask_ref_3)
+# compaction_analysis.add(compaction_4)
+# img_ref_4 = compaction_analysis.apply(img_ref)
 #
-#cv2.imwrite(
+# cv2.imwrite(
 #    "compaction_corrected/ref_4.jpg",
 #    cv2.cvtColor(skimage.img_as_ubyte(np.clip(img_ref_4.img, 0, 1)), cv2.COLOR_RGB2BGR),
 #    [int(cv2.IMWRITE_JPEG_QUALITY), 100],
-#)
+# )
 #
-#print("5. iteration")
-#_, compaction_5 = iteration(img_dst, img_ref_4, mask_dst, mask_ref_4, levels[4])
-#mask_ref_5 = compaction_5.apply(mask_ref_4)
-#compaction_analysis.add(compaction_5)
-#img_ref_5 = compaction_analysis.apply(img_ref)
+# print("5. iteration")
+# _, compaction_5 = iteration(img_dst, img_ref_4, mask_dst, mask_ref_4, levels[4])
+# mask_ref_5 = compaction_5.apply(mask_ref_4)
+# compaction_analysis.add(compaction_5)
+# img_ref_5 = compaction_analysis.apply(img_ref)
 #
-#cv2.imwrite(
+# cv2.imwrite(
 #    "compaction_corrected/ref_5.jpg",
 #    cv2.cvtColor(skimage.img_as_ubyte(np.clip(img_ref_5.img, 0, 1)), cv2.COLOR_RGB2BGR),
 #    [int(cv2.IMWRITE_JPEG_QUALITY), 100],
-#)
+# )
 
 if True:
     mask_plot = mask_ref.copy()
-    #mask_plot.img = skimage.img_as_bool(cv2.resize(skimage.img_as_ubyte(mask_plot.img), (64, 32), interpolation = cv2.INTER_NEAREST))
-    compaction_analysis.plot(scaling = 10., mask = mask_plot)
+    # mask_plot.img = skimage.img_as_bool(cv2.resize(skimage.img_as_ubyte(mask_plot.img), (64, 32), interpolation = cv2.INTER_NEAREST))
+    compaction_analysis.plot(scaling=10.0, mask=mask_plot)
 
 if False:
     plt.figure("0")
@@ -201,6 +237,8 @@ if False:
     plt.figure("5")
     plt.imshow(mask_ref_5.img)
     plt.show()
+
+assert False
 
 # ! ---- 3. Post analysis
 

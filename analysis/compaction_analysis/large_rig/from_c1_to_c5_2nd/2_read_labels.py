@@ -20,33 +20,33 @@ from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 
 
 print("WARNING: It assumed that the corrected images are labeled by the user.")
-print(
-    "For the analysis in the paper, inkscape and a manual selection has been used."
-)
+print("For the analysis in the paper, inkscape and a manual selection has been used.")
 
 # Read and detect the black regions.
 c1 = cv2.imread("labels/c1_labels.png")
-#c3 = cv2.imread("labels/c3.png")
-#c1_with_fault = cv2.imread("labels/c1_with_fault.png")
-#c3_with_fault = cv2.imread("labels/c3_with_fault.png")
+c3 = cv2.imread("labels/c3_labels.png")
+# c1_with_fault = cv2.imread("labels/c1_with_fault.png")
+# c3_with_fault = cv2.imread("labels/c3_with_fault.png")
 
 gray_c1 = cv2.cvtColor(c1, cv2.COLOR_BGR2GRAY)
-#gray_c3 = cv2.cvtColor(c1, cv2.COLOR_BGR2GRAY)
-#gray_c1_with_fault = cv2.cvtColor(c1_with_fault, cv2.COLOR_BGR2GRAY)
-#gray_c3_with_fault = cv2.cvtColor(c3_with_fault, cv2.COLOR_BGR2GRAY)
+gray_c3 = cv2.cvtColor(c1, cv2.COLOR_BGR2GRAY)
+# gray_c1_with_fault = cv2.cvtColor(c1_with_fault, cv2.COLOR_BGR2GRAY)
+# gray_c3_with_fault = cv2.cvtColor(c3_with_fault, cv2.COLOR_BGR2GRAY)
 
 c1_water = gray_c1 == 0
-#c3_water = gray_c3 == 0
-#c1_water_and_fault = gray_c1_with_fault == 0
-#c3_water_and_fault = gray_c3_with_fault == 0
+c3_water = gray_c3 == 0
+# c1_water_and_fault = gray_c1_with_fault == 0
+# c3_water_and_fault = gray_c3_with_fault == 0
 
 # Store to file
 np.save("labels/c1_water.npy", c1_water)
-#np.save("labels/c3_water.npy", c3_water)
-#np.save("labels/c1_water_and_fault.npy", c1_water_and_fault)
-#np.save("labels/c3_water_and_fault.npy", c3_water_and_fault)
+np.save("labels/c3_water.npy", c3_water)
+# np.save("labels/c1_water_and_fault.npy", c1_water_and_fault)
+# np.save("labels/c3_water_and_fault.npy", c3_water_and_fault)
 
 # Control
 plt.figure("c1 water")
 plt.imshow(c1_water)
+plt.figure("c3 water")
+plt.imshow(c3_water)
 plt.show()
