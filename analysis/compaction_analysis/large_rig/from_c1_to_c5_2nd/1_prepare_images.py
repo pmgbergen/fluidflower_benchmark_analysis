@@ -5,21 +5,16 @@
 from pathlib import Path
 
 import cv2
-import darsia
-import matplotlib.pyplot as plt
 import numpy as np
-import skimage
-from benchmark.rigs.largefluidflower import LargeFluidFlower
-from benchmark.standardsetups.benchmarkco2analysis import BenchmarkCO2Analysis
 
 # ! ----- Preliminaries - prepare two images for compaction analysis
 
 # Paths to two images of interest.
 path_c1 = Path("corrected/c1.jpg")
 path_c2 = Path("corrected/c2.jpg")
-path_c3 = Path("corrected/c3.jpg")
-path_c4 = Path("corrected/c4.jpg")
-path_c5 = Path("corrected/c5.jpg")
+path_c3 = Path("aligned/c3.jpg")
+path_c4 = Path("aligned/c4.jpg")
+path_c5 = Path("aligned/c5.jpg")
 
 # Stare images unmodifed as npy arrays
 img_c1 = cv2.imread(str(path_c1))
