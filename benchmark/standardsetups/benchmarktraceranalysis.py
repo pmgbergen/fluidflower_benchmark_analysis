@@ -14,10 +14,10 @@ import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
 from datetime import datetime
 
-class TailoredConcentrationAnalysis(daria.SegmentedConcentrationAnalysis):
+class TailoredConcentrationAnalysis(darsia.SegmentedConcentrationAnalysis):
     def __init__(
         self,
-        base: Union[daria.Image, list[daria.Image]],
+        base: Union[darsia.Image, list[darsia.Image]],
         labels: np.ndarray,
         color: Union[str, callable] = "gray",
         **kwargs,
@@ -56,7 +56,7 @@ class TailoredConcentrationAnalysis(daria.SegmentedConcentrationAnalysis):
         return super().postprocess_signal(signal)
 
 
-class BenchmarkTracerAnalysis(LargeFluidFlower, daria.SegmentedTracerAnalysis):
+class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.SegmentedTracerAnalysis):
     """
     Class for managing the well test of the FluidFlower benchmark.
     """
@@ -84,7 +84,7 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, daria.SegmentedTracerAnalysis):
                 are printed to screen; default is False.
         """
         LargeFluidFlower.__init__(self, baseline, config, update_setup)
-        daria.SegmentedTracerAnalysis.__init__(self, baseline, self.effective_volumes, self.labels, config, update_setup)
+        darsia.SegmentedTracerAnalysis.__init__(self, baseline, self.effective_volumes, self.labels, config, update_setup)
 
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
@@ -106,7 +106,7 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, daria.SegmentedTracerAnalysis):
 
     # ! ---- Analysis tools for detecting the tracer concentration
 
-    def define_tracer_analysis(self) -> daria.SegmentedConcentrationAnalysis:
+    def define_tracer_analysis(self) -> darsia.SegmentedConcentrationAnalysis:
         """
         Identify tracer concentration using a reduction to the garyscale space
         """
