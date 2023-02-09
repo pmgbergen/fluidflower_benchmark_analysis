@@ -8,6 +8,35 @@ import darsia
 import numpy as np
 
 
+def benchmark_binary_cleaning_preset(
+    base: darsia.Image, options: dict
+) -> darsia.CombinedModel:
+    """
+    Cleaning methods also used in the benchmark_concentration_analysis_preset.
+
+    Args:
+        base (darsia.Image): baseline image
+        options (dict): options same as in benchmark_concentration_analysis_preset.
+
+    """
+    original_size = base.img.shape[:2]
+    binary_cleaning = darsia.CombinedModel(
+        [
+            # Binary inpainting
+            darsia.BinaryRemoveSmallObjects(key="prior ", **options),
+            darsia.BinaryFillHoles(key="prior ", **options),
+            # Resize and Smoothing
+            darsia.Resize(dtype=np.float32, key="prior ", **options),
+            darsia.TVD(key="prior ", **options),
+            darsia.Resize(dsize=tuple(reversed(original_size))),
+            # Conversion to boolean
+            darsia.StaticThresholdModel(0.5),
+        ]
+    )
+
+    return binary_cleaning
+
+
 def benchmark_concentration_analysis_preset(
     base: darsia.Image, labels: np.ndarray, options: dict
 ) -> darsia.PriorPosteriorConcentrationAnalysis:
@@ -50,26 +79,17 @@ def benchmark_concentration_analysis_preset(
     )
 
     ########################################################################
-    # Combine the four models as prior:
+    # Combine the three models as prior:
     # 1. Thresholding
-    # 2. Binary inpainting
-    # 3. Resize and smoothing
-    # 4. Simple thresholding to convert to binary data
+    # 2. Binary cleaning
 
     # Prior model
     prior_model = darsia.CombinedModel(
         [
             # Thresholding
             darsia.ThresholdModel(labels, key="prior ", **options),
-            # Binary inpainting
-            darsia.BinaryRemoveSmallObjects(key="prior ", **options),
-            darsia.BinaryFillHoles(key="prior ", **options),
-            # Resize and Smoothing
-            darsia.Resize(dtype=np.float32, key="prior ", **options),
-            darsia.TVD(key="prior ", **options),
-            darsia.Resize(dsize=tuple(reversed(original_size))),
-            # Conversion to boolean
-            darsia.StaticThresholdModel(0.5),
+            # Binary cleaning
+            benchmark_binary_cleaning_preset(base, options),
         ]
     )
 
