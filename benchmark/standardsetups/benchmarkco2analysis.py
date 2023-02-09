@@ -91,179 +91,124 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
     # ! ---- Segementation tools for detecting the different CO2 phases
 
-    def define_co2_analysis(self) -> darsia.ConcentrationAnalysis:
+    def _define_benchmark_concentration_analysis_preset(
+        self, options: dict
+    ) -> darsia.PriorPosteriorConcentrationAnalysis:
         """
-        Identify CO2 using a heterogeneous HSV thresholding scheme.
-
-        The strategy for identifying CO2 is constructed as a pipeline
+        The strategy for identifying any phase is constructed as a pipeline
         of the following steps:
 
-        1. Thresholding.
-        2. Binary inpainting.
-        3. Light smoothing and thresholding.
+        1. Use monochromatic signal reduction
+        2. Restoration (upscaling) of signal
+        3. Prior strategy providing a first detection.
+            a. Thresholding.
+            b. binary inpainting
+            c. resizing and smoothing
+            d. conversion to boolean data
         4. Posterior strategy reviewing the first three steps.
+
+        Args:
+            options (dict): dictionary holding all tuning parameters
 
         Returns:
             darsia.ConcentrationAnalysis: concentration analysis for detecting CO2.
 
         """
 
-        # TODO define the analysis definition as 'preset' in the standardsetups.
-
+        ########################################################################
         # Define signal reduction
-        signal_reduction = darsia.MonochromaticReduction(**self.config["co2"])
+        signal_reduction = darsia.MonochromaticReduction(**options)
 
-        # Combine the four models as prior:
-        # 1. Thresholding
-        # 2. Binary inpainting
-        # 3. Postsmoothing
-        # 4. Simple thresholding to convert to binary data
-
-        # TODO rename postsmoothing - prior smoothing
-        # TODO rename postsmoothing resize - prior resize
-
-        # Preliminary: Define postsmoothing
-        global_resize = self.config["co2"].pop("postsmoothing resize", 1.0)
-        fx = self.config["co2"].pop("postsmoothing resize x", global_resize)
-        fy = self.config["co2"].pop("postsmoothing resize y", global_resize)
+        ########################################################################
+        # Define restoration object - coarsen, tvd, resize
         original_size = self.base.img.shape[:2]
-        postsmoothing = darsia.CombinedModel(
+        restoration = darsia.CombinedModel(
             [
-                darsia.Resize(fx=fx, fy=fy, dtype=np.float32),
-                darsia.TVD("postsmoothing ", **self.config["co2"]),
+                darsia.Resize(key="restoration ", **options),
+                darsia.TVD(key="restoration ", **options),
                 darsia.Resize(dsize=tuple(reversed(original_size))),
             ]
         )
+
+        ########################################################################
+        # Combine the four models as prior:
+        # 1. Thresholding
+        # 2. Binary inpainting
+        # 3. Resize and smoothing
+        # 4. Simple thresholding to convert to binary data
 
         # Prior model
         prior_model = darsia.CombinedModel(
             [
-                darsia.ThresholdModel(self.labels, **self.config["co2"]),
-                darsia.BinaryInpaint(**self.config["co2"]),
-                postsmoothing,
+                # Thresholding
+                darsia.ThresholdModel(self.labels, key="prior ", **options),
+                # Binary inpainting
+                darsia.BinaryRemoveSmallObjects(key="prior ", **options),
+                darsia.BinaryFillHoles(key="prior ", **options),
+                # Resize and Smoothing
+                darsia.Resize(dtype=np.float32, key="prior ", **options),
+                darsia.TVD(key="prior ", **options),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
+                # Conversion to boolean
                 darsia.StaticThresholdModel(0.5),
             ]
         )
 
+        ########################################################################
         # Define a posterior model
-        posterior_model = darsia.BinaryDataSelector(
-            prefix="posterior ", **self.config["co2"]
-        )
+        posterior_model = darsia.BinaryDataSelector(key="posterior ", **options)
 
-        # Define restoration object - coarsen, tvd, resize
-        # TODO rename presmoothing - retsoration smoothing.
-        # TODO rename presmoothing resize to restoration resize
-        global_resize = self.config["co2"].pop("presmoothing resize", 1.0)
-        fx = self.config["co2"].pop("presmoothing resize x", global_resize)
-        fy = self.config["co2"].pop("presmoothing resize y", global_resize)
-        original_size = self.base.img.shape[:2]
-        restoration = darsia.CombinedModel(
-            [
-                darsia.Resize(fx=fx, fy=fy),
-                darsia.TVD("presmoothing ", **self.config["co2"]),
-                darsia.Resize(dsize=tuple(reversed(original_size))),
-            ]
-        )
-
+        ########################################################################
         # Combine all to define a concentration analysis object for CO2.
-        co2_analysis = darsia.PriorPosteriorConcentrationAnalysis(
+        concentration_analysis = darsia.PriorPosteriorConcentrationAnalysis(
             self.base,
             signal_reduction,
             restoration,
             prior_model,
             posterior_model,
             self.labels,
-            **self.config["co2"],
+            **options,
         )
 
-        return co2_analysis
+        return concentration_analysis
 
-    def define_co2_gas_analysis(self) -> darsia.ConcentrationAnalysis:
+    def define_co2_analysis(self) -> darsia.PriorPosteriorConcentrationAnalysis:
         """
-        Identify CO2(g) using a thresholding scheme on the blue color channel,
-        controlled from external config file.
-
-        The strategy for identifying CO2 is constructed as a pipeline
-        of the following steps:
-
-        1. Thresholding.
-        2. Binary inpainting.
-        3. Light smoothing and thresholding.
-        4. Posterior strategy reviewing the first three steps.
+        FluidFlower Benchmark preset for detecting CO2.
 
         Returns:
-            darsia.ConcentrationAnalysis: concentration analysis for detecting CO2.
+            PriorPosteriorConcentrationAnalysis: detector for CO2
 
         """
-        # Reduction from trichromatic to monochromatic color space
-        signal_reduction = darsia.MonochromaticReduction(**self.config["co2(g)"])
+        return self._define_benchmark_concentration_analysis_preset(self.config["co2"])
 
-        # Combine the four models as prior:
-        # 1. Thresholding
-        # 2. Binary inpainting
-        # 3. Postsmoothing
-        # 4. Simple thresholding to convert to binary data
+    def define_co2_gas_analysis(self) -> darsia.PriorPosteriorConcentrationAnalysis:
+        """
+        FluidFlower Benchmark preset for detecting CO2 gas.
 
-        # Preliminary: Postsmoothing
-        global_resize = self.config["co2(g)"].pop("postsmoothing resize", 1.0)
-        fx = self.config["co2(g)"].pop("postsmoothing resize x", global_resize)
-        fy = self.config["co2(g)"].pop("postsmoothing resize y", global_resize)
+        Returns:
+            PriorPosteriorConcentrationAnalysis: detector for CO2(g)
+
+        """
+        # Define again the binary cleaning contribution of the co2(g) analysis to be used.
         original_size = self.base.img.shape[:2]
-        postsmoothing = darsia.CombinedModel(
-            [
-                darsia.Resize(fx=fx, fy=fy, dtype=np.float32),
-                darsia.TVD("postsmoothing ", **self.config["co2(g)"]),
-                darsia.Resize(dsize=tuple(reversed(original_size))),
-            ]
-        )
-
-        # Preliminary binary_cleaning (last 3 submodels).
         self.co2_gas_binary_cleaning = darsia.CombinedModel(
             [
-                darsia.BinaryInpaint(**self.config["co2(g)"]),
-                postsmoothing,
+                # Binary inpainting
+                darsia.BinaryRemoveSmallObjects(key="prior ", **self.config["co2(g)"]),
+                darsia.BinaryFillHoles(key="prior ", **self.config["co2(g)"]),
+                # Resize and Smoothing
+                darsia.Resize(dtype=np.float32, key="prior ", **self.config["co2(g)"]),
+                darsia.TVD(key="prior ", **self.config["co2(g)"]),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
+                # Conversion to boolean
                 darsia.StaticThresholdModel(0.5),
             ]
         )
 
-        # Prior model
-        prior_model = darsia.CombinedModel(
-            [
-                darsia.ThresholdModel(self.labels, **self.config["co2(g)"]),
-                self.co2_gas_binary_cleaning,
-            ]
+        return self._define_benchmark_concentration_analysis_preset(
+            self.config["co2(g)"]
         )
-
-        # Define a posterior model
-        posterior_model = darsia.BinaryDataSelector(
-            prefix="posterior ", **self.config["co2(g)"]
-        )
-
-        # Restoration through anisotropic resizing and regularization
-        global_resize = self.config["co2(g)"].pop("presmoothing resize", 1.0)
-        fx = self.config["co2(g)"].pop("presmoothing resize x", global_resize)
-        fy = self.config["co2(g)"].pop("presmoothing resize y", global_resize)
-        original_size = self.base.img.shape[:2]
-        restoration = darsia.CombinedModel(
-            [
-                darsia.Resize(fx=fx, fy=fy),
-                darsia.TVD("presmoothing ", **self.config["co2(g)"]),
-                darsia.Resize(dsize=tuple(reversed(original_size))),
-            ]
-        )
-
-        # All in all concentration analysis
-        co2_gas_analysis = darsia.PriorPosteriorConcentrationAnalysis(
-            self.base,
-            signal_reduction,
-            restoration,
-            prior_model,
-            posterior_model,
-            self.labels,
-            **self.config["co2(g)"],
-        )
-
-        return co2_gas_analysis
 
     def determine_co2_mask(self) -> darsia.Image:
         """Determine CO2.
