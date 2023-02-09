@@ -32,8 +32,6 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         verbosity: bool = True,
     ) -> None:
         """
-        Constructor for Benchmark rig.
-
         Sets up fixed config file required for preprocessing.
 
         Args:
@@ -53,7 +51,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         # Determine the injection start from the config file. Expect format
         # complying with "%y%m%d %H%M%D", e.g., "211127 083412"
         # self.injection_start: datetime = datetime.strptime(
-        #     self.config["injection_start"], "%y%m%d %H%M%S"
+        #    self.config["injection_start"], "%y%m%d %H%M%S"
         # )
 
         # Add possibility to apply compaction correction for each image
@@ -165,11 +163,9 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         co2_gas = super().determine_co2_gas()
 
         # Add expert knowledge. Turn of any signal outside the presence of co2.
-        # And turn off any signal in the ESF layer.
         co2_gas.img[~expert_knowledge] = 0
 
         # Clean the results once more after adding expert knowledge.
-        # co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
         co2_gas.img = self.co2_gas_binary_cleaning(co2_gas.img)
 
         return co2_gas
@@ -222,7 +218,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         if plot_contours or write_contours_to_file:
 
             # Start with the original image
-            original_img = np.copy(self.img.img)
+            original_img = np.clip(np.copy(self.img.img), 0, 1)
             original_img = skimage.img_as_ubyte(original_img)
 
             # Overlay the original image with contours for CO2
@@ -366,7 +362,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
     def batch_segmentation(self, images: list[Path], **kwargs) -> None:
         """
-        Standard batch segmentation for C1, ..., C5.
+        Standard batch segmentation.
 
         Args:
             images (list of Path): paths to batch of images.

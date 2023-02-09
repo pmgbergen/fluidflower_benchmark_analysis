@@ -3,7 +3,6 @@ Module containing the standardized CO2 analysis applicable for the medium rig.
 
 """
 import time
-from datetime import datetime
 from pathlib import Path
 from typing import Union
 
@@ -14,6 +13,8 @@ import numpy as np
 import skimage
 from benchmark.rigs.tabletopfluidflower import TableTopFluidFlower
 from benchmark.utils.misc import read_time_from_path, segmentation_to_csv
+
+from .presets import benchmark_concentration_analysis_preset
 
 
 class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
@@ -32,12 +33,10 @@ class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
         verbosity: bool = True,
     ) -> None:
         """
-        Constructor for the analysis of a table top FluidFlower.
-
         Sets up fixed config file required for preprocessing.
 
         Args:
-            base (str, Path or list of such): baseline images, used to
+            baseline (str, Path or list of such): baseline images, used to
                 set up analysis tools and cleaning tools
             config (str or Path): path to config dict
             results (str or Path): path to results directory
@@ -90,38 +89,47 @@ class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
         # of format */yyMMdd_timeHHmmss*.
         self.img.timestamp = read_time_from_path(path)
 
-    # ! ---- Segementation tools for detecting the different CO2 phases
+    # ! ---- Segmentation tools for detecting the different CO2 phases
 
-    def define_co2_analysis(self) -> darsia.BinaryConcentrationAnalysis:
+    def define_co2_analysis(self) -> darsia.PriorPosteriorConcentrationAnalysis:
         """
-        Identify CO2 using a heterogeneous HSV thresholding scheme.
-        """
-        if self.config["co2"].get("segmented", False):
-            co2_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
-                self.base, self.labels, **self.config["co2"]
-            )
-        else:
-            co2_analysis = darsia.BinaryConcentrationAnalysis(
-                self.base, **self.config["co2"]
-            )
+        FluidFlower Benchmark preset for detecting CO2.
 
-        return co2_analysis
+        Returns:
+            PriorPosteriorConcentrationAnalysis: detector for CO2
 
-    def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
         """
-        Identify CO2(g) using a thresholding scheme on the blue color channel,
-        controlled from external config file.
-        """
-        if self.config["co2(g)"].get("segmented", False):
-            co2_gas_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
-                self.base, self.labels, **self.config["co2(g)"]
-            )
-        else:
-            co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
-                self.base, **self.config["co2(g)"]
-            )
+        return benchmark_concentration_analysis_preset(
+            self.base, self.labels, self.config["co2"]
+        )
 
-        return co2_gas_analysis
+    def define_co2_gas_analysis(self) -> darsia.PriorPosteriorConcentrationAnalysis:
+        """
+        FluidFlower Benchmark preset for detecting CO2 gas.
+
+        Returns:
+            PriorPosteriorConcentrationAnalysis: detector for CO2(g)
+
+        """
+        # Extract/define the binary cleaning contribution of the co2(g) analysis.
+        original_size = self.base.img.shape[:2]
+        self.co2_gas_binary_cleaning = darsia.CombinedModel(
+            [
+                # Binary inpainting
+                darsia.BinaryRemoveSmallObjects(key="prior ", **self.config["co2(g)"]),
+                darsia.BinaryFillHoles(key="prior ", **self.config["co2(g)"]),
+                # Resize and Smoothing
+                darsia.Resize(dtype=np.float32, key="prior ", **self.config["co2(g)"]),
+                darsia.TVD(key="prior ", **self.config["co2(g)"]),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
+                # Conversion to boolean
+                darsia.StaticThresholdModel(0.5),
+            ]
+        )
+
+        return benchmark_concentration_analysis_preset(
+            self.base, self.labels, self.config["co2(g)"]
+        )
 
     def determine_co2_mask(self) -> darsia.Image:
         """Determine CO2.
@@ -156,19 +164,20 @@ class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
         expert_knowledge = np.logical_and(
             expert_knowledge, np.logical_not(self.bottom_zone)
         )
-        self.co2_gas_analysis.update_mask(expert_knowledge)
+        self.co2_gas_analysis.update(mask=expert_knowledge)
 
-        # Extract co2 from analysis - restrict the analysis to areas with CO2.
+        # Extract co2 from analysis
         co2_gas = super().determine_co2_gas()
 
         # Add expert knowledge. Turn of any signal outside the presence of co2.
-        # And turn off any signal in the ESF layer and C layer.
         co2_gas.img[~expert_knowledge] = 0
 
         # Clean the results once more after adding expert knowledge.
-        co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
+        co2_gas.img = self.co2_gas_binary_cleaning(co2_gas.img)
 
         return co2_gas
+
+    # ! ---- Segmentation routines
 
     def single_image_segmentation(
         self, img: Union[Path, darsia.Image], **kwargs
@@ -252,6 +261,7 @@ class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
                         / Path(f"{img_id}_with_contours.jpg")
                     ),
                     original_img,
+                    [int(cv2.IMWRITE_JPEG_QUALITY), 100],
                 )
 
         # Write segmentation to file
@@ -284,7 +294,6 @@ class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
 
             # Store coarse scale segmentation
             if write_coarse_segmentation_to_file:
-                # TODO hardcoded - try to use base.dimensions and use 1cm grids
                 coarse_shape = (150, 280)
                 coarse_shape_reversed = tuple(reversed(coarse_shape))
 
@@ -353,6 +362,7 @@ class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
                     write_segmentation_to_file is written to file; default False.
 
         """
+
         for img in images:
 
             tic = time.time()
