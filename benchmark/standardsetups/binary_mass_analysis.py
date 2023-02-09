@@ -91,7 +91,7 @@ class BinaryMassAnalysis:
         # height (distance from top)
         self.height_map = np.linspace(0, self.base.height, self.base.img.shape[0])[
             :, None
-        ] * np.ones_like(self.base.img)
+            ] * np.ones(self.base.img.shape[:2])
 
     def volume_map(
         self,
