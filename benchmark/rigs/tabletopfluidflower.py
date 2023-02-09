@@ -1,5 +1,5 @@
 """
-Module containing the general setup for the Bilbo fluidflower rig.
+Module containing the general setup for a table top fluidflower rig.
 Includes segmentation and depth map.
 """
 from pathlib import Path
@@ -9,7 +9,7 @@ import darsia
 import numpy as np
 
 
-class Bilbo(darsia.AnalysisBase):
+class TableTopFluidFlower(darsia.AnalysisBase):
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],

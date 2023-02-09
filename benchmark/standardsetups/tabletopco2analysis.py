@@ -1,5 +1,6 @@
 """
 Module containing the standardized CO2 analysis applicable for the medium rig.
+
 """
 import time
 from datetime import datetime
@@ -11,11 +12,11 @@ import darsia
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-from benchmark.rigs.bilbo import Bilbo
-from benchmark.utils.misc import segmentation_to_csv, read_time_from_path
+from benchmark.rigs.tabletopfluidflower import TableTopFluidFlower
+from benchmark.utils.misc import read_time_from_path, segmentation_to_csv
 
 
-class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
+class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, darsia.CO2Analysis):
     """
     Class for managing the FluidFlower benchmark analysis.
     Identifiers for CO2 dissolved in water and CO2(g) are
@@ -31,7 +32,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
         verbosity: bool = True,
     ) -> None:
         """
-        Constructor for the analysis of the medium rig (Bilbo).
+        Constructor for the analysis of a table top FluidFlower.
 
         Sets up fixed config file required for preprocessing.
 
@@ -45,7 +46,7 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
             verbosity  (bool): flag controlling whether results of the
                 post-analysis are printed to screen; default is False.
         """
-        Bilbo.__init__(self, baseline, config, update_setup)
+        TableTopFluidFlower.__init__(self, baseline, config, update_setup)
         darsia.CO2Analysis.__init__(self, baseline, config, update_setup)
 
         # The above constructors provide access to the config via self.config.
@@ -155,7 +156,9 @@ class MediumCO2Analysis(Bilbo, darsia.CO2Analysis):
             co2.img, np.logical_not(np.logical_or(self.esf_sand, self.c_sand))
         )
         # Also exclude CO2 from the bottom of the rig - mostly due to shaking images.
-        expert_knowledge = np.logical_and(expert_knowledge, np.logical_not(self.bottom_zone))
+        expert_knowledge = np.logical_and(
+            expert_knowledge, np.logical_not(self.bottom_zone)
+        )
         self.co2_gas_analysis.update_mask(expert_knowledge)
 
         # Extract co2 from analysis - restrict the analysis to areas with CO2.
