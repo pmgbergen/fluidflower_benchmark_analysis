@@ -2,7 +2,6 @@
 Module containing the standardized CO2 analysis applicable for C1, ..., C5.
 """
 import time
-from datetime import datetime
 from pathlib import Path
 from typing import Union
 
@@ -12,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
-from benchmark.utils.misc import segmentation_to_csv, read_time_from_path
+from benchmark.utils.misc import read_time_from_path, segmentation_to_csv
 
 
 class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
@@ -56,6 +55,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         # )
 
         # Add possibility to apply compaction correction for each image
+        # TODO integrate this as correction
         if "compaction" in self.config.keys():
             self.apply_compaction_analysis = self.config["compaction"].get(
                 "apply", False
@@ -66,9 +66,6 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
                 )
         else:
             self.apply_compaction_analysis = False
-
-        # Initialize results dictionary for post-analysis
-        self.results: dict = {}
 
         # Create folder for results if not existent
         self.path_to_results: Path = Path(results)
@@ -94,34 +91,177 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
     # ! ---- Segementation tools for detecting the different CO2 phases
 
-    def define_co2_analysis(self) -> darsia.BinaryConcentrationAnalysis:
+    def define_co2_analysis(self) -> darsia.ConcentrationAnalysis:
         """
         Identify CO2 using a heterogeneous HSV thresholding scheme.
+
+        The strategy for identifying CO2 is constructed as a pipeline
+        of the following steps:
+
+        1. Thresholding.
+        2. Binary inpainting.
+        3. Light smoothing and thresholding.
+        4. Posterior strategy reviewing the first three steps.
+
+        Returns:
+            darsia.ConcentrationAnalysis: concentration analysis for detecting CO2.
+
         """
-        if self.config["co2"].get("segmented", False):
-            co2_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
-                self.base, self.labels, **self.config["co2"]
-            )
-        else:
-            co2_analysis = darsia.BinaryConcentrationAnalysis(
-                self.base, **self.config["co2"]
-            )
+
+        # TODO define the analysis definition as 'preset' in the standardsetups.
+
+        # Define signal reduction
+        signal_reduction = darsia.MonochromaticReduction(**self.config["co2"])
+
+        # Combine the four models as prior:
+        # 1. Thresholding
+        # 2. Binary inpainting
+        # 3. Postsmoothing
+        # 4. Simple thresholding to convert to binary data
+
+        # TODO rename postsmoothing - prior smoothing
+        # TODO rename postsmoothing resize - prior resize
+
+        # Preliminary: Define postsmoothing
+        global_resize = self.config["co2"].pop("postsmoothing resize", 1.0)
+        fx = self.config["co2"].pop("postsmoothing resize x", global_resize)
+        fy = self.config["co2"].pop("postsmoothing resize y", global_resize)
+        original_size = self.base.img.shape[:2]
+        postsmoothing = darsia.CombinedModel(
+            [
+                darsia.Resize(fx=fx, fy=fy, dtype=np.float32),
+                darsia.TVD("postsmoothing ", **self.config["co2"]),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
+            ]
+        )
+
+        # Prior model
+        prior_model = darsia.CombinedModel(
+            [
+                darsia.ThresholdModel(self.labels, **self.config["co2"]),
+                darsia.BinaryInpaint(**self.config["co2"]),
+                postsmoothing,
+                darsia.StaticThresholdModel(0.5),
+            ]
+        )
+
+        # Define a posterior model
+        posterior_model = darsia.BinaryDataSelector(
+            prefix="posterior ", **self.config["co2"]
+        )
+
+        # Define restoration object - coarsen, tvd, resize
+        # TODO rename presmoothing - retsoration smoothing.
+        # TODO rename presmoothing resize to restoration resize
+        global_resize = self.config["co2"].pop("presmoothing resize", 1.0)
+        fx = self.config["co2"].pop("presmoothing resize x", global_resize)
+        fy = self.config["co2"].pop("presmoothing resize y", global_resize)
+        original_size = self.base.img.shape[:2]
+        restoration = darsia.CombinedModel(
+            [
+                darsia.Resize(fx=fx, fy=fy),
+                darsia.TVD("presmoothing ", **self.config["co2"]),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
+            ]
+        )
+
+        # Combine all to define a concentration analysis object for CO2.
+        co2_analysis = darsia.PriorPosteriorConcentrationAnalysis(
+            self.base,
+            signal_reduction,
+            restoration,
+            prior_model,
+            posterior_model,
+            self.labels,
+            **self.config["co2"],
+        )
 
         return co2_analysis
 
-    def define_co2_gas_analysis(self) -> darsia.BinaryConcentrationAnalysis:
+    def define_co2_gas_analysis(self) -> darsia.ConcentrationAnalysis:
         """
         Identify CO2(g) using a thresholding scheme on the blue color channel,
         controlled from external config file.
+
+        The strategy for identifying CO2 is constructed as a pipeline
+        of the following steps:
+
+        1. Thresholding.
+        2. Binary inpainting.
+        3. Light smoothing and thresholding.
+        4. Posterior strategy reviewing the first three steps.
+
+        Returns:
+            darsia.ConcentrationAnalysis: concentration analysis for detecting CO2.
+
         """
-        if self.config["co2(g)"].get("segmented", False):
-            co2_gas_analysis = darsia.SegmentedBinaryConcentrationAnalysis(
-                self.base, self.labels, **self.config["co2(g)"]
-            )
-        else:
-            co2_gas_analysis = darsia.BinaryConcentrationAnalysis(
-                self.base, **self.config["co2(g)"]
-            )
+        # Reduction from trichromatic to monochromatic color space
+        signal_reduction = darsia.MonochromaticReduction(**self.config["co2(g)"])
+
+        # Combine the four models as prior:
+        # 1. Thresholding
+        # 2. Binary inpainting
+        # 3. Postsmoothing
+        # 4. Simple thresholding to convert to binary data
+
+        # Preliminary: Postsmoothing
+        global_resize = self.config["co2(g)"].pop("postsmoothing resize", 1.0)
+        fx = self.config["co2(g)"].pop("postsmoothing resize x", global_resize)
+        fy = self.config["co2(g)"].pop("postsmoothing resize y", global_resize)
+        original_size = self.base.img.shape[:2]
+        postsmoothing = darsia.CombinedModel(
+            [
+                darsia.Resize(fx=fx, fy=fy, dtype=np.float32),
+                darsia.TVD("postsmoothing ", **self.config["co2(g)"]),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
+            ]
+        )
+
+        # Preliminary binary_cleaning (last 3 submodels).
+        self.co2_gas_binary_cleaning = darsia.CombinedModel(
+            [
+                darsia.BinaryInpaint(**self.config["co2(g)"]),
+                postsmoothing,
+                darsia.StaticThresholdModel(0.5),
+            ]
+        )
+
+        # Prior model
+        prior_model = darsia.CombinedModel(
+            [
+                darsia.ThresholdModel(self.labels, **self.config["co2(g)"]),
+                self.co2_gas_binary_cleaning,
+            ]
+        )
+
+        # Define a posterior model
+        posterior_model = darsia.BinaryDataSelector(
+            prefix="posterior ", **self.config["co2(g)"]
+        )
+
+        # Restoration through anisotropic resizing and regularization
+        global_resize = self.config["co2(g)"].pop("presmoothing resize", 1.0)
+        fx = self.config["co2(g)"].pop("presmoothing resize x", global_resize)
+        fy = self.config["co2(g)"].pop("presmoothing resize y", global_resize)
+        original_size = self.base.img.shape[:2]
+        restoration = darsia.CombinedModel(
+            [
+                darsia.Resize(fx=fx, fy=fy),
+                darsia.TVD("presmoothing ", **self.config["co2(g)"]),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
+            ]
+        )
+
+        # All in all concentration analysis
+        co2_gas_analysis = darsia.PriorPosteriorConcentrationAnalysis(
+            self.base,
+            signal_reduction,
+            restoration,
+            prior_model,
+            posterior_model,
+            self.labels,
+            **self.config["co2(g)"],
+        )
 
         return co2_gas_analysis
 
@@ -151,7 +291,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         # Add expert knowledge - do not expect any CO2(g) outside
         # of the CO2, and neither in ESF. Include this in the analysis.
         expert_knowledge = np.logical_and(co2.img, np.logical_not(self.esf_sand))
-        self.co2_gas_analysis.update_mask(expert_knowledge)
+        self.co2_gas_analysis.update(mask=expert_knowledge)
 
         # Extract co2 from analysis
         co2_gas = super().determine_co2_gas()
@@ -161,9 +301,12 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         co2_gas.img[~expert_knowledge] = 0
 
         # Clean the results once more after adding expert knowledge.
-        co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
+        # co2_gas.img = self.co2_gas_analysis.clean_mask(co2_gas.img)
+        co2_gas.img = self.co2_gas_binary_cleaning(co2_gas.img)
 
         return co2_gas
+
+    # ! ---- Segmentation routines
 
     def single_image_segmentation(
         self, img: Union[Path, darsia.Image], **kwargs
@@ -218,7 +361,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             contours_co2, _ = cv2.findContours(
                 skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
             )
-            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
+            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 5)
 
             # Overlay the original image with contours for CO2(g)
             contours_co2_gas, _ = cv2.findContours(
@@ -226,31 +369,31 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
                 cv2.RETR_TREE,
                 cv2.CHAIN_APPROX_SIMPLE,
             )
-            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
+            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 5)
 
-            # Overlay the original image with contours of Box A
-            contours_box_A, _ = cv2.findContours(
-                skimage.img_as_ubyte(self.mask_box_A),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            cv2.drawContours(original_img, contours_box_A, -1, (180, 180, 180), 3)
-
-            # Overlay the original image with contours of Box B
-            contours_box_B, _ = cv2.findContours(
-                skimage.img_as_ubyte(self.mask_box_B),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            cv2.drawContours(original_img, contours_box_B, -1, (180, 180, 180), 3)
-
-            # Overlay the original image with contours of Box C
-            contours_box_C, _ = cv2.findContours(
-                skimage.img_as_ubyte(self.mask_box_C),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            cv2.drawContours(original_img, contours_box_C, -1, (180, 180, 180), 3)
+            #            # Overlay the original image with contours of Box A
+            #            contours_box_A, _ = cv2.findContours(
+            #                skimage.img_as_ubyte(self.mask_box_A),
+            #                cv2.RETR_TREE,
+            #                cv2.CHAIN_APPROX_SIMPLE,
+            #            )
+            #            cv2.drawContours(original_img, contours_box_A, -1, (180, 180, 180), 3)
+            #
+            #            # Overlay the original image with contours of Box B
+            #            contours_box_B, _ = cv2.findContours(
+            #                skimage.img_as_ubyte(self.mask_box_B),
+            #                cv2.RETR_TREE,
+            #                cv2.CHAIN_APPROX_SIMPLE,
+            #            )
+            #            cv2.drawContours(original_img, contours_box_B, -1, (180, 180, 180), 3)
+            #
+            #            # Overlay the original image with contours of Box C
+            #            contours_box_C, _ = cv2.findContours(
+            #                skimage.img_as_ubyte(self.mask_box_C),
+            #                cv2.RETR_TREE,
+            #                cv2.CHAIN_APPROX_SIMPLE,
+            #            )
+            #            cv2.drawContours(original_img, contours_box_C, -1, (180, 180, 180), 3)
 
             # Plot
             if plot_contours:
@@ -271,6 +414,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
                         / Path(f"{img_id}_with_contours.jpg")
                     ),
                     original_img,
+                    [int(cv2.IMWRITE_JPEG_QUALITY), 100],
                 )
 
         # Write segmentation to file
@@ -372,7 +516,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
 
         """
 
-        for num, img in enumerate(images):
+        for img in images:
 
             tic = time.time()
 
@@ -382,316 +526,3 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             # Information to the user
             if self.verbosity:
                 print(f"Elapsed time for {img.name}: {time.time()- tic}.")
-
-        return self.results
-
-    # ! ---- Post-analysis
-
-    # TODO this section needs revision. The segmentation can of course also be performed in parallel.
-    # However, due to the large time consumption on the segmentation, a split between segmentation
-    # And post-analysis seems most practical and is suggested here as well.
-
-    # TODO allow to segment (without storing, by providing the right keyword), if storing is requested,
-    # calling of single_image_segmentation is possible as well
-
-    def single_image_analysis(
-        self, img: Union[Path, darsia.Image], **kwargs
-    ) -> tuple[np.ndarray, np.ndarray, dict]:
-        """
-        Standard workflow to analyze CO2 phases.
-
-        Args:
-            image (Path or Image): path to single image.
-            kwargs: optional keyword arguments, see batch_analysis.
-
-        Returns:
-            np.ndarray: co2 mask
-            np.ndarray: co2(g) mask
-            dict: dictinary with all stored results from the post-analysis.
-        """
-
-        # Load the current image
-        if isinstance(img, darsia.Image):
-            self.img = img.copy()
-        else:
-            self.load_and_process_image(img)
-
-        # Perform compaction analysis
-        if self.apply_compaction_analysis:
-            # Apply compaction analysis, providing the deformed image matching the baseline image,
-            # as well as the required translations on each patch, characterizing the total
-            # deformation. Also plot the deformation as vector field.
-            self.img = self.compaction_analysis(self.img)
-
-        # Determine binary mask detecting any(!) CO2
-        co2 = self.determine_co2_mask()
-
-        # Determine binary mask detecting mobile CO2.
-        co2_gas = self.determine_co2_gas_mask(co2)
-
-        # ! ---- Post-analysis
-
-        # Define some general data first:
-        # Crop folder and ending from path - required for writing to file.
-        img_id = Path(img.name).with_suffix("")
-
-        # Determine the time increment (in terms of hours),
-        # referring to injection start, in hours.
-        SECONDS_TO_HOURS = 1.0 / 3600
-        relative_time = (
-            self.img.timestamp - self.injection_start
-        ).total_seconds() * SECONDS_TO_HOURS
-
-        # Fingering analysis in Box C
-        fingering_analysis_box_C = kwargs.pop("fingering_analysis_box_C", False)
-        if fingering_analysis_box_C:
-
-            # Fingers in box C are defines as contour of the CO2. To evaluate the length
-            # of the fingers, determine the length of the internal contour of the CO2 mask.
-            # Apply Venn diagram concept to exclude the boundary of box C. For this consider
-            # the CO2, the water, and the entire box, and take the correct difference.
-
-            contour_length_co2 = darsia.contour_length(co2, roi=self.box_C)
-            contour_length_water = darsia.contour_length(
-                co2, roi=self.box_C, values_of_interest=[False]
-            )
-            boundary_box_C = darsia.perimeter(self.box_C)
-
-            # Venn diagram concept to determine the internal contour of the CO2.
-            # Cut values at 0, slightly negative values can occur e.g., when
-            # contour_length_co2 is very small due to a different evaluation
-            # routine for the contour length and the permiter of a box.
-            length_finger = max(
-                0.5 * (contour_length_co2 + contour_length_water - boundary_box_C), 0.0
-            )
-
-            # Keep track of result and store internally
-            if "fingering_analysis_box_C" not in self.results:
-                self.results["fingering_analysis_box_C"] = []
-            self.results["fingering_analysis_box_C"].append(
-                [relative_time, length_finger]
-            )
-
-            if self.verbosity:
-                print(
-                    f"Total finger length in Box C at {relative_time} hours: {length_finger} m."
-                )
-                print(contour_length_co2, contour_length_water, boundary_box_C)
-
-        # Plot and store image with contours
-        plot_contours = kwargs.pop("plot_contours", False)
-        write_contours_to_file = kwargs.pop("write_contours_to_file", False)
-
-        if plot_contours or write_contours_to_file:
-
-            # Start with the original image
-            original_img = np.copy(self.img.img)
-            original_img = skimage.img_as_ubyte(original_img)
-
-            # Overlay the original image with contours for CO2
-            contours_co2, _ = cv2.findContours(
-                skimage.img_as_ubyte(co2.img), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-            )
-            cv2.drawContours(original_img, contours_co2, -1, (0, 255, 0), 3)
-
-            # Overlay the original image with contours for CO2(g)
-            contours_co2_gas, _ = cv2.findContours(
-                skimage.img_as_ubyte(co2_gas.img),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            cv2.drawContours(original_img, contours_co2_gas, -1, (255, 255, 0), 3)
-
-            # Overlay the original image with contours of Box A
-            contours_box_A, _ = cv2.findContours(
-                skimage.img_as_ubyte(self.mask_box_A),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            cv2.drawContours(original_img, contours_box_A, -1, (180, 180, 180), 3)
-
-            # Overlay the original image with contours of Box B
-            contours_box_B, _ = cv2.findContours(
-                skimage.img_as_ubyte(self.mask_box_B),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            cv2.drawContours(original_img, contours_box_B, -1, (180, 180, 180), 3)
-
-            # Overlay the original image with contours of Box C
-            contours_box_C, _ = cv2.findContours(
-                skimage.img_as_ubyte(self.mask_box_C),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_SIMPLE,
-            )
-            cv2.drawContours(original_img, contours_box_C, -1, (180, 180, 180), 3)
-
-            # Plot
-            if plot_contours:
-                plt.figure("Image with contours of CO2 segmentation")
-                plt.imshow(original_img)
-                plt.show()
-
-            # Write corrected image with contours to file
-            if write_contours_to_file:
-                (self.path_to_results / Path("contour_plots")).mkdir(
-                    parents=True, exist_ok=True
-                )
-                original_img = cv2.cvtColor(original_img, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(
-                    str(
-                        self.path_to_results
-                        / Path("contour_plots")
-                        / Path(f"{img_id}_with_contours.jpg")
-                    ),
-                    original_img,
-                )
-
-        # Write segmentation to file
-        write_segmentation_to_file = kwargs.pop("write_segmentation_to_file", False)
-        write_coarse_segmentation_to_file = kwargs.pop(
-            "write_coarse_segmentation_to_file", False
-        )
-
-        if write_segmentation_to_file or write_coarse_segmentation_to_file:
-
-            # Generate segmentation with codes:
-            # 0 - water
-            # 1 - dissolved CO2
-            # 2 - gaseous CO2
-            segmentation = np.zeros(self.img.img.shape[:2], dtype=int)
-            segmentation[co2.img] += 1
-            segmentation[co2_gas.img] += 1
-
-            # Store fine scale segmentation
-            if write_segmentation_to_file:
-                (self.path_to_results / Path("npy_segmentation")).mkdir(
-                    parents=True, exist_ok=True
-                )
-                np.save(
-                    self.path_to_results
-                    / Path("npy_segmentation")
-                    / Path(f"{img_id}_segmentation.npy"),
-                    segmentation,
-                )
-
-            # Store coarse scale segmentation
-            if write_coarse_segmentation_to_file:
-                coarse_shape = (150, 280)
-                coarse_shape_reversed = tuple(reversed(coarse_shape))
-
-                co2_coarse = skimage.img_as_bool(
-                    cv2.resize(
-                        skimage.img_as_ubyte(
-                            co2.img,
-                        ),
-                        coarse_shape_reversed,
-                        interpolation=cv2.INTER_AREA,
-                    )
-                )
-                co2_gas_coarse = skimage.img_as_bool(
-                    cv2.resize(
-                        skimage.img_as_ubyte(
-                            co2_gas.img,
-                        ),
-                        coarse_shape_reversed,
-                        interpolation=cv2.INTER_AREA,
-                    )
-                )
-
-                coarse_segmentation = np.zeros(coarse_shape, dtype=int)
-                coarse_segmentation[co2_coarse] += 1
-                coarse_segmentation[co2_gas_coarse] += 1
-
-                # Store segmentation as npy array
-                (self.path_to_results / Path("coarse_npy_segmentation")).mkdir(
-                    parents=True, exist_ok=True
-                )
-                np.save(
-                    self.path_to_results
-                    / Path("coarse_npy_segmentation")
-                    / Path(f"{img_id}_coarse_segmentation.npy"),
-                    coarse_segmentation,
-                )
-
-                # Store segmentation as csv file
-                (self.path_to_results / Path("coarse_csv_segmentation")).mkdir(
-                    parents=True, exist_ok=True
-                )
-                segmentation_to_csv(
-                    self.path_to_results
-                    / Path("coarse_csv_segmentation")
-                    / Path(f"{img_id}_coarse_segmentation.csv"),
-                    coarse_segmentation,
-                    img.name,
-                )
-
-        return co2, co2_gas, self.results
-
-    def batch_analysis(self, images: list[Path], **kwargs) -> dict:
-        """
-        Standard batch analysis for C1, ..., C5.
-
-        Args:
-            images (list of Path): paths to batch of images.
-            kwargs: optional keyword arguments:
-                plot_contours (bool): flag controlling whether the original image
-                    is plotted with contours of the two CO2 phases; default False.
-                write_contours_to_file (bool): flag controlling whether the plot from
-                    plot_contours is written to file; default False.
-                fingering_analysis_box_C (bool): flag controlling whether the length
-                    of the finger is performed in Box C; default is False.
-                write_segmentation_to_file (bool): flag controlling whether the
-                    CO2 segmentation is written to file, where water, dissolved CO2
-                    and CO2(g) get decoded 0, 1, 2, respectively; default False.
-                write_coarse_segmentation_to_file (bool): flag controlling whether
-                    a coarse (280 x 150) representation of the CO2 segmentation from
-                    write_segmentation_to_file is written to file; default False.
-
-        Returns:
-            dict: dictinary with all stored results from the post-analysis.
-        """
-
-        for num, img in enumerate(images):
-
-            tic = time.time()
-
-            # Determine binary mask detecting any(!) CO2, and CO2(g), and apply post-analysis.
-            self.single_image_analysis(img, **kwargs)
-
-            # Information to the user
-            if self.verbosity:
-                print(f"Elapsed time for {img.name}: {time.time()- tic}.")
-
-        return self.results
-
-    def return_results(self) -> dict:
-        """
-        Return all results collected throughout any analysis performed.
-        """
-        # TODO restrict to specific list of keywords.
-
-        return self.results
-
-    def write_results_to_file(self) -> None:
-        """
-        Write results in separate files.
-
-        Args:
-            folder (Path): folder where the results are stored.
-        """
-
-        # Write results of fingering analysis to file
-        if "fingering_analysis_box_C" in self.results.keys():
-            # Convert list to a numpy array
-            finger_length_c = np.array(self.results["fingering_analysis_box_C"])
-
-            # Store to file as npy file
-            np.save(self.path_to_results / Path("finger_length_c.npy"), finger_length_c)
-
-            # Store to file as cvs file
-            np.savetxt(
-                self.path_to_results / Path("finger_lenght_c.csv"),
-                finger_length_c,
-                delimiter=",",
-            )
