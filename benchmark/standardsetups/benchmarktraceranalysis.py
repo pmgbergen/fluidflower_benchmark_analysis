@@ -3,6 +3,7 @@ Module containing the standardized tracer concentration analysis applicable
 for the well test performed in the large FluidFlower.
 """
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Union
 
@@ -12,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
-from datetime import datetime
+
 
 class TailoredConcentrationAnalysis(darsia.SegmentedConcentrationAnalysis):
     def __init__(
@@ -31,8 +32,7 @@ class TailoredConcentrationAnalysis(darsia.SegmentedConcentrationAnalysis):
 
         # Apply median to fill in whilte preserving edges.
         signal = skimage.filters.rank.median(
-            skimage.img_as_ubyte(signal),
-            skimage.morphology.disk(self.disk_radius)
+            skimage.img_as_ubyte(signal), skimage.morphology.disk(self.disk_radius)
         )
 
         # Convert back to float
@@ -41,16 +41,16 @@ class TailoredConcentrationAnalysis(darsia.SegmentedConcentrationAnalysis):
         # TODO hardcode coarsening?
 
         ## Smoothen the signal
-        #signal = skimage.restoration.denoise_tv_bregman(
+        # signal = skimage.restoration.denoise_tv_bregman(
         #   signal, weight=1e-2, eps=1e-6, max_num_iter=100
-        #)
+        # )
 
         # Resize
-        signal = cv2.resize(signal, (280, 150), interpolation = cv2.INTER_AREA)
+        signal = cv2.resize(signal, (280, 150), interpolation=cv2.INTER_AREA)
 
         # TVD
         signal = skimage.restoration.denoise_tv_bregman(
-            signal, weight = 8, eps = 1e-4, max_num_iter = 100
+            signal, weight=8, eps=1e-4, max_num_iter=100
         )
 
         return super().postprocess_signal(signal)
@@ -84,14 +84,16 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.SegmentedTracerAnalysis):
                 are printed to screen; default is False.
         """
         LargeFluidFlower.__init__(self, baseline, config, update_setup)
-        darsia.SegmentedTracerAnalysis.__init__(self, baseline, self.effective_volumes, self.labels, config, update_setup)
+        darsia.SegmentedTracerAnalysis.__init__(
+            self, baseline, self.effective_volumes, self.labels, config, update_setup
+        )
 
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
         # complying with "%y%m%d %H%M%D", e.g., "211127 083412"
         # TODO as part of the calibration, this will be returned.
         self.injection_start: datetime = datetime.strptime(
-           self.config["injection_start"], "%y%m%d %H%M%S"
+            self.config["injection_start"], "%y%m%d %H%M%S"
         )
 
         # Initialize results dictionary for post-analysis
@@ -130,7 +132,7 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.SegmentedTracerAnalysis):
         tracer_concentration = super().determine_tracer()
 
         # Add expert knowledge: Turn of any signal in the water zone
-        #tracer_concentration.img[self.water] = 0
+        # tracer_concentration.img[self.water] = 0
 
         return tracer_concentration
 
@@ -155,11 +157,14 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.SegmentedTracerAnalysis):
         # Calibrate the overall signal via a simple constant rescaling
         print("Calibration: Global scaling...")
         if "scaling" in self.config["tracer"]:
-            self.tracer_analysis.update(scaling = self.config["tracer"]["scaling"])
+            self.tracer_analysis.update(scaling=self.config["tracer"]["scaling"])
             print(self.tracer_analysis.scaling)
         else:
-            self.tracer_analysis.calibrate(injection_rate = injection_rate, images = processed_images, initial_guess = (6,9))
-
+            self.tracer_analysis.calibrate(
+                injection_rate=injection_rate,
+                images=processed_images,
+                initial_guess=(6, 9),
+            )
 
     # ! ----- Analysis tools
 
@@ -219,7 +224,9 @@ class BenchmarkTracerAnalysis(LargeFluidFlower, darsia.SegmentedTracerAnalysis):
             if write_data_to_file:
                 img_array = cv2.resize(tracer.img, (280, 150))
                 time = (tracer.timestamp - self.injection_start).total_seconds()
-                np.savez(self.path_to_results / Path(f"data_{img_id}.npz"), img_array, time)
+                np.savez(
+                    self.path_to_results / Path(f"data_{img_id}.npz"), img_array, time
+                )
 
         return tracer, self.results
 

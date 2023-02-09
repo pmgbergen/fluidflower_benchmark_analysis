@@ -91,14 +91,14 @@ class BinaryMassAnalysis:
         # height (distance from top)
         self.height_map = np.linspace(0, self.base.height, self.base.img.shape[0])[
             :, None
-            ] * np.ones(self.base.img.shape[:2])
+        ] * np.ones(self.base.img.shape[:2])
 
     def volume_map(
         self,
         segmentation: np.ndarray,
         component: int,
         roi: Optional[Union[np.ndarray, list]] = None,
-        saturation: Optional[np.ndarray] = None
+        saturation: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """
         Given segmentation and component, returns a volume map of the component
