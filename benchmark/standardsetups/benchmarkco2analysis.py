@@ -13,6 +13,8 @@ import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
 from benchmark.utils.misc import read_time_from_path, segmentation_to_csv
 
+from .presets import benchmark_concentration_analysis_preset
+
 
 class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
     """
@@ -89,88 +91,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
         # of format */yyMMdd_timeHHmmss*.
         self.img.timestamp = read_time_from_path(path)
 
-    # ! ---- Segementation tools for detecting the different CO2 phases
-
-    def _define_benchmark_concentration_analysis_preset(
-        self, options: dict
-    ) -> darsia.PriorPosteriorConcentrationAnalysis:
-        """
-        The strategy for identifying any phase is constructed as a pipeline
-        of the following steps:
-
-        1. Use monochromatic signal reduction
-        2. Restoration (upscaling) of signal
-        3. Prior strategy providing a first detection.
-            a. Thresholding.
-            b. binary inpainting
-            c. resizing and smoothing
-            d. conversion to boolean data
-        4. Posterior strategy reviewing the first three steps.
-
-        Args:
-            options (dict): dictionary holding all tuning parameters
-
-        Returns:
-            darsia.ConcentrationAnalysis: concentration analysis for detecting CO2.
-
-        """
-
-        ########################################################################
-        # Define signal reduction
-        signal_reduction = darsia.MonochromaticReduction(**options)
-
-        ########################################################################
-        # Define restoration object - coarsen, tvd, resize
-        original_size = self.base.img.shape[:2]
-        restoration = darsia.CombinedModel(
-            [
-                darsia.Resize(key="restoration ", **options),
-                darsia.TVD(key="restoration ", **options),
-                darsia.Resize(dsize=tuple(reversed(original_size))),
-            ]
-        )
-
-        ########################################################################
-        # Combine the four models as prior:
-        # 1. Thresholding
-        # 2. Binary inpainting
-        # 3. Resize and smoothing
-        # 4. Simple thresholding to convert to binary data
-
-        # Prior model
-        prior_model = darsia.CombinedModel(
-            [
-                # Thresholding
-                darsia.ThresholdModel(self.labels, key="prior ", **options),
-                # Binary inpainting
-                darsia.BinaryRemoveSmallObjects(key="prior ", **options),
-                darsia.BinaryFillHoles(key="prior ", **options),
-                # Resize and Smoothing
-                darsia.Resize(dtype=np.float32, key="prior ", **options),
-                darsia.TVD(key="prior ", **options),
-                darsia.Resize(dsize=tuple(reversed(original_size))),
-                # Conversion to boolean
-                darsia.StaticThresholdModel(0.5),
-            ]
-        )
-
-        ########################################################################
-        # Define a posterior model
-        posterior_model = darsia.BinaryDataSelector(key="posterior ", **options)
-
-        ########################################################################
-        # Combine all to define a concentration analysis object for CO2.
-        concentration_analysis = darsia.PriorPosteriorConcentrationAnalysis(
-            self.base,
-            signal_reduction,
-            restoration,
-            prior_model,
-            posterior_model,
-            self.labels,
-            **options,
-        )
-
-        return concentration_analysis
+    # ! ---- Segmentation tools for detecting the different CO2 phases
 
     def define_co2_analysis(self) -> darsia.PriorPosteriorConcentrationAnalysis:
         """
@@ -180,7 +101,9 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             PriorPosteriorConcentrationAnalysis: detector for CO2
 
         """
-        return self._define_benchmark_concentration_analysis_preset(self.config["co2"])
+        return benchmark_concentration_analysis_preset(
+            self.base, self.labels, self.config["co2"]
+        )
 
     def define_co2_gas_analysis(self) -> darsia.PriorPosteriorConcentrationAnalysis:
         """
@@ -190,7 +113,7 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             PriorPosteriorConcentrationAnalysis: detector for CO2(g)
 
         """
-        # Define again the binary cleaning contribution of the co2(g) analysis to be used.
+        # Extract/define the binary cleaning contribution of the co2(g) analysis.
         original_size = self.base.img.shape[:2]
         self.co2_gas_binary_cleaning = darsia.CombinedModel(
             [
@@ -206,8 +129,8 @@ class BenchmarkCO2Analysis(LargeFluidFlower, darsia.CO2Analysis):
             ]
         )
 
-        return self._define_benchmark_concentration_analysis_preset(
-            self.config["co2(g)"]
+        return benchmark_concentration_analysis_preset(
+            self.base, self.labels, self.config["co2(g)"]
         )
 
     def determine_co2_mask(self) -> darsia.Image:
