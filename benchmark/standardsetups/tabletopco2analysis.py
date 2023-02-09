@@ -7,8 +7,8 @@ from typing import Union
 
 import numpy as np
 from benchmark.rigs.tabletopfluidflower import TableTopFluidFlower
-
-from .fluidflowerco2analysis import FluidFlowerCO2Analysis
+from darsia_fluidflower.analysis.fluidflowerco2analysis import \
+    FluidFlowerCO2Analysis
 
 
 class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, FluidFlowerCO2Analysis):

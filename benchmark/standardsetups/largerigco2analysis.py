@@ -8,8 +8,8 @@ from typing import Union
 
 import numpy as np
 from benchmark.rigs.largefluidflower import LargeFluidFlower
-
-from .fluidflowerco2analysis import FluidFlowerCO2Analysis
+from darsia_fluidflower.analysis.fluidflowerco2analysis import \
+    FluidFlowerCO2Analysis
 
 
 class LargeRigCO2Analysis(LargeFluidFlower, FluidFlowerCO2Analysis):
