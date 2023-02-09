@@ -3,7 +3,8 @@
 
     "physical_asset": {
         "dimensions": {"width": 2.8, "height": 1.5},
-        "parameters": {"porosity": 0.44}
+        "parameters": {"porosity": 0.44},
+        "volumes_path": "../cache/volumes.npy"
     },
 
     "drift": {
@@ -38,22 +39,21 @@
 
         "color": "negative-key",
 
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize": 0.5,
-        "presmoothing weight": 0.1,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 200,
+        "restoration resize": 0.5,
+        "restoration smoothing method": "isotropic bregman",
+        "restoration smoothing weight": 0.1,
+        "restoration smoothing eps": 1e-4,
+        "restoration smoothing max_num_iter": 200,
 
-        "threshold dynamic": false,
-        "threshold value": [0.2, 0.04, 0.05, 0.04, 0.05, 0.06, 0.05, 0.04, 0.07, 0.07, 0.11, 0.075, 0.05, 0.05, 0.08],
+        "prior threshold dynamic": false,
+        "prior threshold value": [0.2, 0.04, 0.05, 0.04, 0.05, 0.06, 0.05, 0.04, 0.07, 0.07, 0.11, 0.075, 0.05, 0.05, 0.08],
 
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize": 0.5,
-        "postsmoothing weight": 0.05,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 200,
+        "prior resize": 0.5,
+
+        "prior smoothing method": "isotropic bregman",
+        "prior smoothing weight": 0.05,
+        "prior smoothing eps": 1e-4,
+        "prior smoothing max_num_iter": 200,
 
         "posterior": true,
         "posterior criterion": "value",
@@ -67,27 +67,25 @@
 
         "color": "blue",
 
-        "presmoothing": true,
-        "presmoothing method": "isotropic bregman",
-        "presmoothing resize x": 0.25,
+        "restoration resize x": 0.25,
+        "restoration smoothing method": "isotropic bregman",
+        "restoration smoothing weight": 0.1,
+        "restoration smoothing eps": 1e-4,
+        "restoration smoothing max_num_iter": 100,
 
-        "presmoothing weight": 0.1,
-        "presmoothing eps": 1e-4,
-        "presmoothing max_num_iter": 100,
-
-        "threshold dynamic": false,
-        "threshold value": [0.2, 0.2, 0.04, 0.2, 0.04, 0.06, 0.2, 0.02, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.07], 
+        "prior threshold dynamic": false,
+        "prior threshold value": [0.2, 0.2, 0.04, 0.2, 0.04, 0.06, 0.2, 0.02, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.07], 
 
         "comment on min area size and max hole size": "needed due to inaccurate segmentation of the geometry - the interfaces are not accurate, while the signal registration is - this results in boundary effects mitigated by removing small objects",
-        "min area size": 1000,
-        "max hole size": 1000,
+        "prior remove small objects size": 1000,
+        "prior fill holes size": 1000,
 
-        "postsmoothing": true,
-        "postsmoothing method": "isotropic bregman",
-        "postsmoothing resize x": 0.5,
-        "postsmoothing weight": 0.1,
-        "postsmoothing eps": 1e-4,
-        "postsmoothing max_num_iter": 100,
+        "prior resize x": 0.5,
+
+        "prior smoothing method": "isotropic bregman",
+        "prior smoothing weight": 0.1,
+        "prior smoothing eps": 1e-4,
+        "prior smoothing max_num_iter": 100,
 
         "posterior": true,
         "posterior criterion": "value/value extra color",
