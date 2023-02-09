@@ -36,8 +36,6 @@
     "co2": {
         "cleaning_filter": "cache/cleaning_filter_negative_key.npy",
 
-        "segmented": true,
-
         "color": "negative-key",
 
         "presmoothing": true,
@@ -67,8 +65,6 @@
     "co2(g)": {
         "cleaning_filter": "cache/cleaning_filter_blue.npy",
 
-        "segmented": true,
-
         "color": "blue",
 
         "presmoothing": true,
@@ -94,8 +90,8 @@
         "postsmoothing max_num_iter": 100,
 
         "posterior": true,
-        "posterior extra color": "red+green",
         "posterior criterion": "value/value extra color",
+        "posterior extra color": "red+green",
         "posterior threshold": [0.09, 0.35],
 
         "verbosity": 0
