@@ -7,10 +7,11 @@ from typing import Union
 
 import darsia
 import numpy as np
+from darsia_fluidflower.rigs.segmentedfluidflower import SegmentedFluidFlower
 from scipy.interpolate import RBFInterpolator
 
 
-class LargeFluidFlower(darsia.AnalysisBase):
+class LargeFluidFlower(SegmentedFluidFlower):
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
@@ -27,16 +28,13 @@ class LargeFluidFlower(darsia.AnalysisBase):
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
         """
-        darsia.AnalysisBase.__init__(self, baseline, config, update_setup)
+        super().__init__(baseline, config, update_setup)
 
         # Define boxes A, B, C, relevant for the benchmark analysis
         self._define_boxes()
 
-        # Segment the baseline image; identidy water and esf layer.
-        self._segment_geometry(update_setup=update_setup)
-
         # Determine effective volumes, required for calibration, determining total mass etc.
-        self._determine_effective_volumes()
+        # self._determine_effective_volumes()
 
     # ! ---- Auxiliary setup routines
 
@@ -66,88 +64,42 @@ class LargeFluidFlower(darsia.AnalysisBase):
 
     def _segment_geometry(self, update_setup: bool = False) -> None:
         """
-        Use watershed segmentation and some cleaning to segment
-        the geometry. The routine further identifies the water and
-        ESF layers. This is hardcoded and works well with the config
-        files used for the CO2 analysis.
+        See SegmentedFluidFlower.
 
-        TODO: Need to think about a more general approach or move the
-        segmentation into the analysis, since it will be analysis-dependent
-        which detail of the segmentation will be needed (tracer analysis
-        requires more detail for instance).
-
-        Args:
-            update_setup (bool): flag controlling whether the labeled image
-                identifying different layers is necessarily updated even
-                if it is cached.
         """
-
-        # Fetch or generate and store labels
-        if (
-            Path(self.config["segmentation"]["labels_path"]).exists()
-            and not update_setup
-        ):
-            labels = np.load(self.config["segmentation"]["labels_path"])
-        else:
-            labels = darsia.segment(
-                self.base.img,
-                markers_method="supervised",
-                edges_method="scharr",
-                **self.config["segmentation"]
-            )
-            # Store to file (create required directories if needed)
-            labels_path = Path(self.config["segmentation"]["labels_path"])
-            labels_path.parents[0].mkdir(parents=True, exist_ok=True)
-            np.save(labels_path, labels)
-
-        # Store the labels as attribute
-        self.labels = labels
-
-        #import matplotlib.pyplot as plt
-        #plt.figure()
-        #plt.imshow(labels)
-        #plt.show()
-
-        def _labels_to_mask(ids: list) -> np.ndarray:
-            ids = ids if isinstance(ids, list) else [ids]
-            mask = np.zeros(labels.shape[:2], dtype=bool)
-            for i in ids:
-                mask[labels == i] = True
-            return mask
-
-        # Cache labels
-        self.labels = labels
+        super()._segment_geometry(update_setup)
 
         # Identify water layer
-        self.water = _labels_to_mask(self.config["segmentation"]["water"])
+        self.water = self._labels_to_mask(self.config["segmentation"]["water"])
 
         # Identify ESF layer
-        self.esf_sand = _labels_to_mask(self.config["segmentation"]["esf"])
+        self.esf_sand = self._labels_to_mask(self.config["segmentation"]["esf"])
 
         # Identify C layer
-        self.c_sand = _labels_to_mask(self.config["segmentation"]["c"])
+        self.c_sand = self._labels_to_mask(self.config["segmentation"]["c"])
 
-        self.component_groups = [[1,10,11], [2,3,4]]
+        # TODO rm
+        # self.component_groups = [[1,10,11], [2,3,4]]
 
-        self.label_reduced = np.ones_like(self.labels)
-        self.label_reduced[self.water] = 0
-        self.label_reduced[self.esf_sand] = 1
-        self.label_reduced[self.c_sand] = 2
+        # self.label_reduced = np.ones_like(self.labels)
+        # self.label_reduced[self.water] = 0
+        # self.label_reduced[self.esf_sand] = 1
+        # self.label_reduced[self.c_sand] = 2
 
         ## Create new labeled image
-        #self.labels = np.zeros(labels.shape[:2], dtype=np.uint8)
-        #self.labels_legend = {
+        # self.labels = np.zeros(labels.shape[:2], dtype=np.uint8)
+        # self.labels_legend = {
         #    "water": 0,
         #    "esf_sand": 1,
         #    "c_sand": 2,
         #    "rest": 3,
-        #}
+        # }
         ## Initiate all elements with the default parameter
-        #self.labels[:, :] = self.labels_legend["rest"]
+        # self.labels[:, :] = self.labels_legend["rest"]
         ## Overwrite all specific segments
-        #self.labels[self.water] = self.labels_legend["water"]
-        #self.labels[self.esf_sand] = self.labels_legend["esf_sand"]
-        #self.labels[self.c_sand] = self.labels_legend["c_sand"]
+        # self.labels[self.water] = self.labels_legend["water"]
+        # self.labels[self.esf_sand] = self.labels_legend["esf_sand"]
+        # self.labels[self.c_sand] = self.labels_legend["c_sand"]
 
     def _determine_effective_volumes(self) -> None:
         """
