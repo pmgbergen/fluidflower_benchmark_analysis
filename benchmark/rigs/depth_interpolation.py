@@ -3,9 +3,9 @@ Module computing the depth of the FluidFlower rig based on
 the interpolation of the measured depths.
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import RBFInterpolator
-import matplotlib.pyplot as plt
 
 # Coordinates at which depth measurements have been taken.
 # Note that the y-coordinate differs depending on the x-coordinate,
@@ -191,9 +191,7 @@ dy = 0.01
 x = np.linspace(0.5 * dx, width - 0.5 * dx, Nx)
 y = np.flip(np.linspace(0.5 * dy, height - 0.5 * dy, Ny))
 Y_coords, X_coords = np.meshgrid(y, x, indexing="ij")
-coords_vector = np.transpose(
-    np.vstack((np.ravel(X_coords), np.ravel(Y_coords)))
-)
+coords_vector = np.transpose(np.vstack((np.ravel(X_coords), np.ravel(Y_coords))))
 
 # Determine depth and shape to image format
 depth_vector = depth_interpolator(coords_vector)
@@ -210,17 +208,13 @@ np.save("depth.npy", depth)
 # Build csv file with standard text on top.
 header = f"Depth interoplated using RBF interpolation, based on updated measurements."
 
-header += (
-    "\nEach entry identifies the phase distribution in a 1 cm by 1 cm cell, where"
-)
+header += "\nEach entry identifies the phase distribution in a 1 cm by 1 cm cell, where"
 
 header += "\n0 = pure water, 1 = water with dissolved CO2, 2 = gaseous CO2."
 
 header += "\n2d array representing the laser grid of the benchmark description,"
 
-header += (
-    "\nordered row-wise from top to bottom, and column-wise from left to right."
-)
+header += "\nordered row-wise from top to bottom, and column-wise from left to right."
 
 header += "\nThe first entry corresponds to the cell centered at coordinates (0.035 m, 1.525 m)"
 
