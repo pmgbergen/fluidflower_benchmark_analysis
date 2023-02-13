@@ -5,10 +5,10 @@ Module containing the standardized CO2 analysis applicable for the table top rig
 from pathlib import Path
 from typing import Union
 
+import darsia
 import numpy as np
 from benchmark.rigs.tabletopfluidflower import TableTopFluidFlower
-from darsia_fluidflower.analysis.fluidflowerco2analysis import \
-    FluidFlowerCO2Analysis
+from darsia.presets.fluidflower.fluidflowerco2analysis import FluidFlowerCO2Analysis
 
 
 class TableTopFluidFlowerCO2Analysis(TableTopFluidFlower, FluidFlowerCO2Analysis):

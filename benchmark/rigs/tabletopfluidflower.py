@@ -7,10 +7,10 @@ from typing import Union
 
 import darsia
 import numpy as np
-from darsia_fluidflower.rigs.segmentedfluidflower import SegmentedFluidFlower
+from darsia.presets.fluidflower.fluidflowerrig import FluidFlowerRig
 
 
-class TableTopFluidFlower(SegmentedFluidFlower):
+class TableTopFluidFlower(FluidFlowerRig):
     def __init__(
         self,
         baseline: Union[str, Path, list[str], list[Path]],
