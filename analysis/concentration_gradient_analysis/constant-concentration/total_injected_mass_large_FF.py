@@ -1,5 +1,9 @@
 """
-Hardcoded injection profile for the large fluid flower. 
+Injection profile for the large fluid flower as recorded by the
+mass controller at injection.
+
+The CO2 has been injected through two injection ports with
+separate injection protocols.
 """
 
 
