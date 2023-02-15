@@ -6,6 +6,14 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 import matplotlib
 
+import os
+
+from datetime import datetime
+
+from benchmark.utils.misc import read_time_from_path
+
+import pandas as pd
+
 matplotlib.use("Agg")
 
 
@@ -284,3 +292,128 @@ def zones(segmentation_path, depth_map, subregion):
         return True, weighted_colors, total_color
     except:
         False, None
+
+
+Results_path = (
+    "E:/Git/fluidflower_benchmark_analysis/analysis/Results/fine_segmentation/"
+)
+
+seg_folders = [Results_path + i + "/" for i in os.listdir(Results_path)]
+segmentations_path = []
+
+
+# remove segmentations from 68 to 71, because c5 missing those images/segmentations
+for i in seg_folders:
+    s = [i + seg for seg in os.listdir(i) if seg.endswith(".npy")]
+    if len(s) > 123:
+        s = s[:68] + s[72:]
+    segmentations_path.append(s)
+
+inj_start = [
+    datetime(2021, 11, 24, 8, 31, 0),  # c1
+    datetime(2021, 12, 4, 10, 1, 0),  # c2
+    datetime(2021, 12, 14, 11, 20, 0),  # c3
+    datetime(2021, 12, 24, 9, 0, 0),  # c4
+    datetime(2022, 1, 4, 11, 0, 0),  # c5
+]
+
+time = []
+c1 = []
+c2 = []
+c3 = []
+c4 = []
+c5 = []
+spesial_comb = []
+c2_c3_c4_overlap = []
+other = []
+total = []
+
+meas_dir = "E:/Git/fluidflower_benchmark_analysis/analysis/depths/"
+
+depth_measurements = (
+    np.load(meas_dir + "x_measures.npy"),
+    np.load(meas_dir + "y_measures.npy"),
+    np.load(meas_dir + "depth_measures.npy"),
+)
+
+seg_da = da.Image(np.load(segmentations_path[0][0]), width=2.8, height=1.5)
+
+depth_map = da.compute_depth_map(seg_da, depth_measurements=depth_measurements)
+
+for i in range(46, len(segmentations_path[0])):
+    timestamp1 = read_time_from_path(segmentations_path[0][i])
+    timestamp2 = read_time_from_path(segmentations_path[1][i])
+    timestamp3 = read_time_from_path(segmentations_path[2][i])
+    timestamp4 = read_time_from_path(segmentations_path[3][i])
+    timestamp5 = read_time_from_path(segmentations_path[4][i])
+    t1 = (timestamp1 - inj_start[0]).total_seconds() / 60  # minutes
+    t2 = (timestamp2 - inj_start[1]).total_seconds() / 60  # minutes
+    t3 = (timestamp3 - inj_start[2]).total_seconds() / 60  # minutes
+    t4 = (timestamp4 - inj_start[3]).total_seconds() / 60  # minutes
+    t5 = (timestamp5 - inj_start[4]).total_seconds() / 60  # minutes
+    plot_name = (
+        "comp_images_weighted/"
+        + str(round(t1, 1))
+        + "_"
+        + str(round(t2, 1))
+        + "_"
+        + str(round(t3, 1))
+        + "_"
+        + str(round(t4, 1))
+        + "_"
+        + str(round(t5, 1))
+        + "_min.png"
+    )
+
+    ans, values, tot = whole_img(
+        [
+            segmentations_path[0][i],
+            segmentations_path[1][i],
+            segmentations_path[2][i],
+            segmentations_path[3][i],
+            segmentations_path[4][i],
+        ],
+        depth_map,
+        plot_name,
+        plot=True,
+    )
+
+    if ans:
+        c1.append(values[0])
+        c2.append(values[1])
+        c3.append(values[2])
+        c4.append(values[3])
+        c5.append(values[4])
+        spesial_comb.append(values[5])
+        c2_c3_c4_overlap.append(values[6])
+        other.append(values[7])
+        total.append(tot)
+        time.append(t1)
+        print(sum(values))
+    else:
+        None
+
+df = pd.DataFrame()
+
+df["Time [min]"] = time
+
+df["C1"] = c1
+
+df["C2"] = c2
+
+df["C3"] = c3
+
+df["C4"] = c4
+
+df["C5"] = c5
+
+df["spesial_comb"] = spesial_comb
+
+df["c2_c3_c4_overlap"] = c2_c3_c4_overlap
+
+df["other"] = other
+
+df["total"] = total
+
+
+df.to_excel("fine_segmentation_whole_FL_weighted_colors.xlsx", index=False)
