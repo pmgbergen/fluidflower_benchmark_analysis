@@ -162,6 +162,7 @@ def whole_img(segmentation_path, depth_map, plot_name, plot=False):
     except:
         False, None
 
+
 # Main script
 Results_path = (
     "E:/Git/fluidflower_benchmark_analysis/analysis/Results/fine_segmentation/"
