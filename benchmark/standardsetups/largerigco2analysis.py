@@ -39,16 +39,16 @@ class LargeRigCO2Analysis(LargeFluidFlower, FluidFlowerCO2Analysis):
             self, baseline, config, results, update_setup, verbosity
         )
 
-    #    def _expert_knowledge_co2(self) -> np.ndarray:
-    #        """
-    #        Retrieve expert knowledge, i.e., areas with possibility for CO2.
+    # def _expert_knowledge_co2(self) -> np.ndarray:
+    #    """
+    #    Retrieve expert knowledge, i.e., areas with possibility for CO2.
     #
-    #        Returns:
-    #            np.ndarray: mask with no CO2.
+    #    Returns:
+    #        np.ndarray: mask with no CO2.
     #
-    #        """
-    #        # Add expert knowledge. Turn of any signal in the water zone.
-    #        return np.logical_not(self.water)
+    #    """
+    #    # Add expert knowledge. Turn of any signal in the water zone.
+    #    return np.logical_not(self.water)
 
     def _expert_knowledge_co2_gas(self, co2) -> np.ndarray:
         """
