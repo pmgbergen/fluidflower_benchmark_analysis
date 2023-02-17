@@ -109,9 +109,11 @@ class LargeFluidFlower(FluidFlowerRig):
         """
 
         # Fetch volumes from file if existent, otherwise generate.
-        path = Path(self.config["physical_asset"]["volumes_path"])
-        if path.exists():
+        path = Path(self.config["physical asset"]["volumes_path"])
+        path_depth = Path(self.config["physical asset"]["depth_path"])
+        if path.exists() and path_depth.exists():
             self.effective_volumes = np.load(path)
+            self.depth = np.load(path_depth)
 
         else:
             # Determine number of voxels in each dimension - assume 2d image
@@ -126,8 +128,8 @@ class LargeFluidFlower(FluidFlowerRig):
             coords_vector = self.base.coordinatesystem.pixelToCoordinate(pixel_vector)
 
             # Fetch physical dimensions
-            width = self.config["physical_asset"]["dimensions"]["width"]
-            height = self.config["physical_asset"]["dimensions"]["height"]
+            width = self.config["physical asset"]["dimensions"]["width"]
+            height = self.config["physical asset"]["dimensions"]["height"]
 
             # Depth of the rig, measured in discrete points, taking into account expansion.
             # Values taken from the benchmark description.
@@ -305,12 +307,15 @@ class LargeFluidFlower(FluidFlowerRig):
             depth_vector = depth_interpolator(coords_vector)
             depth = depth_vector.reshape((Ny, Nx))
 
+            self.depth = depth
+
             # TODO actually heterogeneous (though with very little differences)
             # Porosity
-            porosity = self.config["physical_asset"]["parameters"]["porosity"]
+            porosity = self.config["physical asset"]["parameters"]["porosity"]
 
             # Compute effective volume per porous voxel
             self.effective_volumes = porosity * width * height * depth / (Nx * Ny * Nz)
 
             # Store in cache
             np.save(path, self.effective_volumes)
+            np.save(path_depth, self.depth)
