@@ -1,10 +1,11 @@
 {
     "description": "config file for FluidFlower Benchmark well/tracer test",
 
-    "physical_asset": {
+    "physical asset": {
         "dimensions": {"width": 2.8, "height": 1.5},
         "parameters": {"porosity": 0.44},
-        "volumes_path": "cache/volumes.npy"
+        "volumes_path": "cache/volumes.npy",
+        "depth_path": "cache/depth.npy"
     },
 
     "injection_start": "211002 171940",
@@ -91,7 +92,21 @@
     "tracer": {
         "cleaning_filter": "cache/cleaning_filter.npy",
         "segmentation_scaling": "cache/segmentation_scaling.npy",
-        "median_disk_radius": 20,
-        "scaling": 7.2
+
+        "color": "gray",
+
+        "restoration median disk radius": 20,
+        "restoration resize dsize": [280, 150], 
+        "restoration resize interpolation": "inter_area",
+        "restoration tvd smoothing method": "chambolle",
+        "restoration tvd smoothing weight": 8.0,
+        "restoration tvd smoothing eps": 1e-4,
+        "restoration tvd smoothing max_num_iter": 100,
+
+        "balancing scaling": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        "off balancing offset": 0.0,
+
+        "model scaling": 7.2,
+        "model offset": 0.0
     }
 }
