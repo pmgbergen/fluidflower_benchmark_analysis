@@ -64,7 +64,6 @@ class LargeRigTracerAnalysis(LargeFluidFlower, FluidFlowerTracerAnalysis):
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
         # complying with "%y%m%d %H%M%D", e.g., "211127 083412"
-        # TODO as part of the calibration, this will be returned.
         self.injection_start: datetime = datetime.strptime(
             self.config["injection_start"], "%y%m%d %H%M%S"
         )
