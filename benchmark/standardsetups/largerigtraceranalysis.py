@@ -2,7 +2,6 @@
 Module containing the standardized tracer concentration analysis applicable
 for the well test performed in the large FluidFlower.
 """
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -11,13 +10,15 @@ import cv2
 import darsia
 import matplotlib.pyplot as plt
 import numpy as np
-import skimage
 from benchmark.rigs.largefluidflower import LargeFluidFlower
+from darsia.presets.fluidflower.fluidflowertraceranalysis import \
+    FluidFlowerTracerAnalysis
 
 
-class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
+class LargeRigTracerAnalysis(LargeFluidFlower, FluidFlowerTracerAnalysis):
     """
     Class for managing the well test of the FluidFlower benchmark.
+
     """
 
     # ! ---- Setup routines
@@ -28,7 +29,7 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         config: Union[str, Path],
         results: Union[str, Path],
         update_setup: bool = False,
-        verbosity: bool = False,
+        verbosity: int = 0,
     ) -> None:
         """
         Constructor for tracer analysis tailored to the benchmark
@@ -40,6 +41,7 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
             baseline (str, Path or list of such): baseline images, used to
                 set up analysis tools and cleaning tools
             config (str or Path): path to config dict
+            results (str or Path): path to results directory
             update_setup (bool): flag controlling whether cache in setup
                 routines is emptied.
             verbosity  (bool): flag controlling whether results of the post-analysis
@@ -52,17 +54,12 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         LargeFluidFlower._determine_effective_volumes(self)
 
         # Assign tracer analysis
-        darsia.TracerAnalysis.__init__(self, baseline, config, update_setup)
+        FluidFlowerTracerAnalysis.__init__(
+            self, baseline, config, results, update_setup, verbosity
+        )
 
         # Define a geometry to enable integration over the porous domain
         self.define_porous_geometry()
-
-        # Create folder for results if not existent
-        self.path_to_results: Path = Path(results)
-        self.path_to_results.parents[0].mkdir(parents=True, exist_ok=True)
-
-        # Store verbosity
-        self.verbosity = verbosity
 
         # The above constructors provide access to the config via self.config.
         # Determine the injection start from the config file. Expect format
@@ -72,10 +69,12 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
             self.config["injection_start"], "%y%m%d %H%M%S"
         )
 
-    # TODO move somewhere else - this should be standard.
     def define_porous_geometry(self) -> None:
+        """
+        Define geometry for integrating data.
+
+        """
         shape = self.base.img.shape
-        physical_asset = self.config["physical asset"]
         dimensions = {
             "width": self.config["physical asset"]["dimensions"]["width"],
             "height": self.config["physical asset"]["dimensions"]["height"],
@@ -83,112 +82,6 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
             "porosity": self.config["physical asset"]["parameters"]["porosity"],
         }
         self.geometry = darsia.PorousGeometry(shape[:2], **dimensions)
-
-    # ! ---- Analysis tools for detecting the tracer concentration
-
-    def define_tracer_analysis(self) -> darsia.ConcentrationAnalysis:
-        """
-        Identify tracer concentration using a reduction to the garyscale space
-        """
-        ########################################################################
-        # Define signal reduction
-        signal_reduction = darsia.MonochromaticReduction(**self.config["tracer"])
-
-        ########################################################################
-        # Balancing
-        balancing = darsia.HeterogeneousLinearModel(
-            self.labels, key="balancing ", **self.config["tracer"]
-        )
-
-        ########################################################################
-        # Define restoration object - coarsen, tvd, resize
-        original_size = self.base.img.shape[:2]
-        restoration = darsia.CombinedModel(
-            [
-                darsia.Resize(key="restoration ", **self.config["tracer"]),
-                darsia.TVD(key="restoration ", **self.config["tracer"]),
-                darsia.Resize(dsize=tuple(reversed(original_size))),
-            ]
-        )
-
-        ########################################################################
-        # Linear model for converting signals to data
-        model = darsia.CombinedModel(
-            [
-                darsia.LinearModel(key="model ", **self.config["tracer"]),
-                darsia.ClipModel(**{"min value": 0.0, "max value": 1.0}),
-            ]
-        )
-
-        ########################################################################
-        # Final concentration analysis with possibility for calibration
-        # of both the balancing and the model
-        class TailoredConcentrationAnalysis(
-            darsia.ConcentrationAnalysis,
-            darsia.ContinuityBasedBalancingCalibrationMixin,
-            darsia.InjectionRateModelObjectiveMixin,
-        ):
-            pass
-
-        tracer_analysis = TailoredConcentrationAnalysis(
-            self.base,
-            signal_reduction,
-            balancing,
-            restoration,
-            model,
-            self.labels,
-        )
-
-        return tracer_analysis
-
-    # ! ---- Calibration routines
-
-    def calibrate_balancing(
-        self, calibration_images: list[Path], options: dict
-    ) -> None:
-        """
-        Calibration routine aiming at decreasing the discontinuity modulus
-        across interfaces of the labeling.
-
-        Args:
-            calibration_images (list of Path): calibration images.
-
-        """
-
-        # Read and process the images
-        print("Calibration: Processing images...")
-        images = [self._read(path) for path in calibration_images]
-
-        # Calibrate the overall signal via a simple constant rescaling
-        print("Calibration: Balancing...")
-        self.tracer_analysis.calibrate_balancing(images, options)
-
-    def calibrate_model(self, calibration_images: list[Path]) -> None:
-        """
-        Calibration routine aiming at matching the injection rate
-
-        Args:
-            calibration_images (list of Path): calibration images.
-
-        """
-        # Read and process the images
-        print("Calibration: Processing images...")
-        images = [self._read(path) for path in calibration_images]
-
-        # Calibrate the overall signal via a simple constant rescaling
-        print("Calibration: Model...")
-        self.tracer_analysis.calibrate_model(
-            images,
-            options={
-                "model position": 0,
-                "geometry": self.geometry,
-                # TODO make these arguments of calibrate_model
-                "injection_rate": 2250,
-                "initial_guess": [3.0, 0.0],
-                "tol": 1e-1,
-                "maxiter": 100,
-            },
-        )
 
     # ! ----- Analysis tools
 
@@ -204,14 +97,8 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
             np.ndarray: tracer concentration map
             dict: dictinary with all stored results from the post-analysis.
         """
-
         # ! ---- Extract concentration profile
-
-        # Load the current image
-        self.load_and_process_image(img)
-
-        # Determine tracer concentration
-        tracer = self.determine_tracer()
+        tracer = FluidFlowerTracerAnalysis.single_image_analysis(self, img, **kwargs)
 
         # ! ---- Post-analysis
 
