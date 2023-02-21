@@ -4,6 +4,7 @@ Analysis of well test for the FluidFlower Benchmark.
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 from benchmark.standardsetups.largerigtraceranalysis import \
     LargeRigTracerAnalysis
 
@@ -47,19 +48,19 @@ tracer_analysis = LargeRigTracerAnalysis(
 calibration_images_balancing = images_1[355:363]  # *445.jpg-*474.jpg
 
 tracer_analysis.calibrate_balancing(
-    calibration_images_balancing,
-    {
-        "exclude couplings": [
-            (5, 7),
-            (7, 8),
-            (6, 10),
-            (7, 10),
-            (9, 12),
-        ],  # Do not trust following couplings
-        "median disk radius": 20,
-        "mean thresh": 0.1,
-        "label groups": [[1, 10, 11], [2, 3, 4], [6, 7, 8]],  # Identify labels as same
-    },
+   calibration_images_balancing,
+   {
+       "exclude couplings": [
+           (5, 7),
+           (7, 8),
+           (6, 10),
+           (7, 10),
+           (9, 12),
+       ],  # Do not trust following couplings
+       "median disk radius": 20,
+       "mean thresh": 0.1,
+       "label groups": [[1, 10, 11], [2, 3, 4], [6, 7, 8]],  # Identify labels as same
+   },
 )
 
 # ! ---- Model calibration
@@ -68,40 +69,35 @@ tracer_analysis.calibrate_balancing(
 # jumps in discontinuities, as well as - use images which cover sufficient
 # areas of the geoemtry and result in connected labels after all.
 # Phase 1c - steady injection (only one plume)
-calibration_images_model = images_1[10:30:3]
-# calibration_images_model = images_1[125:155:3]  # *260.jpg-*259.jpg
+calibration_images_model = images_1[10:20]
 
 # Phase 2c - steady injection (two plumes)
 # calibration_images_model = images_1[340:370] # *445.jpg-*474.jpg
-# calibration_images_model = images_1[355:363:2] # *445.jpg-*474.jpg
 # calibration_images_model = images_1[355:363]  # *445.jpg-*474.jpg
 
 tracer_analysis.calibrate_model(
     calibration_images_model,
     {
         "injection_rate": 2250,
-        "initial_guess": [3.0], #, 0.0],
+        "initial_guess": [3.0, 0.0],
         "tol": 1e-1,
         "maxiter": 100,
-    }
+    },
 )
 
 # ! ---- Analysis
 
-# random_indices_1 = np.unique((np.random.rand(5) * len(images_1)).astype(np.int32))
-# random_images_1 = [images_1[i] for i in random_indices_1]
-# random_images_1 = images_1[::10]
-random_images_1 = images_1[::3]
+analysis_images_1 = images[::3]
 
 # Perform batch analysis for the entire images folder
 tracer_analysis.batch_analysis(
-    images=random_images_1,
+    images=analysis_images,
     plot_concentration=True,
     write_data_to_file=False,
 )
 
+# Plot evolution
 print(tracer_analysis.times)
 print(tracer_analysis.vols)
-
 plt.plot(tracer_analysis.times, tracer_analysis.vols)
 plt.show()

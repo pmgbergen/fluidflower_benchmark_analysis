@@ -95,18 +95,29 @@
 
         "color": "gray",
 
-        "restoration median disk radius": 20,
-        "restoration resize dsize": [280, 150], 
-        "restoration resize interpolation": "inter_area",
-        "restoration tvd smoothing method": "chambolle",
-        "restoration tvd smoothing weight": 8.0,
-        "restoration tvd smoothing eps": 1e-4,
-        "restoration tvd smoothing max_num_iter": 100,
+        "balancing scaling": [ 0.99297203,  0.98594406,  0.90208526,  0.90682972,  0.9029513,   0.89904169,
+          0.90811596,  0.9034187,   0.90937031,  0.85628516,  0.98076465,  0.98147278, 0.9744763],
+        "paper balancing scaling": [0.99337665, 0.9867533 , 0.90370549, 0.91033616, 0.90645051,
+        0.91810915, 0.91655025, 0.92162906, 0.92136933, 0.94158536,
+        0.97551541, 0.98006783, 0.95712657],
 
-        "balancing scaling": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        "off balancing offset": 0.0,
+        "off restoration median disk radius": 20,
+        "off restoration resize dsize": [280, 150], 
+        "off restoration resize interpolation": "inter_area",
+        "off restoration tvd smoothing method": "chambolle",
+        "off restoration tvd smoothing weight": 8.0,
+        "off restoration tvd smoothing eps": 1e-4,
+        "off restoration tvd smoothing max_num_iter": 100,
+        
+        "restoration resize": 0.25,
+        "restoration smoothing method": "isotropic bregman",
+        "restoration smoothing weight": 0.025,
+        "restoration smoothing eps": 1e-4,
+        "restoration smoothing max_num_iter": 100,
 
-        "model scaling": 7.2,
-        "model offset": 0.0
+        "model scaling": 7.75,
+        "model offset": 0.0,
+
+        "verbosity": 0
     }
 }
