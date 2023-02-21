@@ -105,9 +105,9 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         original_size = self.base.img.shape[:2]
         restoration = darsia.CombinedModel(
             [
-                darsia.Median(key="restoration median ", **self.config["tracer"]),
                 darsia.Resize(key="restoration ", **self.config["tracer"]),
-                darsia.TVD(key="restoration tvd ", **self.config["tracer"]),
+                darsia.TVD(key="restoration ", **self.config["tracer"]),
+                darsia.Resize(dsize=tuple(reversed(original_size))),
             ]
         )
 
@@ -116,17 +116,17 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         model = darsia.CombinedModel(
             [
                 darsia.LinearModel(key="model ", **self.config["tracer"]),
-                # TODO include clip.
-                # darsia.Clip(**{"min value": 0.0, "max value": 1.0}),
+                darsia.ClipModel(**{"min value": 0.0, "max value": 1.0}),
             ]
         )
 
         ########################################################################
         # Final concentration analysis with possibility for calibration
+        # of both the balancing and the model
         class TailoredConcentrationAnalysis(
             darsia.ConcentrationAnalysis,
-            # darsia.ContinuityObjectiveMixin # TODO tagret calibration of balancing.
-            darsia.InjectionRateObjectiveMixin,
+            darsia.ContinuityBasedBalancingCalibrationMixin,
+            darsia.InjectionRateModelObjectiveMixin,
         ):
             pass
 
@@ -143,7 +143,9 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
 
     # ! ---- Calibration routines
 
-    def calibrate_balancing(self, calibration_images: list[Path]) -> None:
+    def calibrate_balancing(
+        self, calibration_images: list[Path], options: dict
+    ) -> None:
         """
         Calibration routine aiming at decreasing the discontinuity modulus
         across interfaces of the labeling.
@@ -153,32 +155,13 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
 
         """
 
-        raise NotImplementedError("Curretly not in use.")
-
         # Read and process the images
         print("Calibration: Processing images...")
         images = [self._read(path) for path in calibration_images]
 
-        # TODO!
-
-        # Initial guess
-        num_labels = len(np.unique(self.labels))
-
-        # TODO initialize from config
-        initial_guess = np.zeros(2 * num_labels, dtype=float)
-        initial_guess[:num_labels] = 6
-
-        # # Calibrate the overall signal via a simple constant rescaling
-        # print("Calibration: Global scaling...")
-        # self.tracer_analysis.calibrate_balancing(
-        #     images,
-        #     options={
-        #         "geometry": self.geometry,
-        #         "initial_guess": initial_guess,
-        #         "tol": 1e-1,
-        #         "maxiter": 100,
-        #     },
-        # )
+        # Calibrate the overall signal via a simple constant rescaling
+        print("Calibration: Balancing...")
+        self.tracer_analysis.calibrate_balancing(images, options)
 
     def calibrate_model(self, calibration_images: list[Path]) -> None:
         """
@@ -192,20 +175,16 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         print("Calibration: Processing images...")
         images = [self._read(path) for path in calibration_images]
 
-        # TODO.
-        # # Setup calibration
-        # print("Calibration: Setup...")
-        # self.tracer_analysis.calibration_setup()
-
         # Calibrate the overall signal via a simple constant rescaling
-        print("Calibration: Heterogeneous scaling...")
+        print("Calibration: Model...")
         self.tracer_analysis.calibrate_model(
             images,
             options={
                 "model position": 0,
                 "geometry": self.geometry,
+                # TODO make these arguments of calibrate_model
                 "injection_rate": 2250,
-                "initial_guess": [6.0, 0.0],
+                "initial_guess": [3.0, 0.0],
                 "tol": 1e-1,
                 "maxiter": 100,
             },
