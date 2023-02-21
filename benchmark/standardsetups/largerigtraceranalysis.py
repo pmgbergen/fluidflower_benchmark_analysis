@@ -97,7 +97,7 @@ class LargeRigTracerAnalysis(LargeFluidFlower, darsia.TracerAnalysis):
         ########################################################################
         # Balancing
         balancing = darsia.HeterogeneousLinearModel(
-            self.labels, key="heterogeneous model ", **self.config["tracer"]
+            self.labels, key="balancing ", **self.config["tracer"]
         )
 
         ########################################################################
