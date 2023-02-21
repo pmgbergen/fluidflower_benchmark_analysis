@@ -4,7 +4,6 @@ Analysis of well test for the FluidFlower Benchmark.
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 from benchmark.standardsetups.largerigtraceranalysis import \
     LargeRigTracerAnalysis
 
@@ -20,15 +19,17 @@ images_folder = folder / pt3
 file_ending = "*.JPG"
 config = "./config.json"
 
-images_1 = list(
-    sorted((folder / pt1).glob(file_ending))
-)  # contains entire phase 1 and 2 including breaks
-images_2 = list(
-    sorted((folder / pt2).glob(file_ending))
-)  # contains overnight break between phase 2 and phase 3
-images_3 = list(sorted((folder / pt3).glob(file_ending)))  # contains phase 3
-images = list(sorted((folder / pt3).glob(file_ending)))
+# Baseline prior to injection
 baseline = list(sorted((folder / Path("baseline")).glob(file_ending)))[:20]
+
+# Entire phase 1 and 2 including breaks
+images_1 = list(sorted((folder / pt1).glob(file_ending)))
+
+# Overnight break between phase 2 and phase 3
+images_2 = list(sorted((folder / pt2).glob(file_ending)))
+
+# Phase 3
+images_3 = list(sorted((folder / pt3).glob(file_ending)))
 
 # ! ---- Analysis object
 
@@ -44,7 +45,21 @@ tracer_analysis = LargeRigTracerAnalysis(
 # ! ---- Balancing calibration
 
 calibration_images_balancing = images_1[355:363]  # *445.jpg-*474.jpg
-# tracer_analysis.calibrate_balancing(calibration_images_balancing)
+tracer_analysis.calibrate_balancing(
+    calibration_images_balancing,
+    {
+        "exclude couplings": [
+            (5, 7),
+            (7, 8),
+            (6, 10),
+            (7, 10),
+            (9, 12),
+        ],  # Do not trust following couplings
+        "median disk radius": 20,
+        "mean thresh": 0.1,
+        "label groups": [[1, 10, 11], [2, 3, 4], [6, 7, 8]],  # Identify labels as same
+    },
+)
 
 # ! ---- Model calibration
 
@@ -52,19 +67,21 @@ calibration_images_balancing = images_1[355:363]  # *445.jpg-*474.jpg
 # jumps in discontinuities, as well as - use images which cover sufficient
 # areas of the geoemtry and result in connected labels after all.
 # Phase 1c - steady injection (only one plume)
-calibration_images_model = images_1[125:155]  # *260.jpg-*259.jpg
+calibration_images_model = images_1[10:30:3]
+# calibration_images_model = images_1[125:155:3]  # *260.jpg-*259.jpg
 
 # Phase 2c - steady injection (two plumes)
 # calibration_images_model = images_1[340:370] # *445.jpg-*474.jpg
 # calibration_images_model = images_1[355:363:2] # *445.jpg-*474.jpg
 # calibration_images_model = images_1[355:363]  # *445.jpg-*474.jpg
-# tracer_analysis.calibrate_model(calibration_images_model)
+tracer_analysis.calibrate_model(calibration_images_model)
 
 # ! ---- Analysis
 
 # random_indices_1 = np.unique((np.random.rand(5) * len(images_1)).astype(np.int32))
 # random_images_1 = [images_1[i] for i in random_indices_1]
-random_images_1 = images_1[::10]
+# random_images_1 = images_1[::10]
+random_images_1 = images_1[::3]
 
 # Perform batch analysis for the entire images folder
 tracer_analysis.batch_analysis(
