@@ -45,6 +45,7 @@ tracer_analysis = LargeRigTracerAnalysis(
 # ! ---- Balancing calibration
 
 calibration_images_balancing = images_1[355:363]  # *445.jpg-*474.jpg
+
 tracer_analysis.calibrate_balancing(
     calibration_images_balancing,
     {
@@ -74,7 +75,16 @@ calibration_images_model = images_1[10:30:3]
 # calibration_images_model = images_1[340:370] # *445.jpg-*474.jpg
 # calibration_images_model = images_1[355:363:2] # *445.jpg-*474.jpg
 # calibration_images_model = images_1[355:363]  # *445.jpg-*474.jpg
-tracer_analysis.calibrate_model(calibration_images_model)
+
+tracer_analysis.calibrate_model(
+    calibration_images_model,
+    {
+        "injection_rate": 2250,
+        "initial_guess": [3.0], #, 0.0],
+        "tol": 1e-1,
+        "maxiter": 100,
+    }
+)
 
 # ! ---- Analysis
 
@@ -86,7 +96,7 @@ random_images_1 = images_1[::3]
 # Perform batch analysis for the entire images folder
 tracer_analysis.batch_analysis(
     images=random_images_1,
-    plot_concentration=False,
+    plot_concentration=True,
     write_data_to_file=False,
 )
 
